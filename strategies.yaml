@@ -1,1 +1,79 @@
-strategies: []
+strategies:
+  - name: RTY Hybrid BB Monthly Governor Strategy
+    description: >
+      A multi-mode futures trading strategy designed for the Russell 2000 (RTY)
+      that uses daily bars and Bollinger Band signals to trigger trend-following
+      long entries and mean-reverting short entries. The strategy is governed by
+      a "Monthly Governor" risk management logic that liquidates positions and
+      halts trading for the remainder of the calendar month once a specific
+      dollar-based profit target or stop-loss threshold is breached.
+    source_channel: Jacob Amaral
+    source_videos:
+      - "Building an RTY Futures Breakout Strategy with Python and QuantConnect"
+      - "Algo Trader member starts 2026 up +11%!"
+      - "Are Monthly Profit Targets and Stops worth it for automated trading?"
+    parameters:
+      - name: ticker_symbol
+        description: The futures instrument to be traded
+        type: string
+        default: RTY
+        range: [RTY, NQ, ES, ZN]
+      - name: bar_timeframe
+        description: Time interval for each price bar in minutes (1440 = daily)
+        type: int
+        default: 1440
+        range: 1-1440
+      - name: bb_period
+        description: Number of periods for the Bollinger Band calculation
+        type: int
+        default: 20
+        range: 10-50
+      - name: bb_std_dev
+        description: Number of standard deviations for Bollinger Band width
+        type: float
+        default: 2.0
+        range: 1.0-3.0
+      - name: long_monthly_target_usd
+        description: Dollar profit target per contract for longs to trigger monthly halt
+        type: float
+        default: 8000.0
+        range: 7000.0-9000.0
+      - name: short_monthly_target_usd
+        description: Dollar profit target per contract for shorts to trigger monthly halt
+        type: float
+        default: 4000.0
+        range: 2000.0-6000.0
+      - name: monthly_stop_loss_usd
+        description: Dollar loss threshold per contract to stop trading for the month
+        type: float
+        default: 3000.0
+        range: 2000.0-4000.0
+      - name: contract_quantity
+        description: Number of contracts traded per signal
+        type: int
+        default: 1
+        range: 1-10
+      - name: optimization_cycle_years
+        description: Frequency of walk-forward optimization for parameter adjustment
+        type: int
+        default: 1
+        range: 1-2
+    entry_rules:
+      - "Enter LONG when the high of the current bar crosses below the Upper Bollinger Band (bb_period, bb_std_dev) — buying the dip after a breakout"
+      - "Enter SHORT when the high of the current bar crosses above the Middle Bollinger Band (SMA of bb_period) — mean-reverting short at the middle level"
+      - "Entries are only permitted if the Monthly Governor state is Active (no targets or stops hit this month)"
+    exit_rules:
+      - "If MTD realized+unrealized P&L exceeds long_monthly_target_usd (longs) or short_monthly_target_usd (shorts), liquidate all positions and halt trading for the rest of the month"
+      - "If MTD realized+unrealized P&L drops below -monthly_stop_loss_usd, liquidate all positions and halt trading for the rest of the month"
+      - "No indicator-based exit signals — exits are strictly governed by the monthly targets and stop"
+    risk_management:
+      - "Calculate MTD performance daily: current portfolio value minus portfolio value at start of month"
+      - "Reset the Monthly Governor to Active on the first trading bar of every new calendar month"
+      - "Roll over futures contracts to the front month before expiration"
+      - "Target a Return of Drawdown ratio (Net Profit / Max Drawdown) greater than 2.0"
+      - "Verify robustness via Monte Carlo simulation on out-of-sample trades (median RoD > 2.0)"
+    notes:
+      - "Long profit targets are set higher than short targets because equity indices have a long-term upward bias"
+      - "The strategy caps right-tail risk (massive trending months) in exchange for lower variance and more consistent risk-adjusted returns"
+      - "Walk-forward optimization adjusts monthly targets and stops yearly based on recent market conditions"
+      - "Platform: QuantConnect (Python). Futures must be manually rolled over in backtests"
