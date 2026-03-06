@@ -1,0 +1,13 @@
+topics:
+  ai-agents:
+    description: AI agent frameworks and autonomous systems
+    channels:
+    - name: AI Jason
+      url: https://www.youtube.com/@AIJason
+    - name: Matt Williams
+      url: https://www.youtube.com/@technovangelist
+  trading:
+    description: Algorithmic and quantitative trading
+    channels:
+    - name: QuantProgram
+      url: https://www.youtube.com/@QuantProgram
