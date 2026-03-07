@@ -1,0 +1,15 @@
+{
+  "youtube": {
+    "default_search_count": 20,
+    "default_months_filter": 6,
+    "fetch_workers": 4
+  },
+  "notebooklm": {
+    "language": "es"
+  },
+  "paths": {
+    "channels_db": "data/channels/channels.yaml",
+    "strategies_db": "data/strategies/strategies.yaml",
+    "backtests_dir": "data/backtests"
+  }
+}

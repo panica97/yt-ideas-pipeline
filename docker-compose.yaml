@@ -1,7 +1,0 @@
-services:
-  pipeline:
-    build: .
-    volumes:
-      - ./channels.yaml:/app/channels.yaml
-      - ./strategies.yaml:/app/strategies.yaml
-    working_dir: /app
