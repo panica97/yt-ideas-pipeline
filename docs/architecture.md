@@ -2,7 +2,7 @@
 
 ## Vision general
 
-IRT (Ideas Research Team) es un sistema orquestado por Claude Code CLI que monitorea canales de YouTube, extrae estrategias de trading con NotebookLM y las guarda para analisis. El trabajo se delega a sub-agentes especializados definidos como skills.
+Trading Research Pipeline es un sistema orquestado por Claude Code CLI que monitorea canales de YouTube, extrae estrategias de trading con NotebookLM y las guarda para analisis. El trabajo se delega a sub-agentes especializados definidos como skills.
 
 ```
                     +-------------------------------------+

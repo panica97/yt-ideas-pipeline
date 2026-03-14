@@ -17,12 +17,27 @@ from .formatting import format_date
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
+
+def _has_database_url():
+    """Check if DATABASE_URL is configured."""
+    return bool(os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_SYNC"))
+
+
 def save_db(data, db_path):
     with open(db_path, "w", encoding="utf-8") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
 
 def load_db(db_path):
+    # Try PostgreSQL first if available
+    if _has_database_url():
+        try:
+            from tools.db.channel_repo import get_topics_as_dict
+            from tools.db.session import sync_session_ctx
+            with sync_session_ctx() as session:
+                return get_topics_as_dict(session)
+        except Exception as e:
+            print(f"Warning: PostgreSQL read failed ({e}), falling back to YAML", file=sys.stderr)
     if not os.path.exists(db_path):
         print(f"Error: channels.yaml not found at {db_path}", file=sys.stderr)
         sys.exit(1)
@@ -168,6 +183,21 @@ def main():
         today = datetime.now().strftime("%Y-%m-%d")
         for ch in fetched_channels:
             ch["last_fetched"] = today
+        # Update in PostgreSQL if available
+        if _has_database_url():
+            try:
+                from tools.db.channel_repo import get_topic_by_slug, update_channel_last_fetched
+                from tools.db.session import sync_session_ctx
+                with sync_session_ctx() as session:
+                    topic_obj = get_topic_by_slug(session, topic_name)
+                    if topic_obj:
+                        for ch in fetched_channels:
+                            for db_ch in topic_obj.channels:
+                                if db_ch.url.rstrip("/") == ch["url"].rstrip("/"):
+                                    update_channel_last_fetched(session, db_ch.id)
+                                    break
+            except Exception as e:
+                print(f"Warning: PostgreSQL update failed ({e}), YAML still updated", file=sys.stderr)
         save_db(db_data, db_path)
 
     # Filter by date

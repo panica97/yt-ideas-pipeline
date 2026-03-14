@@ -4,7 +4,7 @@
 
 **Frontend Dashboard** -- interfaz web para visualizar y gestionar los datos del pipeline de investigacion de trading (canales, estrategias, historial) y monitorizar en tiempo real el estado de las investigaciones lanzadas desde el CLI.
 
-El dashboard NO lanza investigaciones. El flujo de research sigue siendo exclusivo de Claude Code CLI. El frontend es una ventana de lectura y gestion de datos sobre los mismos ficheros YAML/JSON que usa el pipeline.
+El dashboard NO lanza investigaciones. El flujo de research sigue siendo exclusivo de Claude Code CLI. El frontend es una ventana de lectura y gestion de datos sobre PostgreSQL, la unica fuente de verdad compartida entre el CLI y el dashboard.
 
 ---
 
@@ -16,8 +16,9 @@ Actualmente toda la interaccion con los datos del pipeline se hace via CLI o edi
 - **Gestion de canales**: anadir o eliminar canales requiere editar `channels.yaml` manualmente, con riesgo de romper el formato.
 - **Borradores JSON**: los drafts en `data/strategies/drafts/*.json` contienen campos `_TODO` que necesitan atencion del usuario, pero no hay forma facil de identificarlos.
 - **Estado del research**: cuando el agente de investigacion esta corriendo, no hay feedback visual del progreso.
+- **Concurrencia**: multiples agentes paralelos (estrategias de futuros, opciones, sync con Obsidian) pueden escribir datos simultaneamente, lo que causa conflictos en ficheros planos.
 
-El dashboard resuelve estos problemas ofreciendo una interfaz web que lee y escribe los mismos ficheros que el pipeline, sin duplicar datos ni introducir una base de datos separada.
+El dashboard resuelve estos problemas ofreciendo una interfaz web respaldada por PostgreSQL como unica fuente de verdad. Tanto el CLI como el backend leen y escriben a la misma base de datos, eliminando ficheros intermediarios y problemas de concurrencia.
 
 ---
 
@@ -25,12 +26,16 @@ El dashboard resuelve estos problemas ofreciendo una interfaz web que lee y escr
 
 ```
 VPS (produccion) / Local (desarrollo)
-  Claude Code CLI --> ejecuta research --> escribe YAML/JSON
+  Claude Code CLI --> ejecuta research --> escribe a PostgreSQL
                                                 |
-  FastAPI backend --> lee/escribe mismos ficheros --+
+  FastAPI backend --> lee/escribe PostgreSQL ----+
        |
        |-- REST API para gestion de datos
        |-- WebSocket para estado del research en tiempo real
+
+  PostgreSQL 16 (postgres:16-alpine)
+       |-- Unica fuente de verdad
+       |-- Tablas: channels, strategies, drafts, history, research_sessions
 
 Navegador del usuario
   React app --HTTP/WS--> FastAPI backend
@@ -38,9 +43,17 @@ Navegador del usuario
 
 ### Principios clave
 
-- **Ficheros como base de datos**: no hay base de datos. Los ficheros YAML/JSON en `data/` son la unica fuente de verdad.
-- **Lectura compartida**: tanto el CLI como el backend leen los mismos ficheros. Las escrituras del backend (por ejemplo, anadir un canal) modifican los mismos ficheros que el CLI lee.
-- **Sin conflictos de escritura**: el research (CLI) y el dashboard (API) no escriben al mismo fichero simultaneamente. El research escribe a `strategies.yaml`, `history.yaml` y `drafts/`. El dashboard escribe a `channels.yaml` y lee el resto. Excepcion: `current.yaml` lo escribe el CLI y lo lee el dashboard (solo lectura).
+- **PostgreSQL como fuente de verdad**: no hay ficheros YAML/JSON intermedios. PostgreSQL 16 es la unica fuente de verdad para todos los datos (canales, estrategias, historial, estado del research).
+- **Sin ficheros intermediarios**: el CLI escribe directamente a PostgreSQL, el backend lee directamente de PostgreSQL. No hay ficheros YAML que sincronizar.
+- **Concurrencia segura**: PostgreSQL soporta escrituras concurrentes desde multiples agentes paralelos (futuros, opciones, sync con Obsidian) gracias a MVCC. No hay riesgo de corrupcion de ficheros ni race conditions.
+- **Exportacion bajo demanda**: los formatos YAML/JSON se mantienen como opcion de exportacion desde el dashboard (boton de descarga), no como formato de almacenamiento.
+
+### Justificacion de PostgreSQL sobre SQLite
+
+- **Escrituras concurrentes**: multiples agentes de research pueden correr en paralelo (uno para futuros, otro para opciones, sync con Obsidian). SQLite usa write-ahead logging con un unico escritor concurrente; PostgreSQL soporta multiples escritores simultaneos via MVCC.
+- **JSONB**: los borradores de estrategia (drafts) tienen estructura variable con campos como `_TODO` y metadatos flexibles. JSONB permite almacenar y consultar esta estructura sin esquema rigido.
+- **Full-text search**: busqueda de estrategias por nombre y descripcion nativa con `tsvector/tsquery`, sin dependencias adicionales.
+- **Ecosistema Docker**: PostgreSQL corre como servicio independiente en Docker Compose, sin acoplamiento al filesystem del host.
 
 ---
 
@@ -53,8 +66,11 @@ Navegador del usuario
 | Estado frontend | React Query (TanStack Query) | Cache, invalidacion automatica, polling sencillo |
 | Build frontend | Vite | Rapido, soporte nativo de TypeScript |
 | Backend | FastAPI (Python 3.12) | Asincrono, validacion con Pydantic, WebSocket nativo, mismo lenguaje que el pipeline |
-| Validacion | Pydantic v2 | Modelos tipados para YAML/JSON |
-| YAML | PyYAML / ruamel.yaml | ruamel.yaml preserva comentarios y orden de claves |
+| Base de datos | PostgreSQL 16 | Concurrencia MVCC, JSONB, full-text search. Imagen `postgres:16-alpine` |
+| ORM | SQLAlchemy 2.0 | ORM async con soporte nativo de tipos Python, modelos declarativos |
+| Migraciones | Alembic | Migraciones versionadas, autogenerate desde modelos SQLAlchemy |
+| Driver async | asyncpg | Driver PostgreSQL asincrono de alto rendimiento para SQLAlchemy async |
+| Validacion | Pydantic v2 | Modelos tipados para request/response |
 | WebSocket | fastapi.websockets | Integrado en FastAPI |
 | Despliegue | Docker Compose | Mismo compose que el pipeline existente |
 | Proxy reverso | Caddy o Nginx | HTTPS automatico en VPS |
@@ -65,49 +81,57 @@ Navegador del usuario
 
 ### 5.1 Gestion de canales (CRUD)
 
-**Descripcion**: permite ver, anadir y eliminar canales de YouTube agrupados por topic. Opera sobre `data/channels/channels.yaml`.
+**Descripcion**: permite ver, anadir y eliminar canales de YouTube agrupados por topic. Opera sobre la tabla `channels` en PostgreSQL.
 
-**Estructura actual del fichero**:
-```yaml
-topics:
-  futures:
-    description: Futures strategies
-    channels:
-    - name: Jacob Amaral
-      url: https://www.youtube.com/@jacobamaral
-      last_fetched: '2026-03-14'
-  trading:
-    description: Algorithmic and quantitative trading
-    channels:
-    - name: QuantProgram
-      url: https://www.youtube.com/@QuantProgram
-      last_fetched: null
+**Modelo de datos (PostgreSQL)**:
+```sql
+CREATE TABLE topics (
+    id SERIAL PRIMARY KEY,
+    slug VARCHAR(50) UNIQUE NOT NULL,       -- e.g. "futures"
+    description TEXT
+);
+
+CREATE TABLE channels (
+    id SERIAL PRIMARY KEY,
+    topic_id INTEGER REFERENCES topics(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    last_fetched TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(topic_id, url)
+);
 ```
 
 **Criterios de aceptacion**:
 
 - [ ] Listar todos los topics con sus canales en vista de tarjetas agrupadas.
 - [ ] Cada tarjeta de canal muestra: nombre, URL (enlace), fecha del ultimo fetch (o "Nunca" si es null).
+- [ ] Boton "Anadir topic" en la cabecera de la pagina de canales: formulario con campos `slug` (identificador unico, lowercase, sin espacios) y `description`.
+- [ ] Boton "Editar topic" para modificar la descripcion.
+- [ ] Boton "Eliminar topic" con confirmacion. No permitir eliminar si el topic tiene canales asociados (debe vaciarse primero).
 - [ ] Boton "Anadir canal" dentro de cada topic: formulario con campos `name` y `url`. Validar que la URL tiene formato de canal de YouTube (`https://www.youtube.com/@...` o `https://www.youtube.com/c/...` o `https://www.youtube.com/channel/...`).
 - [ ] Boton "Eliminar canal" con confirmacion. No permitir eliminar si solo queda un canal en el topic (el topic quedaria sin canales).
 - [ ] Al anadir un canal, el campo `last_fetched` se inicializa como `null`.
-- [ ] Los cambios se persisten inmediatamente en `channels.yaml` via la API.
-- [ ] Mensajes de error claros si la API falla (fichero bloqueado, formato invalido, etc.).
-- [ ] No se puede anadir un canal con la misma URL que otro ya existente en el mismo topic (deduplicacion).
+- [ ] Los cambios se persisten inmediatamente en PostgreSQL via la API.
+- [ ] Mensajes de error claros si la API falla (conexion a BD perdida, constraint violation, etc.).
+- [ ] No se puede anadir un canal con la misma URL que otro ya existente en el mismo topic (constraint UNIQUE en BD).
 
 ### 5.2 Historial de investigacion
 
-**Descripcion**: visualiza los videos investigados desde `data/research/history.yaml`. Solo lectura.
+**Descripcion**: visualiza los videos investigados desde la tabla `research_history` en PostgreSQL. Solo lectura.
 
-**Estructura del fichero**:
-```yaml
-researched_videos:
-  - video_id: "G0c7GAg-FCY"
-    url: "https://youtube.com/watch?v=G0c7GAg-FCY"
-    channel: "Jacob Amaral"
-    topic: "futures"
-    researched_at: "2026-03-14"
-    strategies_found: 1
+**Modelo de datos (PostgreSQL)**:
+```sql
+CREATE TABLE research_history (
+    id SERIAL PRIMARY KEY,
+    video_id VARCHAR(20) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    channel_id INTEGER REFERENCES channels(id),
+    topic_id INTEGER REFERENCES topics(id),
+    researched_at TIMESTAMPTZ DEFAULT NOW(),
+    strategies_found INTEGER DEFAULT 0,
+    UNIQUE(video_id, topic_id)
+);
 ```
 
 **Criterios de aceptacion**:
@@ -121,22 +145,30 @@ researched_videos:
 
 ### 5.3 Visor de estrategias
 
-**Descripcion**: visualiza las estrategias en dos formatos: las estrategias YAML crudas (`strategies.yaml`) y los borradores JSON traducidos (`drafts/*.json`).
+**Descripcion**: visualiza las estrategias en dos formatos: las estrategias estructuradas (tabla `strategies`) y los borradores traducidos (tabla `drafts` con columna JSONB).
 
-#### 5.3.1 Estrategias YAML
+#### 5.3.1 Estrategias
 
-**Estructura del fichero** (ver `data/strategies/strategies.yaml` para el formato completo):
-```yaml
-strategies:
-  - name: RTY Hybrid BB Monthly Governor Strategy
-    description: "..."
-    source_channel: Jacob Amaral
-    source_videos: [...]
-    parameters: [...]
-    entry_rules: [...]
-    exit_rules: [...]
-    risk_management: [...]
-    notes: [...]
+**Modelo de datos (PostgreSQL)**:
+```sql
+CREATE TABLE strategies (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
+    source_channel_id INTEGER REFERENCES channels(id),
+    source_videos TEXT[],               -- array de titulos/URLs
+    parameters JSONB DEFAULT '[]',      -- flexible: nombre, tipo, default, rango
+    entry_rules JSONB DEFAULT '[]',
+    exit_rules JSONB DEFAULT '[]',
+    risk_management JSONB DEFAULT '[]',
+    notes JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Full-text search index
+CREATE INDEX idx_strategies_fts ON strategies
+    USING GIN (to_tsvector('english', name || ' ' || COALESCE(description, '')));
 ```
 
 **Criterios de aceptacion**:
@@ -153,12 +185,29 @@ strategies:
 - [ ] Filtro por canal fuente.
 - [ ] Busqueda por texto libre (busca en nombre y descripcion).
 
-#### 5.3.2 Borradores JSON (Drafts)
+#### 5.3.2 Borradores (Drafts)
 
-**Estructura del fichero** (ver `data/strategies/drafts/9001.json` para referencia):
-- Ficheros JSON individuales por estrategia, con `strat_code` como identificador.
-- Campos `_TODO` indican valores que el usuario debe completar manualmente.
-- Campo `_notes` contiene observaciones sobre la traduccion.
+**Modelo de datos (PostgreSQL)**:
+```sql
+CREATE TABLE drafts (
+    id SERIAL PRIMARY KEY,
+    strat_code INTEGER UNIQUE NOT NULL,
+    strat_name VARCHAR(255) NOT NULL,
+    strategy_id INTEGER REFERENCES strategies(id),
+    data JSONB NOT NULL,                -- el draft completo como JSONB
+    todo_count INTEGER DEFAULT 0,       -- cache del conteo de _TODO
+    todo_fields TEXT[] DEFAULT '{}',    -- cache de paths con _TODO
+    active BOOLEAN DEFAULT FALSE,
+    tested BOOLEAN DEFAULT FALSE,
+    prod BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+- La columna `data` almacena el draft completo como JSONB, permitiendo consultas flexibles.
+- Campos `_TODO` dentro de `data` indican valores que el usuario debe completar manualmente.
+- Las columnas `todo_count` y `todo_fields` son caches que se actualizan al insertar/modificar el draft.
 
 **Criterios de aceptacion**:
 
@@ -177,34 +226,53 @@ strategies:
 
 ### 5.4 Estado del research en tiempo real
 
-**Descripcion**: el agente de investigacion (CLI) escribe su estado en `data/research/current.yaml`. El backend lo sirve via WebSocket al frontend.
+**Descripcion**: el agente de investigacion (CLI) escribe su estado en la tabla `research_sessions` en PostgreSQL. Cada ejecucion del pipeline crea una nueva fila, permitiendo multiples sesiones en paralelo. El backend lo sirve via WebSocket al frontend.
 
-**Estructura del fichero de estado**:
-```yaml
-status: running | completed | error | idle
-topic: "futures"
-step: 2
-step_name: "notebooklm-analyst"
-total_steps: 6
-channel: "Jacob Amaral"
-videos_processing: ["G0c7GAg-FCY"]
-started_at: "2026-03-14T10:30:00"
-error_detail: null
+**Modelo de datos (PostgreSQL)**:
+```sql
+CREATE TABLE research_sessions (
+    id SERIAL PRIMARY KEY,
+    status VARCHAR(20) DEFAULT 'running',  -- running | completed | error
+    topic_id INTEGER REFERENCES topics(id),
+    step INTEGER DEFAULT 0,
+    step_name VARCHAR(50),
+    total_steps INTEGER DEFAULT 6,
+    channel VARCHAR(100),
+    videos_processing TEXT[] DEFAULT '{}',
+    started_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    error_detail TEXT,
+    result_summary JSONB,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Vista rapida de sesiones activas
+CREATE INDEX idx_research_sessions_active ON research_sessions (status) WHERE status = 'running';
 ```
+
+**Mecanismo de actualizacion en tiempo real (LISTEN/NOTIFY)**:
+
+El sistema usa PostgreSQL LISTEN/NOTIFY en lugar de polling para actualizaciones en tiempo real:
+
+1. El agente de investigacion (CLI) ejecuta `NOTIFY research_update, '<session_id>'` despues de cada UPDATE a `research_sessions`.
+2. FastAPI mantiene una conexion persistente con `LISTEN research_update`.
+3. Cuando llega una notificacion, FastAPI consulta la sesion actualizada y la envia via WebSocket a los clientes conectados.
+4. Fallback: si se pierde una notificacion (por ejemplo, caida de conexion), el cliente puede solicitar el estado actual al reconectarse al WebSocket.
 
 **Criterios de aceptacion**:
 
-- [ ] Panel de estado con indicador visual del estado actual:
+- [ ] Panel de estado mostrando todas las sesiones activas en paralelo (por ejemplo, futures en paso 4, options en paso 2).
+- [ ] Cada sesion activa muestra su propio indicador visual:
   - `running`: indicador verde pulsante con nombre del paso actual.
   - `completed`: indicador verde estatico con resumen.
   - `error`: indicador rojo con detalle del error.
-  - `idle`: indicador gris con "No hay investigacion en curso".
-- [ ] Barra de progreso basada en `step` / `total_steps`.
-- [ ] Detalle visible: topic, paso actual (nombre legible), canal siendo procesado, videos en proceso (como enlaces).
-- [ ] Timestamp de inicio formateado ("hace 5 minutos" o similar).
-- [ ] Actualizacion via WebSocket: el backend observa `current.yaml` (polling cada 2 segundos al fichero) y envia actualizaciones por WebSocket cuando hay cambios.
-- [ ] Si el fichero no existe o esta vacio, mostrar estado `idle`.
-- [ ] Cuando transiciona a `completed`, mostrar un resumen breve y enlace a la pagina de estrategias.
+- [ ] Cuando no hay filas con `status='running'`, mostrar estado idle: indicador gris con "No hay investigacion en curso".
+- [ ] Barra de progreso individual por sesion basada en `step` / `total_steps`.
+- [ ] Detalle visible por sesion: topic, paso actual (nombre legible), canal siendo procesado, videos en proceso (como enlaces).
+- [ ] Timestamp de inicio formateado ("hace 5 minutos" o similar) por sesion.
+- [ ] Actualizacion via WebSocket usando PostgreSQL LISTEN/NOTIFY: el agente ejecuta `NOTIFY research_update, '<session_id>'` tras cada UPDATE; FastAPI escucha con `LISTEN research_update` y envia el estado actualizado via WebSocket.
+- [ ] Al reconectar el WebSocket, el cliente recibe el estado actual de todas las sesiones activas.
+- [ ] Cuando una sesion transiciona a `completed`, mostrar un resumen breve y enlace a la pagina de estrategias.
 
 **Nombres legibles de los pasos**:
 
@@ -231,7 +299,7 @@ error_detail: null
   - Total de estrategias (YAML)
   - Total de borradores JSON
   - Borradores con `_TODO` pendientes
-- [ ] Seccion "Ultima investigacion": muestra el ultimo research completado (de history.yaml, el mas reciente por fecha).
+- [ ] Seccion "Ultima investigacion": muestra el ultimo research completado (de la tabla `research_history`, el mas reciente por fecha).
 - [ ] Seccion "Estado actual": mini-widget del estado del research (version compacta de la pagina Live).
 - [ ] Enlaces rapidos a cada seccion.
 
@@ -288,7 +356,7 @@ error_detail: null
 +--------------------------------------------------+
 | Canales                          [+ Anadir topic] |
 +--------------------------------------------------+
-| > futures (2 canales)                             |
+| > futures (2 canales)          [Editar] [Borrar]  |
 |   Futures strategies                              |
 |   +--------------------------------------------+ |
 |   | Jacob Amaral     | @jacobamaral | 14/03/26 | |
@@ -298,10 +366,14 @@ error_detail: null
 |   +--------------------------------------------+ |
 |   [+ Anadir canal]                               |
 |                                                   |
-| > trading (1 canal)                               |
+| > trading (1 canal)           [Editar] [Borrar]  |
 |   ...                                             |
 +--------------------------------------------------+
 ```
+
+- El boton [+ Anadir topic] abre un formulario con campos `slug` y `description`.
+- El boton [Editar] del topic permite modificar la descripcion.
+- El boton [Borrar] del topic solo esta habilitado si el topic no tiene canales asociados.
 
 ### 6.4 Pagina Historial
 
@@ -375,24 +447,31 @@ Dos pestanas: **YAML** y **Drafts JSON**.
 
 ### 6.6 Pagina Live
 
+Muestra todas las sesiones de research activas en paralelo. Cada sesion tiene su propio panel de progreso.
+
 ```
 +--------------------------------------------------+
 | Estado del Research en Tiempo Real                |
 +--------------------------------------------------+
-|                                                   |
+| Sesion #42 - futures                              |
 |   [============================------] 4/6        |
-|                                                   |
 |   Estado: EN CURSO (punto verde pulsante)         |
-|   Topic: futures                                  |
 |   Paso: 4 - Limpieza                              |
 |   Canal: Jacob Amaral                             |
 |   Videos: G0c7GAg-FCY (enlace)                    |
 |   Inicio: hace 12 minutos                         |
-|                                                   |
++--------------------------------------------------+
+| Sesion #43 - options                              |
+|   [============--------------------------] 2/6    |
+|   Estado: EN CURSO (punto verde pulsante)         |
+|   Paso: 2 - Extrayendo estrategias                |
+|   Canal: OptionsPlay                              |
+|   Videos: xK9f2a3b (enlace)                       |
+|   Inicio: hace 3 minutos                          |
 +--------------------------------------------------+
 ```
 
-Cuando `idle`:
+Cuando no hay sesiones activas (ninguna fila con `status='running'`):
 ```
 +--------------------------------------------------+
 |                                                   |
@@ -425,6 +504,7 @@ frontend/
         ChannelCard.tsx
         ChannelForm.tsx
         TopicGroup.tsx
+        TopicForm.tsx
       strategies/
         StrategyCard.tsx
         StrategyDetail.tsx
@@ -449,6 +529,7 @@ frontend/
       LoginPage.tsx
     services/
       api.ts              # Cliente HTTP con interceptor de API key
+      topics.ts            # Llamadas a /api/topics
       channels.ts          # Llamadas a /api/channels
       strategies.ts        # Llamadas a /api/strategies
       history.ts           # Llamadas a /api/history
@@ -475,24 +556,45 @@ frontend/
 
 api/
   main.py                  # App FastAPI, CORS, middleware de auth
-  config.py                # Settings (rutas a ficheros, API key, CORS)
-  dependencies.py          # Dependency injection (auth, file paths)
+  config.py                # Settings (DB URL, API key, CORS)
+  dependencies.py          # Dependency injection (auth, DB session)
+  database.py              # SQLAlchemy engine, async session factory
   routers/
+    topics.py              # CRUD topics
     channels.py            # CRUD canales
-    strategies.py          # Lectura estrategias YAML + JSON drafts
+    strategies.py          # Lectura estrategias + drafts
     history.py             # Lectura historial
     research.py            # WebSocket estado live
     health.py              # Health check
+    export.py              # Exportacion YAML/JSON bajo demanda
   services/
-    yaml_manager.py        # Lectura/escritura YAML con ruamel.yaml
-    json_manager.py        # Lectura de drafts JSON
-    file_watcher.py        # Polling de current.yaml para WebSocket
+    topic_service.py       # Logica de negocio de topics
+    channel_service.py     # Logica de negocio de canales
+    strategy_service.py    # Logica de negocio de estrategias y drafts
+    history_service.py     # Logica de negocio de historial
+    research_watcher.py    # LISTEN/NOTIFY de research_sessions para WebSocket
+    export_service.py      # Generacion de YAML/JSON para descarga
+    import_service.py      # Importacion one-time de YAML existentes a PostgreSQL
   models/
-    channel.py             # Pydantic models para canales
-    strategy.py            # Pydantic models para estrategias
-    draft.py               # Pydantic models para drafts JSON
-    history.py             # Pydantic models para historial
-    research.py            # Pydantic models para estado del research
+    db/                    # SQLAlchemy ORM models
+      base.py              # Base declarativa
+      channel.py           # Topic + Channel
+      strategy.py          # Strategy
+      draft.py             # Draft (con JSONB)
+      history.py           # ResearchHistory
+      research.py          # ResearchSession (multi-session)
+    schemas/               # Pydantic schemas (request/response)
+      channel.py
+      strategy.py
+      draft.py
+      history.py
+      research.py
+      export.py
+  alembic/                 # Migraciones de base de datos
+    alembic.ini
+    env.py
+    versions/
+      001_initial_schema.py
   requirements.txt
   Dockerfile
 ```
@@ -523,16 +625,73 @@ GET /api/health
 ```json
 {
   "status": "ok",
-  "files": {
+  "database": "connected",
+  "tables": {
+    "topics": true,
     "channels": true,
     "strategies": true,
-    "history": true,
-    "drafts_dir": true
+    "drafts": true,
+    "research_history": true,
+    "research_sessions": true
   }
 }
 ```
 
-### 8.2 Canales
+### 8.2 Topics y canales
+
+#### Crear un topic
+
+```
+POST /api/topics
+Content-Type: application/json
+
+{
+  "slug": "options",
+  "description": "Options strategies"
+}
+```
+
+**Validaciones**:
+- `slug`: string no vacio, lowercase, sin espacios, max 50 caracteres.
+- No puede existir otro topic con el mismo `slug` (constraint UNIQUE en BD).
+
+**Respuesta** `201`:
+```json
+{
+  "id": 1,
+  "slug": "options",
+  "description": "Options strategies"
+}
+```
+
+**Respuesta** `409`: `{"detail": "Topic 'options' ya existe"}`.
+
+#### Editar un topic
+
+```
+PUT /api/topics/{slug}
+Content-Type: application/json
+
+{
+  "description": "Updated description"
+}
+```
+
+**Respuesta** `200`: topic actualizado.
+**Respuesta** `404`: `{"detail": "Topic 'xxx' no encontrado"}`.
+
+#### Eliminar un topic
+
+```
+DELETE /api/topics/{slug}
+```
+
+**Validaciones**:
+- No se puede eliminar si el topic tiene canales asociados (debe vaciarse primero).
+
+**Respuesta** `204`: sin cuerpo.
+**Respuesta** `404`: topic no encontrado.
+**Respuesta** `409`: `{"detail": "No se puede eliminar un topic con canales asociados"}`.
 
 #### Listar todos los topics y canales
 
@@ -775,24 +934,43 @@ WS /api/research/status
 **Protocolo**:
 
 1. El cliente abre la conexion WebSocket.
-2. El servidor envia el estado actual inmediatamente.
-3. El servidor hace polling a `data/research/current.yaml` cada 2 segundos.
-4. Si detecta cambios (comparando contenido o timestamp del fichero), envia el nuevo estado.
-5. Si el fichero no existe, envia `{"status": "idle"}`.
+2. El servidor envia el estado actual inmediatamente: un array con todas las sesiones activas (filas con `status='running'` en `research_sessions`).
+3. El servidor escucha notificaciones via `LISTEN research_update` en PostgreSQL.
+4. Cuando el agente ejecuta `NOTIFY research_update, '<session_id>'`, FastAPI consulta la sesion actualizada y envia el nuevo estado via WebSocket.
+5. Si no hay sesiones con `status='running'`, envia `{"sessions": []}`.
+6. Fallback: al reconectar, el cliente recibe el estado actual completo de todas las sesiones activas.
 
 **Mensaje del servidor**:
 ```json
 {
-  "status": "running",
-  "topic": "futures",
-  "step": 2,
-  "step_name": "notebooklm-analyst",
-  "step_display": "Extrayendo estrategias",
-  "total_steps": 6,
-  "channel": "Jacob Amaral",
-  "videos_processing": ["G0c7GAg-FCY"],
-  "started_at": "2026-03-14T10:30:00",
-  "error_detail": null
+  "sessions": [
+    {
+      "id": 42,
+      "status": "running",
+      "topic": "futures",
+      "step": 4,
+      "step_name": "cleanup",
+      "step_display": "Limpieza",
+      "total_steps": 6,
+      "channel": "Jacob Amaral",
+      "videos_processing": ["G0c7GAg-FCY"],
+      "started_at": "2026-03-14T10:30:00",
+      "error_detail": null
+    },
+    {
+      "id": 43,
+      "status": "running",
+      "topic": "options",
+      "step": 2,
+      "step_name": "notebooklm-analyst",
+      "step_display": "Extrayendo estrategias",
+      "total_steps": 6,
+      "channel": "OptionsPlay",
+      "videos_processing": ["xK9f2a3b"],
+      "started_at": "2026-03-14T10:39:00",
+      "error_detail": null
+    }
+  ]
 }
 ```
 
@@ -854,16 +1032,18 @@ GET /api/stats
 ```env
 DASHBOARD_API_KEY=tu-api-key-segura-aqui
 CORS_ORIGINS=http://localhost:5173
-DATA_DIR=/app/data
+DATABASE_URL=postgresql+asyncpg://irt:irt_dev_password@localhost:5432/irt
+POSTGRES_PASSWORD=irt_dev_password
 ```
 
 Este fichero esta en `.gitignore`. Se incluye un `.env.example` en el repositorio con valores placeholder.
 
-### Proteccion de ficheros
+### Proteccion de datos
 
-- El backend solo tiene acceso de lectura/escritura a la carpeta `data/`.
+- El backend solo accede a la base de datos PostgreSQL via `DATABASE_URL`.
 - No expone ficheros del sistema ni de configuracion del pipeline.
-- Las rutas de ficheros en la API no aceptan path traversal (`..`).
+- Las queries usan SQLAlchemy ORM (no SQL crudo) para prevenir inyeccion SQL.
+- El usuario de PostgreSQL (`irt`) solo tiene permisos sobre la base de datos `irt`.
 
 ---
 
@@ -875,26 +1055,46 @@ Este fichero esta en `.gitignore`. Se incluye un `.env.example` en el repositori
 version: "3.8"
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: irt
+      POSTGRES_USER: irt
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-irt_dev_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irt"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   pipeline:
     build: .
     volumes:
-      - ./data:/app/data
       - ./config:/app/config
       - ./tools:/app/tools
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://irt:${POSTGRES_PASSWORD:-irt_dev_password}@postgres:5432/irt
+    depends_on:
+      postgres:
+        condition: service_healthy
     # Servicio existente del pipeline
 
   api:
     build: ./api
     ports:
       - "8000:8000"
-    volumes:
-      - ./data:/app/data    # Mismo volumen que pipeline
     env_file:
       - .env
     environment:
-      - DATA_DIR=/app/data
+      - DATABASE_URL=postgresql+asyncpg://irt:${POSTGRES_PASSWORD:-irt_dev_password}@postgres:5432/irt
     depends_on:
-      - pipeline
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -914,11 +1114,15 @@ services:
   #   volumes:
   #     - ./Caddyfile:/etc/caddy/Caddyfile
   #     - caddy_data:/data
+
+volumes:
+  pgdata:
+    name: irt_pgdata
 ```
 
 ### Volumenes clave
 
-El volumen `./data:/app/data` es compartido entre `pipeline` y `api`. Esto garantiza que ambos servicios leen y escriben los mismos ficheros. Es el pilar fundamental de la arquitectura.
+El named volume `pgdata` persiste los datos de PostgreSQL entre reinicios del contenedor. Tanto `pipeline` como `api` se conectan a la misma instancia de PostgreSQL via `DATABASE_URL`. No hay ficheros compartidos en el filesystem: PostgreSQL es el unico punto de contacto entre servicios.
 
 ### Dockerfile del API (`api/Dockerfile`)
 
@@ -928,7 +1132,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Ejecutar migraciones de Alembic y arrancar el servidor
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
 ```
 
 ### Dockerfile del Frontend (`frontend/Dockerfile`)
@@ -952,8 +1157,15 @@ EXPOSE 80
 ### Desarrollo local
 
 ```bash
+# PostgreSQL (si no se usa Docker Compose)
+docker run -d --name irt-postgres -p 5432:5432 \
+  -e POSTGRES_DB=irt -e POSTGRES_USER=irt -e POSTGRES_PASSWORD=irt_dev_password \
+  -v irt_pgdata:/var/lib/postgresql/data \
+  postgres:16-alpine
+
 # Backend
 cd api && pip install -r requirements.txt
+alembic upgrade head   # Aplicar migraciones
 uvicorn main:app --reload --port 8000
 
 # Frontend
@@ -972,74 +1184,92 @@ Las siguientes funcionalidades NO estan incluidas en esta version y se considera
 - **Sistema de autenticacion con usuarios**: no hay registro, login con password ni roles. Solo API key unica.
 - **Diseno responsive/movil**: el dashboard esta pensado para uso en escritorio. La adaptacion movil es trabajo futuro.
 - **Notificaciones push**: cuando una investigacion termina, no se envia notificacion al navegador. El usuario debe estar en la pagina Live.
-- **Gestion de topics** (crear/eliminar topics): solo se gestionan canales dentro de topics existentes. La creacion de topics se hace editando `channels.yaml`.
 - **Historial de cambios/audit log**: no se registra quien hizo que cambio en los canales.
-- **Exportacion de datos**: no hay boton de exportar a CSV/Excel.
+- **Exportacion a CSV/Excel**: se ofrece exportacion a YAML/JSON (formatos nativos del pipeline), no a CSV/Excel.
 - **Tests E2E del frontend**: los tests unitarios son recomendados pero no obligatorios en la primera iteracion.
 
 ---
 
 ## 12. Dependencias con el pipeline existente
 
-### Cambio requerido: fichero de estado del research
+### 12.1 Dependencia critica: migracion del pipeline a PostgreSQL
 
-El agente de investigacion (`.claude/agents/research/AGENT.md`) necesita ser modificado para escribir el fichero `data/research/current.yaml` en cada paso del pipeline. Actualmente el agente no escribe este fichero.
+Esta es la **dependencia principal** del frontend: el dashboard lee datos de PostgreSQL, por lo que el pipeline CLI debe escribir a PostgreSQL primero. Sin esta migracion, el frontend no tiene datos reales.
 
-#### Que hay que anadir al AGENT.md
+**Componentes afectados:**
 
-Despues de cada paso del pipeline (Steps 0-6), el agente debe escribir/actualizar `data/research/current.yaml` con el estado actual. Al finalizar (exito o error), debe escribir el estado final (`completed` o `error`). Si no hay research en curso, el fichero debe contener `status: idle`.
+1. **`tools/youtube/` scripts**: actualmente leen canales desde YAML (`data/channels/channels.yaml`). Deben leer de PostgreSQL (`SELECT` de la tabla `channels`).
+2. **`db-manager` skill** (`.claude/skills/db-manager/`): actualmente escribe estrategias a ficheros YAML en `data/strategies/`. Debe hacer `INSERT INTO strategies` e `INSERT INTO drafts` via SQLAlchemy.
+3. **Research orchestrator** (`.claude/skills/research/`): debe hacer INSERT/UPDATE a `research_sessions` en cada paso del pipeline y ejecutar `NOTIFY research_update` tras cada UPDATE.
+4. **Strategy translator**: actualmente escribe JSON drafts a `data/strategies/drafts/`. Debe hacer `INSERT INTO drafts` con JSONB.
+5. **Nueva dependencia compartida**: modulo `tools/db/` con modelos SQLAlchemy y session factory, compartido entre los scripts del pipeline y la API FastAPI.
 
-**Estructura del fichero `data/research/current.yaml`**:
+**Orden de implementacion recomendado:**
 
-```yaml
-status: idle | running | completed | error
-topic: "<topic>"
-step: <numero 0-6>
-step_name: "<nombre del paso>"
-total_steps: 6
-channel: "<canal siendo procesado o null>"
-videos_processing: ["<video_ids>"]
-started_at: "<ISO 8601>"
-completed_at: "<ISO 8601 o null>"
-error_detail: "<mensaje de error o null>"
-result_summary:
-  videos_analyzed: <int>
-  strategies_found: <int>
-  new_saved: [<list>]
-  duplicates_skipped: [<list>]
-```
+1. Crear modelos SQLAlchemy compartidos (`tools/db/models.py`, `tools/db/session.py`)
+2. Migrar lectura de canales (`tools/youtube/` → PostgreSQL)
+3. Migrar escritura de estrategias (`db-manager` → PostgreSQL)
+4. Migrar escritura de drafts (`strategy-translator` → PostgreSQL)
+5. Implementar tracking de research sessions
+6. Script de importacion one-time de YAML existentes
 
-#### Instrucciones de escritura por paso
+**Nota para SDD**: Esta migracion puede ejecutarse en paralelo con la construccion del frontend (React), ya que son independientes. Ambas convergen cuando el frontend necesita datos reales de PostgreSQL. Se recomienda planificar como dos tracks paralelos:
+- **Track A**: Migracion pipeline → PostgreSQL (prerequisito para datos reales)
+- **Track B**: Frontend React (puede usar datos seed/mock inicialmente)
 
-Anadir al AGENT.md, al inicio del pipeline (antes del Step 0):
+### 12.2 Cambios al research agent
+
+El agente de research debe crear una nueva sesion al inicio y actualizarla durante el pipeline. Ya no hay fila singleton: cada ejecucion es una fila independiente en `research_sessions`.
 
 ```
-Antes de empezar cualquier paso, escribir el estado inicial:
-  status: running, step: 0, step_name: preflight, started_at: <ahora>
+Al iniciar el pipeline:
+  INSERT INTO research_sessions (status, topic_id, step, step_name)
+    VALUES ('running', <topic_id>, 0, 'preflight')
+    RETURNING id;
+  -- Guardar el id retornado como session_id para el resto del pipeline
+  NOTIFY research_update, '<session_id>';
 
-Al empezar cada paso, actualizar:
-  step: <numero>, step_name: <nombre>, channel: <canal si aplica>, videos_processing: <ids si aplica>
+Al empezar cada paso:
+  UPDATE research_sessions SET step=<numero>, step_name=<nombre>,
+    channel=<canal si aplica>, videos_processing=<ids>,
+    updated_at=NOW() WHERE id=<session_id>;
+  NOTIFY research_update, '<session_id>';
 
-Al completar el pipeline, escribir:
-  status: completed, completed_at: <ahora>, result_summary: <resumen>
+Al completar el pipeline:
+  UPDATE research_sessions SET status='completed', completed_at=NOW(),
+    result_summary=<jsonb>, updated_at=NOW() WHERE id=<session_id>;
+  NOTIFY research_update, '<session_id>';
 
-Si ocurre un error, escribir:
-  status: error, error_detail: <detalle>, step donde fallo
-
-Despues de que el orchestrator procese el resultado, escribir:
-  status: idle (limpiar todos los campos excepto status)
+Si ocurre un error:
+  UPDATE research_sessions SET status='error', error_detail=<detalle>,
+    updated_at=NOW() WHERE id=<session_id>;
+  NOTIFY research_update, '<session_id>';
 ```
 
-#### Fichero nuevo: `data/research/current.yaml`
+No hay paso de "reset a idle". Las sesiones completadas o con error permanecen en la tabla como historial. El estado idle se determina por la ausencia de filas con `status='running'`.
 
-Crear el fichero con estado inicial:
+### 12.3 Migracion inicial de datos YAML existentes
 
-```yaml
-status: idle
+Se proporciona un script de importacion one-time (`api/services/import_service.py`) que:
+
+1. Lee los ficheros YAML/JSON existentes en `data/` (channels.yaml, strategies.yaml, history.yaml, drafts/*.json).
+2. Los inserta en las tablas correspondientes de PostgreSQL.
+3. Maneja deduplicacion (si un canal o estrategia ya existe, lo omite).
+4. Se ejecuta una sola vez en el primer setup.
+
+```bash
+# Importar datos existentes a PostgreSQL
+docker compose run api python -m services.import_service
 ```
 
-Este fichero debe anadirse al repositorio con el estado `idle` para que el backend siempre tenga algo que leer.
+Despues de la importacion, los ficheros YAML/JSON originales se pueden mantener como backup pero ya no son la fuente de verdad.
 
-### Sin otros cambios al pipeline
+### 12.4 Exportacion YAML/JSON desde el dashboard
 
-El resto del pipeline no necesita modificaciones. Los ficheros `channels.yaml`, `strategies.yaml`, `history.yaml` y `drafts/*.json` ya existen y tienen la estructura que el dashboard necesita. El backend simplemente los lee (y en el caso de canales, tambien los escribe).
+El dashboard ofrece botones de exportacion en las paginas de canales y estrategias:
+
+- **Exportar canales** (`GET /api/export/channels?format=yaml`): genera un `channels.yaml` con la misma estructura que el fichero original.
+- **Exportar estrategias** (`GET /api/export/strategies?format=yaml`): genera un `strategies.yaml`.
+- **Exportar draft** (`GET /api/export/drafts/{strat_code}?format=json`): genera el JSON del draft.
+
+Estos endpoints generan el fichero al vuelo desde PostgreSQL y lo devuelven como descarga. No se persisten en disco.

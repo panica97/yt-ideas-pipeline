@@ -4,3 +4,5 @@ __pycache__/
 data/backtests/*.csv
 data/backtests/*.json
 planes/
+node_modules/
+frontend/dist/

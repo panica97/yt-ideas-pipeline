@@ -12,7 +12,28 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
+def _has_database_url():
+    """Check if DATABASE_URL is configured."""
+    return bool(os.environ.get("DATABASE_URL") or os.environ.get("DATABASE_URL_SYNC"))
+
+
+def load_db_from_postgres():
+    """Read topics and channels from PostgreSQL, returning the same dict
+    structure as ``load_db()``."""
+    from tools.db.session import sync_session_ctx
+    from tools.db.channel_repo import get_topics_as_dict
+
+    with sync_session_ctx() as session:
+        return get_topics_as_dict(session)
+
+
 def load_db(path):
+    # Try PostgreSQL first if DATABASE_URL is set
+    if _has_database_url():
+        try:
+            return load_db_from_postgres()
+        except Exception as e:
+            print(f"Warning: PostgreSQL read failed ({e}), falling back to YAML", file=sys.stderr)
     if not os.path.exists(path):
         return {"topics": {}}
     with open(path, "r", encoding="utf-8") as f:

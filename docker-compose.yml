@@ -1,8 +1,53 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: irt
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-irt_dev_password}
+      POSTGRES_DB: irt
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irt -d irt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   pipeline:
     build: .
     env_file: .env
+    environment:
+      DATABASE_URL_SYNC: postgresql+psycopg2://irt:${POSTGRES_PASSWORD:-irt_dev_password}@postgres:5432/irt
     volumes:
       - ./data:/app/data
       - ./config:/app/config
     working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: ./api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://irt:${POSTGRES_PASSWORD:-irt_dev_password}@postgres:5432/irt
+      DATABASE_URL_SYNC: postgresql+psycopg2://irt:${POSTGRES_PASSWORD:-irt_dev_password}@postgres:5432/irt
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./tools:/app/tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
