@@ -1,0 +1,162 @@
+{
+  "$schema": "./schema.json",
+  "strat_code": 9003,
+  "strat_name": "RSI_DivExhaustion_TimeExit20_360m",
+  "active": false,
+  "tested": false,
+  "prod": false,
+  "symbol": "GF",
+  "secType": "FUT",
+  "exchange": "CME",
+  "currency": "USD",
+  "multiplier": 500,
+  "minTick": 0.025,
+  "rolling_days": 5,
+  "process_freq": "6 hours",
+  "trading_hours": null,
+  "UTC_tz": -6,
+  "ind_list": {
+    "6 hours": [
+      {
+        "indicator": "RSI",
+        "params": {
+          "price_1": "close",
+          "timePeriod_1": 14,
+          "indCode": "RSI_14_6H"
+        }
+      },
+      {
+        "indicator": "PRICE",
+        "params": {
+          "price_1": "low",
+          "timePeriod_1": 1,
+          "indCode": "LOW_6H"
+        }
+      },
+      {
+        "indicator": "PRICE",
+        "params": {
+          "price_1": "high",
+          "timePeriod_1": 1,
+          "indCode": "HIGH_6H"
+        }
+      }
+    ]
+  },
+  "long_conds": [
+    {
+      "cond_type": "price_relation",
+      "cond": "LOW_6H < LOW_6H",
+      "shift_1": 0,
+      "shift_2": 1,
+      "condCode": "long_1_price_lower_low",
+      "group": 1,
+      "mode": "normal"
+    },
+    {
+      "cond_type": "ind_relation",
+      "cond": "RSI_14_6H > RSI_14_6H",
+      "shift_1": 0,
+      "shift_2": 1,
+      "condCode": "long_2_rsi_higher_low",
+      "group": 1,
+      "mode": "normal"
+    },
+    {
+      "cond_type": "num_relation",
+      "cond": "RSI_14_6H < 70",
+      "shift_1": 1,
+      "condCode": "long_3_rsi_deep_reading",
+      "group": 1,
+      "mode": "normal"
+    }
+  ],
+  "short_conds": [
+    {
+      "cond_type": "price_relation",
+      "cond": "HIGH_6H > HIGH_6H",
+      "shift_1": 0,
+      "shift_2": 1,
+      "condCode": "short_1_price_higher_high",
+      "group": 1,
+      "mode": "normal"
+    },
+    {
+      "cond_type": "ind_relation",
+      "cond": "RSI_14_6H < RSI_14_6H",
+      "shift_1": 0,
+      "shift_2": 1,
+      "condCode": "short_2_rsi_lower_high",
+      "group": 1,
+      "mode": "normal"
+    },
+    {
+      "cond_type": "num_relation",
+      "cond": "RSI_14_6H > 30",
+      "shift_1": 1,
+      "condCode": "short_3_rsi_deep_reading",
+      "group": 1,
+      "mode": "normal"
+    }
+  ],
+  "exit_conds": [
+    {
+      "cond_type": "num_bars",
+      "cond": "bars_since_entry >= 20",
+      "condCode": "exit_1_time_20bars",
+      "strat": "9003",
+      "mode": "normal"
+    }
+  ],
+  "max_shift": [
+    1,
+    "6 hours"
+  ],
+  "max_timePeriod": 14,
+  "stop_loss_init": {
+    "indicator": false,
+    "indicator_params": {},
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "take_profit_init": {
+    "indicator": false,
+    "indicator_params": {},
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "stop_loss_mgmt": {
+    "breakeven": {
+      "action": false,
+      "profitRatio": 0.2
+    },
+    "trailing": {
+      "action": false,
+      "trailingRatio": 0.8
+    }
+  },
+  "order_params": {
+    "max_rpo": 1,
+    "min_volume": 1
+  },
+  "control_params": {
+    "strategy": 9003,
+    "strategy_filename": "9003.py",
+    "symbol": "GF",
+    "start_date": "_TODO",
+    "end_date": "_TODO",
+    "timestamp": "_TODO",
+    "primary_timeframe": "6 hours",
+    "slippage_amount": "_TODO",
+    "comm_per_contract": "_TODO"
+  },
+  "_notes": {
+    "exit_method": "Time-based exit: cerrar posicion despues de 20 barras (120 horas). Del video de Kevin Davey.",
+    "rsi_threshold": "Mismo que variante A. Optimizar en backtest.",
+    "source": "Kevin Davey - Hidden RSI Exhaustion Point Entry"
+  }
+}

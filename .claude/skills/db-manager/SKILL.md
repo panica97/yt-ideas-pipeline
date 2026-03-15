@@ -44,18 +44,24 @@ The `strategy_data` dict should have these keys (matching YAML format):
 
 ## Saving Drafts
 
-JSON drafts from the translator step can be saved to PostgreSQL:
+The translator step generates **multiple JSON drafts per idea** (variants by timeframe, exit method, filters, etc.). Each variant is a separate draft.
 
 ```python
 from tools.db.session import sync_session_ctx
 from tools.db.draft_repo import upsert_draft
 
 with sync_session_ctx() as session:
-    upsert_draft(session, strat_code=9001, strat_name="My Strategy", data=draft_json)
+    # Each variant gets its own strat_code, starting at 9001 and incrementing
+    upsert_draft(session, strat_code=9001, strat_name="RSI_Divergence_SAR_360m", data=draft_json_v1)
+    upsert_draft(session, strat_code=9002, strat_name="RSI_Divergence_TimeExit_240m", data=draft_json_v2)
+    upsert_draft(session, strat_code=9003, strat_name="RSI_Divergence_ATR_Daily", data=draft_json_v3)
     # Automatically computes todo_count and todo_fields from _TODO values in data
 ```
 
-`upsert_draft()` deduplicates by `strat_code`. Additional optional params: `strategy_id`, `active`, `tested`, `prod`.
+`upsert_draft()` deduplicates by `strat_code`. If a draft with the same `strat_code` exists, it is updated.
+Additional optional params: `strategy_id`, `active`, `tested`, `prod`.
+
+**Important**: Each variant must have a distinct `strat_name` that describes the variation clearly. Use `"_TODO"` for any values that cannot be determined from the source idea — never guess parameter values.
 
 ## Output Format
 
