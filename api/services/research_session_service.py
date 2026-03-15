@@ -47,6 +47,7 @@ async def get_sessions(
                     ResearchHistory.url,
                     ResearchHistory.strategies_found,
                     ResearchHistory.classification,
+                    ResearchHistory.title,
                     Channel.name.label("channel_name"),
                 )
                 .outerjoin(Channel, ResearchHistory.channel_id == Channel.id)
@@ -64,7 +65,8 @@ async def get_sessions(
                     "url": vrow[1],
                     "strategies_found": vrow[2],
                     "classification": vrow[3],
-                    "channel": vrow[4],
+                    "title": vrow[4],
+                    "channel": vrow[5],
                 })
 
         results.append({
@@ -115,6 +117,7 @@ async def get_session_by_id(
                 ResearchHistory.url,
                 ResearchHistory.strategies_found,
                 ResearchHistory.classification,
+                ResearchHistory.title,
                 ResearchHistory.researched_at,
                 Channel.name.label("channel_name"),
             )
@@ -133,8 +136,9 @@ async def get_session_by_id(
                 "url": vrow[1],
                 "strategies_found": vrow[2],
                 "classification": vrow[3],
-                "researched_at": vrow[4],
-                "channel": vrow[5],
+                "title": vrow[4],
+                "researched_at": vrow[5],
+                "channel": vrow[6],
             })
 
     return {

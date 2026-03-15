@@ -34,8 +34,9 @@ export default function HistoryTable({ items }: HistoryTableProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-400 hover:text-primary-300"
+                  title={item.video_id}
                 >
-                  {item.video_id}
+                  {item.title || item.video_id}
                 </a>
               </td>
               <td className="py-2 px-3 text-slate-300">{item.channel || '-'}</td>

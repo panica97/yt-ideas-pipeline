@@ -97,6 +97,7 @@ async def list_history(
             "topic": topic_slug,
             "researched_at": hist.researched_at,
             "strategies_found": hist.strategies_found,
+            "title": hist.title,
         })
 
     return total, items

@@ -6,6 +6,7 @@ export interface HistoryItem {
   researched_at: string | null;
   strategies_found: number;
   classification: string | null;
+  title: string | null;
 }
 
 export interface HistoryResponse {

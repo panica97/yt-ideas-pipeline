@@ -248,7 +248,7 @@ export default function ResearchDetailPage() {
                         rel="noopener noreferrer"
                         className="text-primary-400 hover:text-primary-300"
                       >
-                        {v.video_id}
+                        {v.title || v.video_id}
                       </a>
                     </td>
                     <td className="py-2 px-3 text-slate-300">

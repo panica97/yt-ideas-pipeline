@@ -16,6 +16,7 @@ class HistoryItem(BaseModel):
     researched_at: datetime | None = None
     strategies_found: int = 0
     classification: str | None = None
+    title: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
