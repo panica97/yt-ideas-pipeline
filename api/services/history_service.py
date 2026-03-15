@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import func, select, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tools.db.models import Channel, ResearchHistory, Topic
+from tools.db.models import Channel, ResearchHistory, ResearchSession, Topic
 
 
 _VALID_SORT_FIELDS = {
@@ -25,6 +25,7 @@ async def list_history(
     channel: str | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
+    session_id: int | None = None,
     sort: str = "researched_at",
     order: str = "desc",
     page: int = 1,
@@ -49,6 +50,26 @@ async def list_history(
         query = query.where(ResearchHistory.researched_at >= date_from)
     if date_to:
         query = query.where(ResearchHistory.researched_at <= date_to)
+
+    if session_id is not None:
+        # Filter by research session's time window and topic
+        session_row = (
+            await db.execute(
+                select(ResearchSession).where(ResearchSession.id == session_id)
+            )
+        ).scalar_one_or_none()
+        if session_row and session_row.started_at:
+            query = query.where(
+                ResearchHistory.researched_at >= session_row.started_at
+            )
+            if session_row.completed_at:
+                query = query.where(
+                    ResearchHistory.researched_at <= session_row.completed_at
+                )
+            if session_row.topic_id:
+                query = query.where(
+                    ResearchHistory.topic_id == session_row.topic_id
+                )
 
     # Count total
     count_q = select(func.count()).select_from(query.subquery())

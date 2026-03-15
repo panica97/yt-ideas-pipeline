@@ -115,8 +115,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Ultima investigacion - resumen enriquecido */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
-          <h2 className="text-sm font-semibold text-slate-300 mb-3">Ultima investigacion</h2>
+        <Link
+          to={lastSession ? `/research/${lastSession.id}` : '/research'}
+          className="block bg-slate-800 border border-slate-700 rounded-lg p-5 hover:border-slate-600 hover:bg-slate-800/80 transition-colors"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-300">Ultima investigacion</h2>
+            <span className="text-xs text-slate-500">Ver detalle {'\u2192'}</span>
+          </div>
           {lastSession ? (
             <div className="space-y-3">
               {/* Header info */}
@@ -196,7 +202,7 @@ export default function DashboardPage() {
               No se han realizado investigaciones todavia
             </p>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Quick links */}

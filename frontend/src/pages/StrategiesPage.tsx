@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getStrategies, getStrategy, getDrafts, getDraft } from '../services/strategies';
+import { getResearchSessions } from '../services/research';
 import StrategyCard from '../components/strategies/StrategyCard';
 import StrategyDetail from '../components/strategies/StrategyDetail';
 import DraftCard from '../components/strategies/DraftCard';
@@ -15,14 +16,24 @@ export default function StrategiesPage() {
   const [tab, setTab] = useState<Tab>('strategies');
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
+  const [sessionFilter, setSessionFilter] = useState('');
   const [todosOnly, setTodosOnly] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
   const [selectedDraft, setSelectedDraft] = useState<DraftDetailType | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  const { data: sessionsData } = useQuery({
+    queryKey: ['research-sessions-strategies'],
+    queryFn: () => getResearchSessions(50),
+  });
+
   const { data: strategiesData, isLoading: loadingStrategies } = useQuery({
-    queryKey: ['strategies', search, channelFilter],
-    queryFn: () => getStrategies({ search: search || undefined, channel: channelFilter || undefined }),
+    queryKey: ['strategies', search, channelFilter, sessionFilter],
+    queryFn: () => getStrategies({
+      search: search || undefined,
+      channel: channelFilter || undefined,
+      session_id: sessionFilter ? Number(sessionFilter) : undefined,
+    }),
     enabled: tab === 'strategies',
   });
 
@@ -89,7 +100,7 @@ export default function StrategiesPage() {
       {tab === 'strategies' && (
         <>
           {/* Filters */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <input
               type="text"
               value={search}
@@ -105,6 +116,21 @@ export default function StrategiesPage() {
               <option value="">Canal: Todos</option>
               {channels.map((c) => (
                 <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={sessionFilter}
+              onChange={(e) => setSessionFilter(e.target.value)}
+              className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+            >
+              <option value="">Sesion: Todas</option>
+              {(sessionsData?.sessions ?? []).map((s) => (
+                <option key={s.id} value={String(s.id)}>
+                  {s.topic ?? 'Sin topic'} -{' '}
+                  {s.started_at
+                    ? new Date(s.started_at).toLocaleDateString('es-ES')
+                    : '-'}
+                </option>
               ))}
             </select>
           </div>

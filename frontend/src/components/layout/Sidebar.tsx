@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '\u2302' },
+  { to: '/research', label: 'Investigaciones', icon: '\uD83D\uDD2C' },
   { to: '/channels', label: 'Canales', icon: '\u25B6' },
   { to: '/history', label: 'Historial', icon: '\u23F0' },
   { to: '/strategies', label: 'Estrategias', icon: '\u2605' },

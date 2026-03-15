@@ -53,3 +53,12 @@ export async function getResearchSessions(
   );
   return data;
 }
+
+export async function getResearchSessionDetail(
+  sessionId: number,
+): Promise<ResearchSessionDetail> {
+  const { data } = await api.get<ResearchSessionDetail>(
+    `/research/sessions/${sessionId}`,
+  );
+  return data;
+}

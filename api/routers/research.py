@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
@@ -29,6 +29,19 @@ async def get_research_sessions(
     """Return the last N completed/error research sessions with details."""
     sessions = await research_session_service.get_sessions(db, limit=limit)
     return {"sessions": sessions}
+
+
+@router.get("/api/research/sessions/{session_id}")
+async def get_research_session_detail(
+    session_id: int,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(verify_api_key),
+):
+    """Return a single research session with full details."""
+    session = await research_session_service.get_session_by_id(db, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesion no encontrada")
+    return session
 
 
 @router.websocket("/api/research/status")

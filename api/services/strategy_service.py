@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tools.db.models import Channel, Draft, Strategy
+from tools.db.models import Channel, Draft, ResearchSession, Strategy
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +19,7 @@ async def list_strategies(
     db: AsyncSession,
     channel: str | None = None,
     search: str | None = None,
+    session_id: int | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Return (total, strategies) with optional channel/FTS filters."""
     query = select(Strategy, Channel.name.label("source_channel_name")).outerjoin(
@@ -35,6 +36,18 @@ async def list_strategies(
                 "@@ plainto_tsquery('english', :search)"
             ).bindparams(search=search)
         )
+
+    if session_id is not None:
+        # Filter strategies created within the session's time window
+        session_row = (
+            await db.execute(
+                select(ResearchSession).where(ResearchSession.id == session_id)
+            )
+        ).scalar_one_or_none()
+        if session_row and session_row.started_at:
+            query = query.where(Strategy.created_at >= session_row.started_at)
+            if session_row.completed_at:
+                query = query.where(Strategy.created_at <= session_row.completed_at)
 
     # Count
     count_q = select(func.count()).select_from(query.subquery())

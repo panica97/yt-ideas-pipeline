@@ -34,10 +34,11 @@ async def get_draft(strat_code: int, db: AsyncSession = Depends(get_db)):
 async def list_strategies(
     channel: str | None = Query(None),
     search: str | None = Query(None),
+    session_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     total, strategies = await strategy_service.list_strategies(
-        db, channel=channel, search=search
+        db, channel=channel, search=search, session_id=session_id
     )
     return {"total": total, "strategies": strategies}
 

@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ResearchPage from './pages/ResearchPage';
+import ResearchDetailPage from './pages/ResearchDetailPage';
 import ChannelsPage from './pages/ChannelsPage';
 import HistoryPage from './pages/HistoryPage';
 import StrategiesPage from './pages/StrategiesPage';
@@ -29,6 +31,8 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
+      { path: 'research', element: <ResearchPage /> },
+      { path: 'research/:id', element: <ResearchDetailPage /> },
       { path: 'channels', element: <ChannelsPage /> },
       { path: 'history', element: <HistoryPage /> },
       { path: 'strategies', element: <StrategiesPage /> },

@@ -5,12 +5,14 @@ import type { DraftsResponse, DraftDetail } from '../types/draft';
 interface StrategyFilters {
   channel?: string;
   search?: string;
+  session_id?: number;
 }
 
 export async function getStrategies(filters: StrategyFilters = {}): Promise<StrategiesResponse> {
   const params = new URLSearchParams();
   if (filters.channel) params.set('channel', filters.channel);
   if (filters.search) params.set('search', filters.search);
+  if (filters.session_id) params.set('session_id', String(filters.session_id));
 
   const { data } = await api.get<StrategiesResponse>(`/strategies?${params.toString()}`);
   return data;
