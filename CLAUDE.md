@@ -13,12 +13,13 @@ Pipeline de investigación de estrategias de trading. Monitorea canales de YouTu
 
 ```
 .claude/skills/         Skills del pipeline (cada una con SKILL.md)
-  _shared/              Convenciones compartidas del proyecto
-  research/             Orquestador del pipeline de investigación
+  research/             Trigger del pipeline de investigación
   yt-scraper/           Fetch videos por topic desde canales registrados
   notebooklm/           API completa de NotebookLM
   notebooklm-analyst/   Extracción de estrategias desde videos
-  db-manager/           Persistencia en YAML con deduplicación
+  db-manager/           Persistencia en PostgreSQL con deduplicación
+.claude/agents/         Agentes con contexto propio
+  research/             Agente de investigación (pipeline completo)
 tools/                  Scripts Python ejecutables
   youtube/              Búsqueda y scraping (yt-dlp)
 config/                 Configuración global

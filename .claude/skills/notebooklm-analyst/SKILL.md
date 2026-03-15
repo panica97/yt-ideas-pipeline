@@ -15,7 +15,7 @@ Uses NotebookLM to analyze YouTube videos and extract ALL possible trading strat
 4. Ask questions to identify ALL distinct strategies
 5. For EACH strategy, extract entry rules, exit rules, risk management and parameters
 6. Structure strategies in YAML format
-7. DELETE the notebook when done (always, even if errors occur)
+7. Return extracted strategies (cleanup is the orchestrator's responsibility)
 
 ## Tools
 
@@ -24,7 +24,6 @@ notebooklm create "Title" --json        # Create notebook (returns ID)
 notebooklm source add "<url>" -n <id>   # Add source
 notebooklm source wait <src_id> -n <id> # Wait for processing
 notebooklm ask "<question>" -n <id>     # Query the notebook
-notebooklm delete <id> --yes            # Delete notebook
 ```
 
 ## Rules
@@ -34,7 +33,11 @@ notebooklm delete <id> --yes            # Delete notebook
 - First ask for a list of ALL strategies mentioned
 - For EACH strategy, ask specific questions about entry, exit, risk management and parameters
 - Use the `-n <notebook_id>` flag in all commands to avoid context issues
-- ALWAYS delete the notebook when done, even if extraction fails
+- Do NOT delete the notebook — cleanup is the orchestrator's responsibility
+
+## Source Limits
+
+Maximum sources per notebook depends on NotebookLM plan: Standard 50, Plus 100, Pro 300, Ultra 600. Keep video batches well under the limit to avoid errors.
 
 ## Output Format
 
@@ -67,4 +70,4 @@ If no strategies are found, return exactly: `NO_STRATEGIES_FOUND`
 - `notebooklm create` fails: report authentication/connection error, do not continue
 - Sources fail to process: retry once, then report and continue with those that did process
 - No strategies found: return `NO_STRATEGIES_FOUND`
-- CRITICAL: Always run `notebooklm delete <notebook_id> --yes` before finishing
+- Note: Notebook cleanup is handled by the orchestrator (AGENT.md), not by this skill

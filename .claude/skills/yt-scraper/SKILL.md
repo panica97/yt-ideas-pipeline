@@ -13,6 +13,10 @@ Fetches recent videos from channels registered in the database for a given topic
 python -m tools.youtube.fetch_topic --db data/channels/channels.yaml <topic>
 ```
 
+### Optional parameters
+
+- `--count <N>` -- limit the number of videos returned (default: all available). Use a reasonable value (e.g. 5-10) for normal research sessions.
+
 Note: If `DATABASE_URL` is set, channels are read from PostgreSQL automatically (YAML is fallback).
 
 ## Rules
@@ -29,14 +33,10 @@ Despues de obtener los videos del comando, filtra los que ya fueron investigados
 
 ```python
 from tools.db.session import sync_session_ctx
-from tools.db.research_repo import _resolve_topic_id
-from tools.db.models import ResearchHistory
-from sqlalchemy import select
+from tools.db.history_repo import get_researched_video_ids
 
 with sync_session_ctx() as session:
-    topic_id = _resolve_topic_id(session, "<topic_slug>")
-    stmt = select(ResearchHistory.video_id).where(ResearchHistory.topic_id == topic_id)
-    researched_ids = set(session.execute(stmt).scalars().all())
+    researched_ids = get_researched_video_ids(session, "<topic_slug>")
 ```
 
 Luego filtra los videos cuyo `video_id` ya exista en `researched_ids`.

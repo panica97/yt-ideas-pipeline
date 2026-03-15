@@ -14,6 +14,23 @@ from sqlalchemy.orm import Session
 from .models import Channel, ResearchHistory, Topic
 
 
+def get_researched_video_ids(session: Session, topic_slug: str) -> set[str]:
+    """Return the set of video IDs already researched for a given topic.
+
+    Args:
+        session: SQLAlchemy sync session.
+        topic_slug: The topic slug to filter by.
+
+    Returns:
+        A set of YouTube video IDs that have already been researched.
+    """
+    topic_id_sub = select(Topic.id).where(Topic.slug == topic_slug).scalar_subquery()
+    stmt = select(ResearchHistory.video_id).where(
+        ResearchHistory.topic_id == topic_id_sub
+    )
+    return set(session.execute(stmt).scalars().all())
+
+
 def get_history(
     session: Session,
     *,

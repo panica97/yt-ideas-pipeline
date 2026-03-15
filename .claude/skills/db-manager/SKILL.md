@@ -42,13 +42,28 @@ The `strategy_data` dict should have these keys (matching YAML format):
 - Only add NEW strategies -- existing ones are updated, not duplicated
 - The function handles all DB operations within the context manager
 
+## Saving Drafts
+
+JSON drafts from the translator step can be saved to PostgreSQL:
+
+```python
+from tools.db.session import sync_session_ctx
+from tools.db.draft_repo import upsert_draft
+
+with sync_session_ctx() as session:
+    upsert_draft(session, strat_code=9001, strat_name="My Strategy", data=draft_json)
+    # Automatically computes todo_count and todo_fields from _TODO values in data
+```
+
+`upsert_draft()` deduplicates by `strat_code`. Additional optional params: `strategy_id`, `active`, `tested`, `prod`.
+
 ## Output Format
 
 ```yaml
 saved:
   - "<strategy name 1>"
   - "<strategy name 2>"
-skipped:
+updated:
   - "<duplicate strategy name>"
 total_in_db: <number>
 ```
