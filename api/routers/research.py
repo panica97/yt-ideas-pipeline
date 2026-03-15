@@ -1,10 +1,13 @@
-"""WebSocket endpoint for real-time research session status."""
+"""Research session endpoints: REST + WebSocket."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
+from api.dependencies import get_db, verify_api_key
+from api.services import research_session_service
 
 router = APIRouter(tags=["research"])
 
@@ -15,6 +18,17 @@ _watcher = None
 def set_watcher(watcher) -> None:
     global _watcher
     _watcher = watcher
+
+
+@router.get("/api/research/sessions")
+async def get_research_sessions(
+    limit: int = Query(5, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(verify_api_key),
+):
+    """Return the last N completed/error research sessions with details."""
+    sessions = await research_session_service.get_sessions(db, limit=limit)
+    return {"sessions": sessions}
 
 
 @router.websocket("/api/research/status")
