@@ -6,6 +6,7 @@ interface StrategyFilters {
   channel?: string;
   search?: string;
   session_id?: number;
+  has_draft?: boolean;
 }
 
 export async function getStrategies(filters: StrategyFilters = {}): Promise<StrategiesResponse> {
@@ -13,6 +14,7 @@ export async function getStrategies(filters: StrategyFilters = {}): Promise<Stra
   if (filters.channel) params.set('channel', filters.channel);
   if (filters.search) params.set('search', filters.search);
   if (filters.session_id) params.set('session_id', String(filters.session_id));
+  if (filters.has_draft !== undefined) params.set('has_draft', String(filters.has_draft));
 
   const { data } = await api.get<StrategiesResponse>(`/strategies?${params.toString()}`);
   return data;

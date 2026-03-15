@@ -1,25 +1,20 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getStrategies, getStrategy, getDrafts, getDraft } from '../services/strategies';
+import { getStrategies, getStrategy } from '../services/strategies';
 import { getResearchSessions } from '../services/research';
 import StrategyCard from '../components/strategies/StrategyCard';
 import StrategyDetail from '../components/strategies/StrategyDetail';
-import DraftCard from '../components/strategies/DraftCard';
-import DraftDetail from '../components/strategies/DraftDetail';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import type { Strategy } from '../types/strategy';
-import type { DraftDetail as DraftDetailType } from '../types/draft';
 
-type Tab = 'strategies' | 'drafts';
+type Tab = 'ideas' | 'strategies';
 
 export default function StrategiesPage() {
-  const [tab, setTab] = useState<Tab>('strategies');
+  const [tab, setTab] = useState<Tab>('ideas');
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
   const [sessionFilter, setSessionFilter] = useState('');
-  const [todosOnly, setTodosOnly] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
-  const [selectedDraft, setSelectedDraft] = useState<DraftDetailType | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const { data: sessionsData } = useQuery({
@@ -27,20 +22,27 @@ export default function StrategiesPage() {
     queryFn: () => getResearchSessions(50),
   });
 
-  const { data: strategiesData, isLoading: loadingStrategies } = useQuery({
-    queryKey: ['strategies', search, channelFilter, sessionFilter],
+  // Ideas tab: ALL strategies (no has_draft filter)
+  const { data: ideasData, isLoading: loadingIdeas } = useQuery({
+    queryKey: ['ideas', search, channelFilter, sessionFilter],
     queryFn: () => getStrategies({
       search: search || undefined,
       channel: channelFilter || undefined,
       session_id: sessionFilter ? Number(sessionFilter) : undefined,
     }),
-    enabled: tab === 'strategies',
+    enabled: tab === 'ideas',
   });
 
-  const { data: draftsData, isLoading: loadingDrafts } = useQuery({
-    queryKey: ['drafts', todosOnly],
-    queryFn: () => getDrafts(todosOnly ? true : undefined),
-    enabled: tab === 'drafts',
+  // Estrategias tab: only strategies with JSON drafts
+  const { data: strategiesData, isLoading: loadingStrategies } = useQuery({
+    queryKey: ['strategies-with-draft', search, channelFilter, sessionFilter],
+    queryFn: () => getStrategies({
+      search: search || undefined,
+      channel: channelFilter || undefined,
+      session_id: sessionFilter ? Number(sessionFilter) : undefined,
+      has_draft: true,
+    }),
+    enabled: tab === 'strategies',
   });
 
   const handleStrategyClick = async (name: string) => {
@@ -53,20 +55,11 @@ export default function StrategiesPage() {
     }
   };
 
-  const handleDraftClick = async (stratCode: number) => {
-    setLoadingDetail(true);
-    try {
-      const detail = await getDraft(stratCode);
-      setSelectedDraft(detail);
-    } finally {
-      setLoadingDetail(false);
-    }
-  };
-
-  // Collect unique channels from strategies
+  // Collect unique channels from the active tab's data
+  const activeData = tab === 'ideas' ? ideasData : strategiesData;
   const channels = Array.from(
     new Set(
-      (strategiesData?.strategies ?? [])
+      (activeData?.strategies ?? [])
         .map((s) => s.source_channel)
         .filter((c): c is string => !!c)
     )
@@ -79,63 +72,63 @@ export default function StrategiesPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-800 border border-slate-700 rounded-lg p-1 w-fit">
         <button
-          onClick={() => { setTab('strategies'); setSelectedStrategy(null); setSelectedDraft(null); }}
+          onClick={() => { setTab('ideas'); setSelectedStrategy(null); }}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === 'ideas' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Ideas
+        </button>
+        <button
+          onClick={() => { setTab('strategies'); setSelectedStrategy(null); }}
           className={`px-4 py-1.5 text-sm rounded transition-colors ${
             tab === 'strategies' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Estrategias YAML
-        </button>
-        <button
-          onClick={() => { setTab('drafts'); setSelectedStrategy(null); setSelectedDraft(null); }}
-          className={`px-4 py-1.5 text-sm rounded transition-colors ${
-            tab === 'drafts' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Borradores JSON
+          Estrategias
         </button>
       </div>
 
-      {/* Strategies tab */}
-      {tab === 'strategies' && (
-        <>
-          {/* Filters */}
-          <div className="flex gap-3 flex-wrap">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar..."
-              className="flex-1 max-w-xs px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
-            />
-            <select
-              value={channelFilter}
-              onChange={(e) => setChannelFilter(e.target.value)}
-              className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
-            >
-              <option value="">Canal: Todos</option>
-              {channels.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={sessionFilter}
-              onChange={(e) => setSessionFilter(e.target.value)}
-              className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
-            >
-              <option value="">Sesion: Todas</option>
-              {(sessionsData?.sessions ?? []).map((s) => (
-                <option key={s.id} value={String(s.id)}>
-                  {s.topic ?? 'Sin topic'} -{' '}
-                  {s.started_at
-                    ? new Date(s.started_at).toLocaleDateString('es-ES')
-                    : '-'}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Filters (shared between both tabs) */}
+      <div className="flex gap-3 flex-wrap">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar..."
+          className="flex-1 max-w-xs px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
+        />
+        <select
+          value={channelFilter}
+          onChange={(e) => setChannelFilter(e.target.value)}
+          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+        >
+          <option value="">Canal: Todos</option>
+          {channels.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={sessionFilter}
+          onChange={(e) => setSessionFilter(e.target.value)}
+          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+        >
+          <option value="">Sesion: Todas</option>
+          {(sessionsData?.sessions ?? []).map((s) => (
+            <option key={s.id} value={String(s.id)}>
+              {s.topic ?? 'Sin topic'} -{' '}
+              {s.started_at
+                ? new Date(s.started_at).toLocaleDateString('es-ES')
+                : '-'}
+            </option>
+          ))}
+        </select>
+      </div>
 
-          {loadingStrategies ? (
+      {/* Ideas tab */}
+      {tab === 'ideas' && (
+        <>
+          {loadingIdeas ? (
             <LoadingSpinner />
           ) : selectedStrategy ? (
             <StrategyDetail
@@ -145,10 +138,10 @@ export default function StrategiesPage() {
           ) : (
             <>
               <p className="text-sm text-slate-400">
-                Total: {strategiesData?.total ?? 0} estrategias
+                Total: {ideasData?.total ?? 0} ideas
               </p>
               <div className="space-y-3">
-                {(strategiesData?.strategies ?? []).map((s) => (
+                {(ideasData?.strategies ?? []).map((s) => (
                   <StrategyCard
                     key={s.id}
                     strategy={s}
@@ -161,40 +154,29 @@ export default function StrategiesPage() {
         </>
       )}
 
-      {/* Drafts tab */}
-      {tab === 'drafts' && (
+      {/* Strategies tab (only with JSON drafts) */}
+      {tab === 'strategies' && (
         <>
-          {/* Filter */}
-          <div className="flex gap-3 items-center">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={todosOnly}
-                onChange={(e) => setTodosOnly(e.target.checked)}
-                className="rounded bg-slate-700 border-slate-600"
-              />
-              Solo con TODOs
-            </label>
-          </div>
-
-          {loadingDrafts ? (
+          {loadingStrategies ? (
             <LoadingSpinner />
-          ) : selectedDraft ? (
-            <DraftDetail
-              draft={selectedDraft}
-              onClose={() => setSelectedDraft(null)}
+          ) : selectedStrategy ? (
+            <StrategyDetail
+              strategy={selectedStrategy}
+              onClose={() => setSelectedStrategy(null)}
             />
           ) : (
             <>
               <p className="text-sm text-slate-400">
-                Total: {draftsData?.total ?? 0} borradores
+                {(strategiesData?.total ?? 0) === 0
+                  ? 'No hay estrategias traducidas a JSON todavia'
+                  : `Total: ${strategiesData?.total ?? 0} estrategias`}
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {(draftsData?.drafts ?? []).map((d) => (
-                  <DraftCard
-                    key={d.strat_code}
-                    draft={d}
-                    onClick={() => handleDraftClick(d.strat_code)}
+              <div className="space-y-3">
+                {(strategiesData?.strategies ?? []).map((s) => (
+                  <StrategyCard
+                    key={s.id}
+                    strategy={s}
+                    onClick={() => handleStrategyClick(s.name)}
                   />
                 ))}
               </div>

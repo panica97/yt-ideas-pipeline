@@ -35,10 +35,11 @@ async def list_strategies(
     channel: str | None = Query(None),
     search: str | None = Query(None),
     session_id: int | None = Query(None),
+    has_draft: bool | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     total, strategies = await strategy_service.list_strategies(
-        db, channel=channel, search=search, session_id=session_id
+        db, channel=channel, search=search, session_id=session_id, has_draft=has_draft
     )
     return {"total": total, "strategies": strategies}
 

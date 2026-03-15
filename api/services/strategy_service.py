@@ -20,11 +20,21 @@ async def list_strategies(
     channel: str | None = None,
     search: str | None = None,
     session_id: int | None = None,
+    has_draft: bool | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Return (total, strategies) with optional channel/FTS filters."""
     query = select(Strategy, Channel.name.label("source_channel_name")).outerjoin(
         Channel, Strategy.source_channel_id == Channel.id
     )
+
+    if has_draft is True:
+        query = query.where(
+            Strategy.id.in_(select(Draft.strategy_id).where(Draft.strategy_id.isnot(None)))
+        )
+    elif has_draft is False:
+        query = query.where(
+            ~Strategy.id.in_(select(Draft.strategy_id).where(Draft.strategy_id.isnot(None)))
+        )
 
     if channel:
         query = query.where(Channel.name == channel)

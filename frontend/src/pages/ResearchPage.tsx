@@ -49,7 +49,7 @@ function SessionCard({ session }: { session: ResearchSessionDetail }) {
         </div>
         <div>
           <p className="text-lg font-bold text-yellow-400">{totalStrategies}</p>
-          <p className="text-xs text-slate-400">Estrategias</p>
+          <p className="text-xs text-slate-400">Ideas</p>
         </div>
         <div>
           <p className="text-lg font-bold text-slate-300">

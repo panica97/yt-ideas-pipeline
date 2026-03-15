@@ -98,7 +98,7 @@ export default function ResearchDetailPage() {
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-yellow-400">{totalStrategies}</p>
-          <p className="text-xs text-slate-400 mt-1">Estrategias encontradas</p>
+          <p className="text-xs text-slate-400 mt-1">Ideas encontradas</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-slate-300">
@@ -153,7 +153,7 @@ export default function ResearchDetailPage() {
                 >
                   <span className="text-slate-300 truncate">{ch.name}</span>
                   <span className="text-slate-500 whitespace-nowrap">
-                    {ch.videos} videos / {ch.strategies} estrategias
+                    {ch.videos} videos / {ch.strategies} ideas
                   </span>
                 </div>
               ))}
@@ -187,7 +187,7 @@ export default function ResearchDetailPage() {
                     Canal
                   </th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium">
-                    Estrategias
+                    Ideas
                   </th>
                 </tr>
               </thead>
@@ -225,35 +225,67 @@ export default function ResearchDetailPage() {
         )}
       </div>
 
-      {/* Strategies found */}
+      {/* Ideas found, grouped by source video */}
       <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
         <h2 className="text-sm font-semibold text-slate-300 mb-3">
-          Estrategias encontradas ({strategies.length})
+          Ideas encontradas ({strategies.length})
         </h2>
         {strategies.length > 0 ? (
-          <div className="space-y-2">
-            {strategies.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center justify-between py-2 px-3 bg-slate-700/30 rounded"
-              >
-                <div>
-                  <p className="text-sm text-white font-medium">{s.name}</p>
-                  {s.description && (
-                    <p className="text-xs text-slate-400 mt-0.5 truncate max-w-md">
-                      {s.description}
-                    </p>
-                  )}
+          <div className="space-y-4">
+            {(() => {
+              // Group ideas by first source video (or "Sin video")
+              const groups = new Map<string, { channel: string | null; ideas: typeof strategies }>();
+              for (const s of strategies) {
+                const videoKey = s.source_videos?.[0] ?? 'sin-video';
+                if (!groups.has(videoKey)) {
+                  groups.set(videoKey, { channel: s.source_channel, ideas: [] });
+                }
+                groups.get(videoKey)!.ideas.push(s);
+              }
+              return Array.from(groups.entries()).map(([videoId, { channel, ideas }]) => (
+                <div key={videoId}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {videoId !== 'sin-video' ? (
+                      <a
+                        href={`https://www.youtube.com/watch?v=${videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary-400 hover:text-primary-300 font-medium"
+                      >
+                        {videoId}
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-500 font-medium">Sin video</span>
+                    )}
+                    {channel && (
+                      <span className="text-xs text-slate-500">/ {channel}</span>
+                    )}
+                    <span className="text-xs text-slate-600">({ideas.length})</span>
+                  </div>
+                  <div className="space-y-1 ml-3">
+                    {ideas.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between py-1.5 px-3 bg-slate-700/30 rounded"
+                      >
+                        <div>
+                          <p className="text-sm text-white font-medium">{s.name}</p>
+                          {s.description && (
+                            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-md">
+                              {s.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500">
-                  {s.source_channel || '-'}
-                </span>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         ) : (
           <p className="text-sm text-slate-500">
-            No se encontraron estrategias en esta sesion
+            No se encontraron ideas en esta sesion
           </p>
         )}
       </div>

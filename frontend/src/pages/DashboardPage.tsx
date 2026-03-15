@@ -82,8 +82,8 @@ export default function DashboardPage() {
         <StatsCard icon={'\u{1F4C1}'} label="Topics" value={stats?.total_topics ?? 0} />
         <StatsCard icon={'\u25B6'} label="Canales" value={stats?.total_channels ?? 0} />
         <StatsCard icon={'\u{1F3AC}'} label="Videos investigados" value={stats?.total_videos_researched ?? 0} />
-        <StatsCard icon={'\u2605'} label="Estrategias" value={stats?.total_strategies ?? 0} color="text-yellow-400" />
-        <StatsCard icon={'\u{1F4DD}'} label="Borradores" value={stats?.total_drafts ?? 0} />
+        <StatsCard icon={'\u{1F4A1}'} label="Ideas" value={stats?.total_strategies ?? 0} />
+        <StatsCard icon={'\u2605'} label="Estrategias" value={stats?.total_drafts ?? 0} color="text-yellow-400" />
         <StatsCard icon={'\u26A0'} label="Con TODOs" value={stats?.drafts_with_todos ?? 0} color="text-orange-400" />
       </div>
 
@@ -159,7 +159,7 @@ export default function DashboardPage() {
                   {lastSession.result_summary?.total_videos ?? lastSession.videos?.length ?? 0}
                 </p>
                 <p className="text-slate-300">
-                  <span className="text-slate-500">Estrategias:</span>{' '}
+                  <span className="text-slate-500">Ideas:</span>{' '}
                   {lastSession.result_summary?.total_strategies ?? 0}
                 </p>
               </div>
