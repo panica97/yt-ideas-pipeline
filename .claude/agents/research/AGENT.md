@@ -127,54 +127,15 @@ Workflow:
 **Si no hay estrategias**: Borrar el notebook y devolver `NO_STRATEGIES_FOUND`.
 **Si hay estrategias**: Continuar al Step 3 con el notebook abierto.
 
-### Step 3: Strategy Translator (Creative Proposer)
+### Step 3: Strategy Translator
 
-Para cada idea extraida en el Step 2, genera **multiples propuestas concretas de estrategia** como JSON IBKR.
-No es una traduccion mecanica 1:1 — es un paso creativo que explora variantes.
+Invocar skill: `/strategy-translator`
 
-**Entrada**: ideas/estrategias YAML del Step 2.
+Input: lista de nombres de estrategias guardadas en Step 2+5, y el `notebook_id` del Step 2.
 
-**Referencia**: lee estos ficheros de `.claude/agents/research/`:
-- `schema.json` -- esquema JSON del motor de trading (seguir estrictamente)
-- `examples/*.json` -- estrategias reales como few-shot para entender el formato exacto
-- `translation-rules.md` -- reglas de filtrado y mapeo aprendidas
-
-**Filtrado previo**: Descartar ideas que NO tienen logica concreta de entrada/salida:
-- Ideas demasiado vagas o conceptuales → skip (log como "too vague for translation")
-- Enfoques historicos/abandonados → skip
-- Meta-estrategias (gestion de portfolio, scaling de prop firms) → skip
-
-**Proceso creativo** — para cada idea con reglas concretas de entrada/salida:
-
-1. Lee `schema.json` y los ejemplos en `examples/` para entender el formato exacto
-2. Analiza la idea: ¿que indicadores usa? ¿que condiciones de entrada/salida?
-3. Piensa en variantes: ¿se puede probar en diferentes timeframes? ¿con diferentes exits? ¿anadiendo filtros?
-   Las variantes pueden diferir por:
-   - **Timeframe**: e.g., 240min vs 360min vs daily
-   - **Metodo de salida**: stop & reverse vs time-based exit vs ATR-based SL/TP
-   - **Filtros adicionales**: filtro de tendencia, volumen, volatilidad
-   - **Especializacion de mercado**: si la idea menciona mercados con mejor rendimiento
-4. Si faltan datos para completar un campo, hacer preguntas al notebook de NotebookLM usando `notebooklm ask "<question>" -n <id>`
-5. Genera un JSON completo por variante siguiendo `schema.json` estrictamente
-6. Marca con `"_TODO"` lo que no puedas determinar — nunca inventes valores
-7. Cada variante debe tener un `strat_name` descriptivo de la variacion (e.g., `"RSI_Divergence_SAR_360m"`, `"RSI_Divergence_TimeExit_240m"`)
-8. Guarda cada draft en la BD
-
-**Objetivo**: generar 2-4 variantes por idea cuando la idea tiene suficiente detalle. Si solo hay una forma razonable de implementarla, una variante es suficiente.
-
-**Salida**: guardar cada borrador en la base de datos:
-
-```python
-from tools.db.session import sync_session_ctx
-from tools.db.draft_repo import upsert_draft
-
-with sync_session_ctx() as session:
-    upsert_draft(session, strat_code=9001, strat_name="<name>", data=draft_json)
-    upsert_draft(session, strat_code=9002, strat_name="<name_variant2>", data=draft_json_v2)
-    # ... una llamada por variante
-```
-
-Usar `strat_code` empezando en 9001 e incrementando para cada variante/draft.
+El skill se encarga de:
+- Estructurar las ideas para el frontend (limpiar parametros, reglas, etc.) y actualizar la BD
+- Generar variantes IBKR JSON draft para cada idea valida (creative proposer)
 
 ### Step 4: Cleanup y registro de historial
 

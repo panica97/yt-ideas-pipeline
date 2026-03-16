@@ -1,0 +1,193 @@
+{
+  "$schema": "./schema.json",
+  "UTC_tz": -6,
+  "active": true,
+  "tested": true,
+  "prod": true,
+  "control_params": {
+    "strategy": 1009,
+    "strategy_filename": "1009.py",
+    "symbol": "MNQ",
+    "start_date": "2015-01-01",
+    "end_date": "2024-01-01",
+    "timestamp": "2026-02-05 18:22:51",
+    "primary_timeframe": "4 hours",
+    "slippage_amount": 0.5,
+    "comm_per_contract": 0.62,
+    "metrics": {
+      "total_trades": 175,
+      "winning_trades": 86,
+      "losing_trades": 89,
+      "breakeven_trades": 0,
+      "win_rate": 49.143,
+      "total_pnl": 4691.5,
+      "total_gross_pnl": 5258.5,
+      "total_slippage": 350.0,
+      "total_commission": 217.0,
+      "avg_win": 252.452,
+      "avg_win_pct": 1.106,
+      "avg_loss": -191.229,
+      "avg_loss_pct": 0.838,
+      "profit_factor": 1.276,
+      "max_drawdown": 3249.78,
+      "max_drawdown_pct": 14.239,
+      "max_winning_streak": 6,
+      "avg_winning_streak": 1.87,
+      "max_losing_streak": 6,
+      "avg_losing_streak": 1.935,
+      "return_drawdown_ratio": 1.444,
+      "ppr": 26.809,
+      "avg_initial_risk": 189.971,
+      "rr_percent": 14.112,
+      "kelly_fraction": 0.106,
+      "half_kelly": 0.053,
+      "sqn": 1.222,
+      "sharpe_ratio": 0.407,
+      "sortino_ratio": 0.915,
+      "avg_trades_year": 19.446,
+      "avg_bars_active": 4.726,
+      "annualized_return": 521.317,
+      "annualized_return_pct": 2.284,
+      "sl_exits": 89,
+      "sl_be_exits": 0,
+      "sl_tsl_exits": 0,
+      "tp_exits": 2,
+      "num_bars_exits": 0,
+      "exit_condition_exits": 84,
+      "backtest_end_exits": 0,
+      "be_triggered_count": 0,
+      "tsl_activated_count": 0,
+      "avg_position_size": 1.0,
+      "min_position_size": 1,
+      "max_position_size": 1,
+      "total_contracts_traded": 175
+    }
+  },
+  "currency": "USD",
+  "exchange": "CME",
+  "exit_conds": [
+    {
+      "cond_type": "num_relation",
+      "cond": "RSI_2_4h > 90",
+      "shift_1": 1,
+      "condCode": "exit_1",
+      "group": 1
+    },
+    {
+      "cond_type": "num_bars",
+      "cond": "40",
+      "strat": "1009",
+      "condCode": "exit_2",
+      "group": 2
+    }
+  ],
+  "ind_list": {
+    "4 hours": [
+      {
+        "indicator": "RSI",
+        "params": {
+          "price_1": "close",
+          "timePeriod_1": 2,
+          "indCode": "RSI_2_4h"
+        }
+      },
+      {
+        "indicator": "BBANDS",
+        "params": {
+          "price_1": "high",
+          "timePeriod_1": 89,
+          "nbdevup": 1.9,
+          "nbdevdn": 1.9,
+          "indCode": "MULT_4h"
+        }
+      },
+      {
+        "indicator": "ATR",
+        "params": {
+          "price_1": "high",
+          "price_2": "low",
+          "price_3": "close",
+          "timePeriod_1": 20,
+          "indCode": "ATR_20_4h_SL"
+        }
+      },
+      {
+        "indicator": "ATR",
+        "params": {
+          "price_1": "high",
+          "price_2": "low",
+          "price_3": "close",
+          "timePeriod_1": 30,
+          "indCode": "ATR_30_4h_TP"
+        }
+      }
+    ]
+  },
+  "long_conds": [
+    {
+      "cond_type": "num_relation",
+      "cond": "RSI_2_4h < 30",
+      "shift_1": 1,
+      "condCode": "long_1"
+    },
+    {
+      "cond_type": "ind_direction",
+      "cond": "BBAND_upperband_4h upwards",
+      "shift_1": 2,
+      "condCode": "long_2"
+    }
+  ],
+  "max_shift": [
+    2,
+    "4 hours"
+  ],
+  "max_timePeriod": 89,
+  "minTick": 0.25,
+  "multiplier": 2,
+  "order_params": {
+    "max_rpo": 1,
+    "min_volume": 1
+  },
+  "process_freq": "4 hours",
+  "rolling_days": 5,
+  "secType": "FUT",
+  "short_conds": [],
+  "stop_loss_init": {
+    "indicator": true,
+    "indicator_params": {
+      "multiple": 1.5,
+      "tf": "4 hours",
+      "col": "ATR_20_4h_SL"
+    },
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "stop_loss_mgmt": {
+    "breakeven": {
+      "action": false,
+      "profitRatio": 0.2
+    },
+    "trailing": {
+      "action": false,
+      "trailingRatio": 0.8
+    }
+  },
+  "strat_code": 1009,
+  "strat_name": "RSI2_1_V2",
+  "symbol": "MNQ",
+  "take_profit_init": {
+    "indicator": true,
+    "indicator_params": {
+      "multiple": 4,
+      "tf": "4 hours",
+      "col": "ATR_30_4h_TP"
+    },
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "trading_hours": null
+}

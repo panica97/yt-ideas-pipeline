@@ -312,6 +312,7 @@ export default function ResearchDetailPage() {
           <StrategyDetail
             strategy={selectedIdea}
             onClose={() => setSelectedIdea(null)}
+            onStatusChange={() => setSelectedIdea(null)}
           />
         </div>
       ) : (

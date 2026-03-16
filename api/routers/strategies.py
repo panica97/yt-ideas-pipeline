@@ -36,12 +36,27 @@ async def list_strategies(
     search: str | None = Query(None),
     session_id: int | None = Query(None),
     has_draft: bool | None = Query(None),
+    status: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     total, strategies = await strategy_service.list_strategies(
-        db, channel=channel, search=search, session_id=session_id, has_draft=has_draft
+        db, channel=channel, search=search, session_id=session_id,
+        has_draft=has_draft, status=status,
     )
     return {"total": total, "strategies": strategies}
+
+
+# NOTE: PATCH validate/unvalidate routes MUST come before /{strategy_name}
+# to avoid "validate"/"unvalidate" being captured as a strategy_name.
+
+@router.patch("/{strategy_name}/validate", response_model=StrategyResponse)
+async def validate_strategy(strategy_name: str, db: AsyncSession = Depends(get_db)):
+    return await strategy_service.validate_strategy(db, strategy_name)
+
+
+@router.patch("/{strategy_name}/unvalidate", response_model=StrategyResponse)
+async def unvalidate_strategy(strategy_name: str, db: AsyncSession = Depends(get_db)):
+    return await strategy_service.unvalidate_strategy(db, strategy_name)
 
 
 @router.get("/{strategy_name}", response_model=StrategyResponse)

@@ -21,6 +21,7 @@ async def list_strategies(
     search: str | None = None,
     session_id: int | None = None,
     has_draft: bool | None = None,
+    status: str | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Return (total, strategies) with optional channel/FTS filters."""
     query = select(Strategy, Channel.name.label("source_channel_name")).outerjoin(
@@ -35,6 +36,9 @@ async def list_strategies(
         query = query.where(
             ~Strategy.id.in_(select(Draft.strategy_id).where(Draft.strategy_id.isnot(None)))
         )
+
+    if status:
+        query = query.where(Strategy.status == status)
 
     if channel:
         query = query.where(Channel.name == channel)
@@ -74,6 +78,7 @@ async def list_strategies(
         strategies.append({
             "id": strat.id,
             "name": strat.name,
+            "status": strat.status,
             "description": strat.description,
             "source_channel": ch_name,
             "source_videos": strat.source_videos,
@@ -108,6 +113,7 @@ async def get_strategy_by_name(
     return {
         "id": strat.id,
         "name": strat.name,
+        "status": strat.status,
         "description": strat.description,
         "source_channel": ch_name,
         "source_videos": strat.source_videos,
@@ -119,6 +125,44 @@ async def get_strategy_by_name(
         "created_at": strat.created_at,
         "updated_at": strat.updated_at,
     }
+
+
+async def validate_strategy(
+    db: AsyncSession, name: str
+) -> dict[str, Any]:
+    """Set strategy status to 'validated'."""
+    result = await db.execute(
+        select(Strategy).where(Strategy.name == name)
+    )
+    strat = result.scalar_one_or_none()
+    if not strat:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Estrategia '{name}' no encontrada",
+        )
+    strat.status = "validated"
+    await db.commit()
+    await db.refresh(strat)
+    return await get_strategy_by_name(db, name)
+
+
+async def unvalidate_strategy(
+    db: AsyncSession, name: str
+) -> dict[str, Any]:
+    """Set strategy status back to 'idea'."""
+    result = await db.execute(
+        select(Strategy).where(Strategy.name == name)
+    )
+    strat = result.scalar_one_or_none()
+    if not strat:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Estrategia '{name}' no encontrada",
+        )
+    strat.status = "idea"
+    await db.commit()
+    await db.refresh(strat)
+    return await get_strategy_by_name(db, name)
 
 
 # ---------------------------------------------------------------------------

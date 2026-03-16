@@ -22,25 +22,26 @@ export default function StrategiesPage() {
     queryFn: () => getResearchSessions(50),
   });
 
-  // Ideas tab: ALL strategies (no has_draft filter)
+  // Ideas tab: strategies with status='idea'
   const { data: ideasData, isLoading: loadingIdeas } = useQuery({
     queryKey: ['ideas', search, channelFilter, sessionFilter],
     queryFn: () => getStrategies({
       search: search || undefined,
       channel: channelFilter || undefined,
       session_id: sessionFilter ? Number(sessionFilter) : undefined,
+      status: 'idea',
     }),
     enabled: tab === 'ideas',
   });
 
-  // Estrategias tab: only strategies with JSON drafts
+  // Estrategias tab: strategies with status='validated'
   const { data: strategiesData, isLoading: loadingStrategies } = useQuery({
-    queryKey: ['strategies-with-draft', search, channelFilter, sessionFilter],
+    queryKey: ['validated-strategies', search, channelFilter, sessionFilter],
     queryFn: () => getStrategies({
       search: search || undefined,
       channel: channelFilter || undefined,
       session_id: sessionFilter ? Number(sessionFilter) : undefined,
-      has_draft: true,
+      status: 'validated',
     }),
     enabled: tab === 'strategies',
   });
@@ -134,6 +135,7 @@ export default function StrategiesPage() {
             <StrategyDetail
               strategy={selectedStrategy}
               onClose={() => setSelectedStrategy(null)}
+              onStatusChange={() => setSelectedStrategy(null)}
             />
           ) : (
             <>
@@ -163,12 +165,13 @@ export default function StrategiesPage() {
             <StrategyDetail
               strategy={selectedStrategy}
               onClose={() => setSelectedStrategy(null)}
+              onStatusChange={() => setSelectedStrategy(null)}
             />
           ) : (
             <>
               <p className="text-sm text-slate-400">
                 {(strategiesData?.total ?? 0) === 0
-                  ? 'No hay estrategias traducidas a JSON todavia'
+                  ? 'No hay estrategias validadas todavia'
                   : `Total: ${strategiesData?.total ?? 0} estrategias`}
               </p>
               <div className="space-y-3">

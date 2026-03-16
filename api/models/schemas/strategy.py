@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict
 class StrategyResponse(BaseModel):
     id: int
     name: str
+    status: str = "idea"
     description: str | None = None
     source_channel: str | None = None
     source_videos: list[str] | None = None

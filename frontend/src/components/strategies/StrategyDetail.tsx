@@ -1,8 +1,13 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { validateStrategy, unvalidateStrategy } from '../../services/strategies';
+import ConfirmDialog from '../common/ConfirmDialog';
 import type { Strategy } from '../../types/strategy';
 
 interface StrategyDetailProps {
   strategy: Strategy;
   onClose: () => void;
+  onStatusChange?: () => void;
 }
 
 function RuleList({ title, rules }: { title: string; rules: Record<string, unknown>[] | null }) {
@@ -21,7 +26,33 @@ function RuleList({ title, rules }: { title: string; rules: Record<string, unkno
   );
 }
 
-export default function StrategyDetail({ strategy, onClose }: StrategyDetailProps) {
+export default function StrategyDetail({ strategy, onClose, onStatusChange }: StrategyDetailProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const queryClient = useQueryClient();
+
+  const isIdea = strategy.status === 'idea';
+
+  const handleConfirm = async () => {
+    setUpdating(true);
+    try {
+      if (isIdea) {
+        await validateStrategy(strategy.name);
+      } else {
+        await unvalidateStrategy(strategy.name);
+      }
+      await queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      await queryClient.invalidateQueries({ queryKey: ['validated-strategies'] });
+      await queryClient.invalidateQueries({ queryKey: ['strategies-by-session'] });
+      onStatusChange?.();
+    } catch (err) {
+      console.error('Error updating strategy status:', err);
+    } finally {
+      setConfirmOpen(false);
+      setUpdating(false);
+    }
+  };
+
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 space-y-4">
       <div className="flex items-start justify-between">
@@ -31,13 +62,40 @@ export default function StrategyDetail({ strategy, onClose }: StrategyDetailProp
             <p className="text-xs text-primary-400 mt-0.5">{strategy.source_channel}</p>
           )}
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
-        >
-          Cerrar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setConfirmOpen(true)}
+            disabled={updating}
+            className={`px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 ${
+              isIdea
+                ? 'text-white bg-green-600 hover:bg-green-700'
+                : 'text-white bg-amber-600 hover:bg-amber-700'
+            }`}
+          >
+            {updating ? '...' : isIdea ? 'Validar estrategia' : 'Devolver a ideas'}
+          </button>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={isIdea ? 'Validar estrategia' : 'Devolver a ideas'}
+        message={
+          isIdea
+            ? 'Esta idea pasara a la pestana Estrategias. Podras revertirlo luego.'
+            : 'Esta estrategia volvera a la pestana Ideas.'
+        }
+        confirmLabel={isIdea ? 'Validar' : 'Devolver'}
+        confirmVariant={isIdea ? 'success' : 'danger'}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
       {strategy.description && (
         <div>

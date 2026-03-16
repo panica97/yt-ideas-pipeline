@@ -7,6 +7,7 @@ interface StrategyFilters {
   search?: string;
   session_id?: number;
   has_draft?: boolean;
+  status?: 'idea' | 'validated';
 }
 
 export async function getStrategies(filters: StrategyFilters = {}): Promise<StrategiesResponse> {
@@ -15,6 +16,7 @@ export async function getStrategies(filters: StrategyFilters = {}): Promise<Stra
   if (filters.search) params.set('search', filters.search);
   if (filters.session_id) params.set('session_id', String(filters.session_id));
   if (filters.has_draft !== undefined) params.set('has_draft', String(filters.has_draft));
+  if (filters.status) params.set('status', filters.status);
 
   const { data } = await api.get<StrategiesResponse>(`/strategies?${params.toString()}`);
   return data;
@@ -22,6 +24,16 @@ export async function getStrategies(filters: StrategyFilters = {}): Promise<Stra
 
 export async function getStrategy(name: string): Promise<Strategy> {
   const { data } = await api.get<Strategy>(`/strategies/${encodeURIComponent(name)}`);
+  return data;
+}
+
+export async function validateStrategy(name: string): Promise<Strategy> {
+  const { data } = await api.patch<Strategy>(`/strategies/${encodeURIComponent(name)}/validate`);
+  return data;
+}
+
+export async function unvalidateStrategy(name: string): Promise<Strategy> {
+  const { data } = await api.patch<Strategy>(`/strategies/${encodeURIComponent(name)}/unvalidate`);
   return data;
 }
 

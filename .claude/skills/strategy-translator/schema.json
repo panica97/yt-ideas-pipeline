@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trading Strategy",
+  "description": "Schema for IBKR trading strategy configuration files",
+  "type": "object",
+  "required": [
+    "strat_code",
+    "strat_name",
+    "active",
+    "tested",
+    "prod",
+    "symbol",
+    "secType",
+    "exchange",
+    "currency",
+    "multiplier",
+    "minTick",
+    "process_freq",
+    "ind_list",
+    "long_conds",
+    "short_conds",
+    "stop_loss_init",
+    "take_profit_init",
+    "control_params"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "strat_code": {
+      "type": "integer",
+      "description": "Unique strategy identifier (e.g., 1001)"
+    },
+    "strat_name": {
+      "type": "string",
+      "description": "Human-readable strategy name"
+    },
+    "active": {
+      "type": "boolean",
+      "description": "Whether this strategy is active (false = skipped on load)"
+    },
+    "tested": {
+      "type": "boolean",
+      "description": "Whether this strategy has passed backtesting validation"
+    },
+    "prod": {
+      "type": "boolean",
+      "description": "Whether this strategy is approved for production trading"
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Trading symbol (e.g., MNQ, ES, NQ, MGC)"
+    },
+    "secType": {
+      "type": "string",
+      "enum": ["FUT", "STK", "OPT", "CASH"],
+      "description": "IB security type"
+    },
+    "exchange": {
+      "type": "string",
+      "description": "Exchange code (e.g., CME, COMEX, GLOBEX)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD",
+      "description": "Currency code"
+    },
+    "multiplier": {
+      "type": "integer",
+      "description": "Contract multiplier"
+    },
+    "minTick": {
+      "type": "number",
+      "description": "Minimum price increment"
+    },
+    "rolling_days": {
+      "type": "integer",
+      "description": "Futures rolling days before expiry"
+    },
+    "process_freq": {
+      "type": "string",
+      "description": "Primary processing timeframe (e.g., '4 hours', '1 day')"
+    },
+    "trading_hours": {
+      "description": "Trading schedule or null for default",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string" },
+            "entries": {},
+            "exits": {}
+          }
+        }
+      ]
+    },
+    "UTC_tz": {
+      "type": "integer",
+      "description": "Timezone offset from UTC"
+    },
+    "ind_list": {
+      "type": "object",
+      "description": "Indicators grouped by timeframe",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["indicator", "params"],
+          "properties": {
+            "indicator": { "type": "string" },
+            "params": { "type": "object" }
+          }
+        }
+      }
+    },
+    "long_conds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "short_conds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "exit_conds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "market_conds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/condition" }
+    },
+    "max_shift": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer" },
+        { "type": "string" }
+      ],
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Tuple as [shift_value, timeframe]"
+    },
+    "max_timePeriod": {
+      "type": "integer",
+      "description": "Maximum indicator lookback period"
+    },
+    "stop_loss_init": { "$ref": "#/$defs/sl_tp_config" },
+    "take_profit_init": { "$ref": "#/$defs/sl_tp_config" },
+    "stop_loss_mgmt": {
+      "type": "object",
+      "properties": {
+        "breakeven": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "boolean" },
+            "profitRatio": { "type": "number" }
+          }
+        },
+        "trailing": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "boolean" },
+            "trailingRatio": { "type": "number" }
+          }
+        }
+      }
+    },
+    "order_params": {
+      "type": "object",
+      "description": "Order execution parameters (e.g., max_rpo, min_volume)"
+    },
+    "control_params": {
+      "type": "object",
+      "description": "Static backtest metrics for monitoring"
+    }
+  },
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "required": ["cond_type", "cond", "condCode"],
+      "properties": {
+        "cond_type": {
+          "type": "string",
+          "enum": [
+            "num_relation",
+            "ind_relation",
+            "price_relation",
+            "p2p_relation",
+            "cross_num_relation",
+            "cross_ind_relation",
+            "cross_price_relation",
+            "ind_direction",
+            "num_bars"
+          ]
+        },
+        "cond": { "type": "string" },
+        "condCode": { "type": "string" },
+        "shift_1": { "type": "integer", "default": 0 },
+        "shift_2": { "type": "integer", "default": 0 },
+        "group": { "type": "integer" },
+        "mode": {
+          "type": "string",
+          "enum": ["normal", "force"],
+          "default": "normal"
+        },
+        "strat": {
+          "type": "string",
+          "description": "Strategy code reference for num_bars conditions"
+        }
+      }
+    },
+    "sl_tp_config": {
+      "type": "object",
+      "properties": {
+        "indicator": { "type": "boolean" },
+        "indicator_params": { "type": "object" },
+        "pips": { "type": "boolean" },
+        "pips_params": { "type": "object" },
+        "percent": { "type": "boolean" },
+        "percent_params": { "type": "object" }
+      }
+    }
+  }
+}

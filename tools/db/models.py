@@ -56,6 +56,9 @@ class Strategy(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="idea", server_default="idea"
+    )
     description: Mapped[Optional[str]] = mapped_column(Text)
     source_channel_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("channels.id")

@@ -1,0 +1,226 @@
+{
+  "$schema": "./schema.json",
+  "UTC_tz": -6,
+  "active": true,
+  "tested": true,
+  "prod": true,
+  "control_params": {
+    "strategy": 1017,
+    "strategy_filename": "1017.py",
+    "symbol": "MNQ",
+    "start_date": "2015-01-01",
+    "end_date": "2024-01-01",
+    "timestamp": "2026-02-05 18:28:00",
+    "primary_timeframe": "1 day",
+    "slippage_amount": 0.5,
+    "comm_per_contract": 0.62,
+    "metrics": {
+      "total_trades": 233,
+      "winning_trades": 131,
+      "losing_trades": 102,
+      "breakeven_trades": 0,
+      "win_rate": 56.223,
+      "total_pnl": 11673.08,
+      "total_gross_pnl": 12428.0,
+      "total_slippage": 466.0,
+      "total_commission": 288.92,
+      "avg_win": 502.909,
+      "avg_win_pct": 2.136,
+      "avg_loss": -531.451,
+      "avg_loss_pct": 2.257,
+      "profit_factor": 1.215,
+      "max_drawdown": 14603.18,
+      "max_drawdown_pct": 62.015,
+      "max_winning_streak": 8,
+      "avg_winning_streak": 2.426,
+      "max_losing_streak": 5,
+      "avg_losing_streak": 1.889,
+      "return_drawdown_ratio": 0.799,
+      "ppr": 50.099,
+      "avg_initial_risk": 642.584,
+      "rr_percent": 7.797,
+      "kelly_fraction": 0.1,
+      "half_kelly": 0.05,
+      "sqn": 1.114,
+      "sharpe_ratio": 0.371,
+      "sortino_ratio": 0.575,
+      "avg_trades_year": 25.891,
+      "avg_bars_active": 6.541,
+      "annualized_return": 1297.108,
+      "annualized_return_pct": 5.508,
+      "sl_exits": 76,
+      "sl_be_exits": 0,
+      "sl_tsl_exits": 0,
+      "tp_exits": 30,
+      "num_bars_exits": 8,
+      "exit_condition_exits": 119,
+      "backtest_end_exits": 0,
+      "be_triggered_count": 0,
+      "tsl_activated_count": 0,
+      "avg_position_size": 1.0,
+      "min_position_size": 1,
+      "max_position_size": 1,
+      "total_contracts_traded": 233
+    }
+  },
+  "currency": "USD",
+  "exchange": "CME",
+  "exit_conds": [
+    {
+      "cond_type": "num_relation",
+      "cond": "IBS_1D > 0.8",
+      "shift_1": 2,
+      "condCode": "exit_1",
+      "group": 1
+    },
+    {
+      "cond_type": "num_bars",
+      "cond": "23",
+      "strat": "1017",
+      "condCode": "exit_2",
+      "group": 2
+    }
+  ],
+  "ind_list": {
+    "1 day": [
+      {
+        "indicator": "PRICE",
+        "params": {
+          "price_1": "close",
+          "timePeriod_1": 1,
+          "indCode": "CLOSE_1D"
+        }
+      },
+      {
+        "indicator": "PRICE",
+        "params": {
+          "price_1": "high",
+          "timePeriod_1": 1,
+          "indCode": "HIGH_1D"
+        }
+      },
+      {
+        "indicator": "PRICE",
+        "params": {
+          "price_1": "low",
+          "timePeriod_1": 1,
+          "indCode": "LOW_1D"
+        }
+      },
+      {
+        "indicator": "price_formula",
+        "params": {
+          "formula": "(close-low)/(high-low)",
+          "timePeriod_1": 1,
+          "indCode": "IBS_1D"
+        }
+      },
+      {
+        "indicator": "price_formula",
+        "params": {
+          "formula": "(high+low)/2",
+          "timePeriod_1": 1,
+          "indCode": "MEDIAN_1D"
+        }
+      },
+      {
+        "indicator": "RSI",
+        "params": {
+          "price_1": "MEDIAN_1D",
+          "timePeriod_1": 14,
+          "indCode": "RSI_MED_14_1D"
+        }
+      },
+      {
+        "indicator": "ATR",
+        "params": {
+          "price_1": "high",
+          "price_2": "low",
+          "price_3": "close",
+          "timePeriod_1": 20,
+          "indCode": "ATR_20_1D_SL"
+        }
+      },
+      {
+        "indicator": "ATR",
+        "params": {
+          "price_1": "high",
+          "price_2": "low",
+          "price_3": "close",
+          "timePeriod_1": 25,
+          "indCode": "ATR_25_1D_TP"
+        }
+      }
+    ]
+  },
+  "market_conds": [
+    {
+      "cond_type": "ind_direction",
+      "cond": "RSI_MED_14_1D upwards",
+      "shift_1": 4,
+      "condCode": "mkt_1",
+      "group": 1
+    }
+  ],
+  "long_conds": [
+    {
+      "cond_type": "num_relation",
+      "cond": "IBS_1D < 0.2",
+      "shift_1": 2,
+      "condCode": "long_1"
+    }
+  ],
+  "max_shift": [
+    4,
+    "1 day"
+  ],
+  "max_timePeriod": 25,
+  "minTick": 0.25,
+  "multiplier": 2,
+  "order_params": {
+    "max_rpo": 1,
+    "min_volume": 1
+  },
+  "process_freq": "1 day",
+  "rolling_days": 5,
+  "secType": "FUT",
+  "short_conds": [],
+  "stop_loss_init": {
+    "indicator": true,
+    "indicator_params": {
+      "multiple": 2,
+      "tf": "1 day",
+      "col": "ATR_20_1D_SL"
+    },
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "stop_loss_mgmt": {
+    "breakeven": {
+      "action": false,
+      "profitRatio": 0.2
+    },
+    "trailing": {
+      "action": false,
+      "trailingRatio": 0.8
+    }
+  },
+  "strat_code": 1017,
+  "strat_name": "IBS_24_2",
+  "symbol": "MNQ",
+  "take_profit_init": {
+    "indicator": true,
+    "indicator_params": {
+      "multiple": 3.2,
+      "tf": "1 day",
+      "col": "ATR_25_1D_TP"
+    },
+    "pips": false,
+    "pips_params": {},
+    "percent": false,
+    "percent_params": {}
+  },
+  "trading_hours": null
+}
