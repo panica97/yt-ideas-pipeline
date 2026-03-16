@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import type { DraftDetail } from '../../types/draft';
 
 interface DraftCardProps {
@@ -21,6 +21,50 @@ function StatusTag({ label, active }: { label: string; active: boolean }) {
 
 export default function DraftCard({ draft }: DraftCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const scrollToField = useCallback((field: string) => {
+    const pre = preRef.current;
+    if (!pre) return;
+    // Build regex: the field path's last segment is the JSON key with "_TODO" value
+    const lastKey = field.split('.').pop() ?? field;
+    const regex = new RegExp(`"${lastKey}"\\s*:\\s*"_TODO"`);
+    const text = pre.textContent ?? '';
+    const match = regex.exec(text);
+    if (!match) return;
+
+    // Find the text node and character offset
+    const walker = document.createTreeWalker(pre, NodeFilter.SHOW_TEXT);
+    let charCount = 0;
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      const nodeLen = node.length;
+      if (charCount + nodeLen > match.index) {
+        // Create a temporary range to get position
+        const range = document.createRange();
+        range.setStart(node, match.index - charCount);
+        range.setEnd(node, Math.min(match.index - charCount + match[0].length, nodeLen));
+        const rect = range.getBoundingClientRect();
+        const preRect = pre.getBoundingClientRect();
+        // Scroll the pre element so the match is visible
+        pre.scrollTop = pre.scrollTop + rect.top - preRect.top - preRect.height / 3;
+
+        // Flash highlight
+        const mark = document.createElement('mark');
+        mark.className = 'bg-amber-400/30 text-amber-200 rounded';
+        range.surroundContents(mark);
+        setTimeout(() => {
+          const parent = mark.parentNode;
+          if (parent) {
+            parent.replaceChild(document.createTextNode(mark.textContent ?? ''), mark);
+            parent.normalize();
+          }
+        }, 1500);
+        break;
+      }
+      charCount += nodeLen;
+    }
+  }, []);
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
@@ -61,7 +105,11 @@ export default function DraftCard({ draft }: DraftCardProps) {
               <h5 className="text-xs font-semibold text-amber-400 uppercase mb-1">Campos pendientes</h5>
               <ul className="space-y-0.5">
                 {draft.todo_fields.map((field, i) => (
-                  <li key={i} className="text-xs text-amber-300/80 font-mono bg-amber-500/10 rounded px-2 py-1">
+                  <li
+                    key={i}
+                    onClick={() => scrollToField(field)}
+                    className="text-xs text-amber-300/80 font-mono bg-amber-500/10 rounded px-2 py-1 cursor-pointer hover:bg-amber-500/20 hover:text-amber-200 transition-colors"
+                  >
                     {field}
                   </li>
                 ))}
@@ -73,7 +121,7 @@ export default function DraftCard({ draft }: DraftCardProps) {
           {draft.data && (
             <div>
               <h5 className="text-xs font-semibold text-slate-400 uppercase mb-1">Datos completos</h5>
-              <pre className="text-xs text-slate-300 bg-slate-900/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
+              <pre ref={preRef} className="text-xs text-slate-300 bg-slate-900/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
                 {JSON.stringify(draft.data, null, 2)}
               </pre>
             </div>
