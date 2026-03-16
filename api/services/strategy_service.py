@@ -127,10 +127,18 @@ async def get_strategy_by_name(
     }
 
 
-async def validate_strategy(
-    db: AsyncSession, name: str
+VALID_STATUSES = {"pending", "idea", "validated"}
+
+
+async def set_strategy_status(
+    db: AsyncSession, name: str, new_status: str
 ) -> dict[str, Any]:
-    """Set strategy status to 'validated'."""
+    """Set strategy status to a valid value ('pending', 'idea', 'validated')."""
+    if new_status not in VALID_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Estado invalido '{new_status}'. Valores validos: {', '.join(sorted(VALID_STATUSES))}",
+        )
     result = await db.execute(
         select(Strategy).where(Strategy.name == name)
     )
@@ -140,26 +148,7 @@ async def validate_strategy(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Estrategia '{name}' no encontrada",
         )
-    strat.status = "validated"
-    await db.commit()
-    await db.refresh(strat)
-    return await get_strategy_by_name(db, name)
-
-
-async def unvalidate_strategy(
-    db: AsyncSession, name: str
-) -> dict[str, Any]:
-    """Set strategy status back to 'idea'."""
-    result = await db.execute(
-        select(Strategy).where(Strategy.name == name)
-    )
-    strat = result.scalar_one_or_none()
-    if not strat:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Estrategia '{name}' no encontrada",
-        )
-    strat.status = "idea"
+    strat.status = new_status
     await db.commit()
     await db.refresh(strat)
     return await get_strategy_by_name(db, name)

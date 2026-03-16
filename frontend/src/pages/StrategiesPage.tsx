@@ -7,10 +7,10 @@ import StrategyDetail from '../components/strategies/StrategyDetail';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import type { Strategy } from '../types/strategy';
 
-type Tab = 'ideas' | 'strategies';
+type Tab = 'pending' | 'ideas' | 'finales';
 
 export default function StrategiesPage() {
-  const [tab, setTab] = useState<Tab>('ideas');
+  const [tab, setTab] = useState<Tab>('pending');
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
   const [sessionFilter, setSessionFilter] = useState('');
@@ -20,6 +20,18 @@ export default function StrategiesPage() {
   const { data: sessionsData } = useQuery({
     queryKey: ['research-sessions-strategies'],
     queryFn: () => getResearchSessions(50),
+  });
+
+  // Pendientes tab: strategies with status='pending'
+  const { data: pendingData, isLoading: loadingPending } = useQuery({
+    queryKey: ['pending-strategies', search, channelFilter, sessionFilter],
+    queryFn: () => getStrategies({
+      search: search || undefined,
+      channel: channelFilter || undefined,
+      session_id: sessionFilter ? Number(sessionFilter) : undefined,
+      status: 'pending',
+    }),
+    enabled: tab === 'pending',
   });
 
   // Ideas tab: strategies with status='idea'
@@ -34,8 +46,8 @@ export default function StrategiesPage() {
     enabled: tab === 'ideas',
   });
 
-  // Estrategias tab: strategies with status='validated'
-  const { data: strategiesData, isLoading: loadingStrategies } = useQuery({
+  // Finales tab: strategies with status='validated'
+  const { data: finalesData, isLoading: loadingFinales } = useQuery({
     queryKey: ['validated-strategies', search, channelFilter, sessionFilter],
     queryFn: () => getStrategies({
       search: search || undefined,
@@ -43,7 +55,7 @@ export default function StrategiesPage() {
       session_id: sessionFilter ? Number(sessionFilter) : undefined,
       status: 'validated',
     }),
-    enabled: tab === 'strategies',
+    enabled: tab === 'finales',
   });
 
   const handleStrategyClick = async (name: string) => {
@@ -57,7 +69,7 @@ export default function StrategiesPage() {
   };
 
   // Collect unique channels from the active tab's data
-  const activeData = tab === 'ideas' ? ideasData : strategiesData;
+  const activeData = tab === 'pending' ? pendingData : tab === 'ideas' ? ideasData : finalesData;
   const channels = Array.from(
     new Set(
       (activeData?.strategies ?? [])
@@ -66,12 +78,28 @@ export default function StrategiesPage() {
     )
   );
 
+  const activeLoading = tab === 'pending' ? loadingPending : tab === 'ideas' ? loadingIdeas : loadingFinales;
+
+  const emptyMessages: Record<Tab, string> = {
+    pending: 'No hay estrategias pendientes de revision',
+    ideas: 'No hay ideas todavia. Valida estrategias desde la pestana Pendientes.',
+    finales: 'No hay estrategias finales todavia',
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-white">Estrategias</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-800 border border-slate-700 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => { setTab('pending'); setSelectedStrategy(null); }}
+          className={`px-4 py-1.5 text-sm rounded transition-colors ${
+            tab === 'pending' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          Pendientes
+        </button>
         <button
           onClick={() => { setTab('ideas'); setSelectedStrategy(null); }}
           className={`px-4 py-1.5 text-sm rounded transition-colors ${
@@ -81,16 +109,16 @@ export default function StrategiesPage() {
           Ideas
         </button>
         <button
-          onClick={() => { setTab('strategies'); setSelectedStrategy(null); }}
+          onClick={() => { setTab('finales'); setSelectedStrategy(null); }}
           className={`px-4 py-1.5 text-sm rounded transition-colors ${
-            tab === 'strategies' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
+            tab === 'finales' ? 'bg-primary-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Estrategias
+          Finales
         </button>
       </div>
 
-      {/* Filters (shared between both tabs) */}
+      {/* Filters (shared between all tabs) */}
       <div className="flex gap-3 flex-wrap">
         <input
           type="text"
@@ -126,65 +154,31 @@ export default function StrategiesPage() {
         </select>
       </div>
 
-      {/* Ideas tab */}
-      {tab === 'ideas' && (
+      {/* Tab content */}
+      {activeLoading ? (
+        <LoadingSpinner />
+      ) : selectedStrategy ? (
+        <StrategyDetail
+          strategy={selectedStrategy}
+          onClose={() => setSelectedStrategy(null)}
+          onStatusChange={() => setSelectedStrategy(null)}
+        />
+      ) : (
         <>
-          {loadingIdeas ? (
-            <LoadingSpinner />
-          ) : selectedStrategy ? (
-            <StrategyDetail
-              strategy={selectedStrategy}
-              onClose={() => setSelectedStrategy(null)}
-              onStatusChange={() => setSelectedStrategy(null)}
-            />
-          ) : (
-            <>
-              <p className="text-sm text-slate-400">
-                Total: {ideasData?.total ?? 0} ideas
-              </p>
-              <div className="space-y-3">
-                {(ideasData?.strategies ?? []).map((s) => (
-                  <StrategyCard
-                    key={s.id}
-                    strategy={s}
-                    onClick={() => handleStrategyClick(s.name)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </>
-      )}
-
-      {/* Strategies tab (only with JSON drafts) */}
-      {tab === 'strategies' && (
-        <>
-          {loadingStrategies ? (
-            <LoadingSpinner />
-          ) : selectedStrategy ? (
-            <StrategyDetail
-              strategy={selectedStrategy}
-              onClose={() => setSelectedStrategy(null)}
-              onStatusChange={() => setSelectedStrategy(null)}
-            />
-          ) : (
-            <>
-              <p className="text-sm text-slate-400">
-                {(strategiesData?.total ?? 0) === 0
-                  ? 'No hay estrategias validadas todavia'
-                  : `Total: ${strategiesData?.total ?? 0} estrategias`}
-              </p>
-              <div className="space-y-3">
-                {(strategiesData?.strategies ?? []).map((s) => (
-                  <StrategyCard
-                    key={s.id}
-                    strategy={s}
-                    onClick={() => handleStrategyClick(s.name)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+          <p className="text-sm text-slate-400">
+            {(activeData?.total ?? 0) === 0
+              ? emptyMessages[tab]
+              : `Total: ${activeData?.total ?? 0} ${tab === 'pending' ? 'pendientes' : tab === 'ideas' ? 'ideas' : 'finales'}`}
+          </p>
+          <div className="space-y-3">
+            {(activeData?.strategies ?? []).map((s) => (
+              <StrategyCard
+                key={s.id}
+                strategy={s}
+                onClick={() => handleStrategyClick(s.name)}
+              />
+            ))}
+          </div>
         </>
       )}
 

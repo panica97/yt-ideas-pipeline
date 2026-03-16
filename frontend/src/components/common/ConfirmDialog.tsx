@@ -4,7 +4,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmVariant?: 'danger' | 'success';
+  confirmVariant?: 'danger' | 'success' | 'primary';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -39,6 +39,8 @@ export default function ConfirmDialog({
             className={`px-4 py-2 text-sm text-white rounded transition-colors ${
               confirmVariant === 'success'
                 ? 'bg-green-600 hover:bg-green-700'
+                : confirmVariant === 'primary'
+                ? 'bg-cyan-600 hover:bg-cyan-700'
                 : 'bg-red-600 hover:bg-red-700'
             }`}
           >

@@ -1,7 +1,7 @@
 export interface Strategy {
   id: number;
   name: string;
-  status: 'idea' | 'validated';
+  status: 'pending' | 'idea' | 'validated';
   description: string | null;
   source_channel: string | null;
   source_videos: string[] | null;

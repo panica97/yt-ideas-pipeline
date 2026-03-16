@@ -5,13 +5,19 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
+
+
+class StatusUpdate(BaseModel):
+    status: Literal['pending', 'idea', 'validated']
 
 
 class StrategyResponse(BaseModel):
     id: int
     name: str
-    status: str = "idea"
+    status: str = "pending"
     description: str | None = None
     source_channel: str | None = None
     source_videos: list[str] | None = None

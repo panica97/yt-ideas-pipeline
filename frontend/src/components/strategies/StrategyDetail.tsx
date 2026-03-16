@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { validateStrategy, unvalidateStrategy, getDraftsByStrategy } from '../../services/strategies';
+import { setStrategyStatus, getDraftsByStrategy } from '../../services/strategies';
 import ConfirmDialog from '../common/ConfirmDialog';
 import DraftCard from './DraftCard';
 import type { Strategy } from '../../types/strategy';
@@ -27,8 +27,18 @@ function RuleList({ title, rules }: { title: string; rules: Record<string, unkno
   );
 }
 
+type TargetStatus = 'pending' | 'idea' | 'validated';
+
+interface ConfirmAction {
+  targetStatus: TargetStatus;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  confirmVariant: 'danger' | 'success' | 'primary';
+}
+
 export default function StrategyDetail({ strategy, onClose, onStatusChange }: StrategyDetailProps) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [updating, setUpdating] = useState(false);
   const queryClient = useQueryClient();
 
@@ -37,16 +47,12 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
     queryFn: () => getDraftsByStrategy(strategy.name),
   });
 
-  const isIdea = strategy.status === 'idea';
-
   const handleConfirm = async () => {
+    if (!confirmAction) return;
     setUpdating(true);
     try {
-      if (isIdea) {
-        await validateStrategy(strategy.name);
-      } else {
-        await unvalidateStrategy(strategy.name);
-      }
+      await setStrategyStatus(strategy.name, confirmAction.targetStatus);
+      await queryClient.invalidateQueries({ queryKey: ['pending-strategies'] });
       await queryClient.invalidateQueries({ queryKey: ['ideas'] });
       await queryClient.invalidateQueries({ queryKey: ['validated-strategies'] });
       await queryClient.invalidateQueries({ queryKey: ['strategies-by-session'] });
@@ -54,8 +60,93 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
     } catch (err) {
       console.error('Error updating strategy status:', err);
     } finally {
-      setConfirmOpen(false);
+      setConfirmAction(null);
       setUpdating(false);
+    }
+  };
+
+  const openConfirm = (action: ConfirmAction) => setConfirmAction(action);
+
+  const renderStatusButtons = () => {
+    switch (strategy.status) {
+      case 'pending':
+        return (
+          <>
+            <button
+              onClick={() => openConfirm({
+                targetStatus: 'idea',
+                title: 'Marcar como idea',
+                message: 'Esta estrategia pasara a la pestana Ideas.',
+                confirmLabel: 'Marcar como idea',
+                confirmVariant: 'primary',
+              })}
+              disabled={updating}
+              className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-white bg-cyan-600 hover:bg-cyan-700"
+            >
+              Marcar como idea
+            </button>
+            <button
+              onClick={() => openConfirm({
+                targetStatus: 'validated',
+                title: 'Marcar como final',
+                message: 'Esta estrategia pasara directamente a la pestana Finales.',
+                confirmLabel: 'Marcar como final',
+                confirmVariant: 'success',
+              })}
+              disabled={updating}
+              className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-white bg-green-600 hover:bg-green-700"
+            >
+              Marcar como final
+            </button>
+          </>
+        );
+      case 'idea':
+        return (
+          <>
+            <button
+              onClick={() => openConfirm({
+                targetStatus: 'validated',
+                title: 'Promover a final',
+                message: 'Esta idea pasara a la pestana Finales.',
+                confirmLabel: 'Promover',
+                confirmVariant: 'success',
+              })}
+              disabled={updating}
+              className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-white bg-green-600 hover:bg-green-700"
+            >
+              Promover a final
+            </button>
+            <button
+              onClick={() => openConfirm({
+                targetStatus: 'pending',
+                title: 'Devolver a pendientes',
+                message: 'Esta idea volvera a la pestana Pendientes.',
+                confirmLabel: 'Devolver',
+                confirmVariant: 'danger',
+              })}
+              disabled={updating}
+              className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-white bg-slate-600 hover:bg-slate-700"
+            >
+              Devolver a pendientes
+            </button>
+          </>
+        );
+      case 'validated':
+        return (
+          <button
+            onClick={() => openConfirm({
+              targetStatus: 'idea',
+              title: 'Devolver a ideas',
+              message: 'Esta estrategia volvera a la pestana Ideas.',
+              confirmLabel: 'Devolver',
+              confirmVariant: 'danger',
+            })}
+            disabled={updating}
+            className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-white bg-amber-600 hover:bg-amber-700"
+          >
+            Devolver a ideas
+          </button>
+        );
     }
   };
 
@@ -69,17 +160,7 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setConfirmOpen(true)}
-            disabled={updating}
-            className={`px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 ${
-              isIdea
-                ? 'text-white bg-green-600 hover:bg-green-700'
-                : 'text-white bg-amber-600 hover:bg-amber-700'
-            }`}
-          >
-            {updating ? '...' : isIdea ? 'Validar estrategia' : 'Devolver a ideas'}
-          </button>
+          {renderStatusButtons()}
           <button
             onClick={onClose}
             className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
@@ -90,17 +171,13 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
       </div>
 
       <ConfirmDialog
-        open={confirmOpen}
-        title={isIdea ? 'Validar estrategia' : 'Devolver a ideas'}
-        message={
-          isIdea
-            ? 'Esta idea pasara a la pestana Estrategias. Podras revertirlo luego.'
-            : 'Esta estrategia volvera a la pestana Ideas.'
-        }
-        confirmLabel={isIdea ? 'Validar' : 'Devolver'}
-        confirmVariant={isIdea ? 'success' : 'danger'}
+        open={!!confirmAction}
+        title={confirmAction?.title ?? ''}
+        message={confirmAction?.message ?? ''}
+        confirmLabel={confirmAction?.confirmLabel ?? 'Confirmar'}
+        confirmVariant={confirmAction?.confirmVariant ?? 'danger'}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={() => setConfirmAction(null)}
       />
 
       {strategy.description && (

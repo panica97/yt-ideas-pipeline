@@ -7,7 +7,7 @@ interface StrategyFilters {
   search?: string;
   session_id?: number;
   has_draft?: boolean;
-  status?: 'idea' | 'validated';
+  status?: 'pending' | 'idea' | 'validated';
 }
 
 export async function getStrategies(filters: StrategyFilters = {}): Promise<StrategiesResponse> {
@@ -27,13 +27,14 @@ export async function getStrategy(name: string): Promise<Strategy> {
   return data;
 }
 
-export async function validateStrategy(name: string): Promise<Strategy> {
-  const { data } = await api.patch<Strategy>(`/strategies/${encodeURIComponent(name)}/validate`);
-  return data;
-}
-
-export async function unvalidateStrategy(name: string): Promise<Strategy> {
-  const { data } = await api.patch<Strategy>(`/strategies/${encodeURIComponent(name)}/unvalidate`);
+export async function setStrategyStatus(
+  name: string,
+  status: 'pending' | 'idea' | 'validated',
+): Promise<Strategy> {
+  const { data } = await api.patch<Strategy>(
+    `/strategies/${encodeURIComponent(name)}/status`,
+    { status },
+  );
   return data;
 }
 

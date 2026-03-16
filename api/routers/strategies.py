@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import get_db, verify_api_key
 from api.models.schemas.draft import DraftsListResponse
-from api.models.schemas.strategy import StrategiesListResponse, StrategyResponse
+from api.models.schemas.strategy import StrategiesListResponse, StatusUpdate, StrategyResponse
 from api.services import strategy_service
 
 router = APIRouter(prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(verify_api_key)])
@@ -46,22 +46,21 @@ async def list_strategies(
     return {"total": total, "strategies": strategies}
 
 
-# NOTE: PATCH validate/unvalidate routes MUST come before /{strategy_name}
-# to avoid "validate"/"unvalidate" being captured as a strategy_name.
+# NOTE: /status and /drafts routes MUST come before /{strategy_name}
+# to avoid being captured as a strategy_name path parameter.
 
 @router.get("/{strategy_name}/drafts")
 async def get_drafts_by_strategy(strategy_name: str, db: AsyncSession = Depends(get_db)):
     return await strategy_service.get_drafts_by_strategy(db, strategy_name)
 
 
-@router.patch("/{strategy_name}/validate", response_model=StrategyResponse)
-async def validate_strategy(strategy_name: str, db: AsyncSession = Depends(get_db)):
-    return await strategy_service.validate_strategy(db, strategy_name)
-
-
-@router.patch("/{strategy_name}/unvalidate", response_model=StrategyResponse)
-async def unvalidate_strategy(strategy_name: str, db: AsyncSession = Depends(get_db)):
-    return await strategy_service.unvalidate_strategy(db, strategy_name)
+@router.patch("/{strategy_name}/status", response_model=StrategyResponse)
+async def set_strategy_status(
+    strategy_name: str,
+    body: StatusUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    return await strategy_service.set_strategy_status(db, strategy_name, body.status)
 
 
 @router.get("/{strategy_name}", response_model=StrategyResponse)
