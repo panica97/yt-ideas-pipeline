@@ -8,6 +8,7 @@ import ChannelsPage from './pages/ChannelsPage';
 import HistoryPage from './pages/HistoryPage';
 import StrategiesPage from './pages/StrategiesPage';
 import LivePage from './pages/LivePage';
+import InstrumentsPage from './pages/InstrumentsPage';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const apiKey = localStorage.getItem('irt_api_key');
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
       { path: 'history', element: <HistoryPage /> },
       { path: 'strategies', element: <StrategiesPage /> },
       { path: 'live', element: <LivePage /> },
+      { path: 'instruments', element: <InstrumentsPage /> },
     ],
   },
 ]);

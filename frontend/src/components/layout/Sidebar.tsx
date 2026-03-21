@@ -7,6 +7,7 @@ const navItems = [
   { to: '/history', label: 'Historial', icon: '\u23F0' },
   { to: '/strategies', label: 'Resultados', icon: '\u2605' },
   { to: '/live', label: 'Live', icon: '\u26A1' },
+  { to: '/instruments', label: 'Instrumentos', icon: '\u2699' },
 ];
 
 export default function Sidebar() {
