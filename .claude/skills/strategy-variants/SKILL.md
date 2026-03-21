@@ -53,11 +53,13 @@ If the strategy is inherently one-directional (long-only or short-only), keep it
 
 ### Step 3: Propose exit method
 
-Each variant needs exactly ONE exit method:
+Each variant needs exactly ONE exit method. Every variant must be backtestable — it must have a way to close the position.
 
-1. **Source specifies exit**: use it as-is (e.g., "exit after 20 bars", "RSI > 90", "opposite signal closes position")
-2. **Stop & Reverse**: if the source says the strategy is always in the market (opposite signal closes current and opens new), note this as the exit method
-3. **No exit specified**: propose a `num_bars` exit with `_TODO` as the value, and note that the exit method needs to be determined during backtesting
+1. **Stop & Reverse** (only for bidirectional strategies): if the strategy has BOTH long and short conditions AND they are kept together (not split), SAR works because the opposite signal closes the current position. **SAR is NOT valid for unidirectional variants** (long-only or short-only) because there is no opposite signal to trigger the exit.
+2. **Source specifies a concrete exit**: use it as-is (e.g., "exit after 20 bars", "RSI > 90")
+3. **No valid exit or unidirectional SAR**: use `num_bars` exit with `_TODO` as the value and note that exit needs to be determined during backtesting
+
+In practice, since Step 2 splits long/short into separate strategies, SAR is rarely valid. Most variants will need either a concrete exit condition or `num_bars`.
 
 ### Step 4: Propose variants
 
