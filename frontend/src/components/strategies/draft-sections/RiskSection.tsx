@@ -57,16 +57,18 @@ export default function RiskSection({ data, todoFields }: Props) {
       </div>
 
       {/* Management */}
-      <div className="flex gap-4 text-xs">
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.breakeven.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
-          <span>{mgmt.breakeven.action ? '\u2713' : '\u2717'}</span>
-          <span>Breakeven (ratio: {mgmt.breakeven.profitRatio})</span>
+      {mgmt && (
+        <div className="flex gap-4 text-xs">
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.breakeven?.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
+            <span>{mgmt.breakeven?.action ? '\u2713' : '\u2717'}</span>
+            <span>Breakeven (ratio: {mgmt.breakeven?.profitRatio ?? '-'})</span>
+          </div>
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.trailing?.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
+            <span>{mgmt.trailing?.action ? '\u2713' : '\u2717'}</span>
+            <span>Trailing (ratio: {mgmt.trailing?.trailingRatio ?? '-'})</span>
+          </div>
         </div>
-        <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.trailing.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
-          <span>{mgmt.trailing.action ? '\u2713' : '\u2717'}</span>
-          <span>Trailing (ratio: {mgmt.trailing.trailingRatio})</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
