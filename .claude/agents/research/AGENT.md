@@ -6,7 +6,7 @@ description: Research agent - executes the full trading strategy research pipeli
 # Research Agent
 
 Agent dedicado a investigar estrategias de trading. Ejecuta el pipeline completo:
-yt-scraper -> notebooklm-analyst -> translator -> db-manager.
+yt-scraper -> notebooklm-analyst -> strategy-variants -> strategy-translator -> db-manager.
 
 ## Input
 
@@ -107,7 +107,9 @@ with sync_session_ctx() as session:
 
 ### Step 2: NotebookLM Analyst
 
-Usa estos comandos de NotebookLM para extraer estrategias:
+Usa el skill `notebooklm-analyst` (leer `.claude/skills/notebooklm-analyst/SKILL.md` para el workflow detallado).
+
+Comandos base:
 
 ```bash
 notebooklm create "Research: <topic>" --json   # Crear notebook (guarda el ID)
@@ -116,29 +118,41 @@ notebooklm source wait <src_id> -n <id>        # Esperar a que se procese cada s
 notebooklm ask "<question>" -n <id>            # Consultar el notebook
 ```
 
-Workflow:
-1. Crear notebook
-2. Anadir todos los videos como sources y esperar procesamiento
-3. Preguntar por TODAS las estrategias mencionadas en los videos
-4. Para CADA estrategia, extraer entry rules, exit rules, risk management y parametros
-5. Estructurar las estrategias en formato YAML
+El analyst ejecuta 3 rondas de preguntas:
+1. **Discovery**: identificar TODAS las estrategias
+2. **Rules extraction**: para cada estrategia, extraer entry/exit rules concretas con indicadores y thresholds exactos
+3. **Context extraction**: mercados recomendados/a evitar, timeframes recomendados/a evitar
 
-**IMPORTANTE**: NO borrar el notebook todavia. El translator puede necesitarlo para consultas adicionales.
+Output: lista de estrategias en formato YAML con campos `entry_rules`, `exit_rules`, `recommended_markets`, `recommended_timeframes`, `avoid_timeframes`, `avoid_markets`, `notes`.
+
+**IMPORTANTE**: NO borrar el notebook todavia.
 
 **Si no hay estrategias**: Borrar el notebook y devolver `NO_STRATEGIES_FOUND`.
-**Si hay estrategias**: Continuar al Step 3 con el notebook abierto.
+**Si hay estrategias**: Continuar al Step 3.
 
-### Step 3: Strategy Translator
+### Step 3: Strategy Variants
+
+Invocar skill: `/strategy-variants`
+
+Input: el YAML completo del analyst (Step 2).
+
+El skill:
+1. **Purifica**: quita SL/TP y risk management, deja solo entrada/salida
+2. **Separa direcciones**: si hay long+short, genera dos estrategias independientes
+3. **Propone exit method**: usa lo que dice el source o propone num_bars con _TODO
+4. **Propone variantes**: combina mercados y timeframes recomendados (max 5 por estrategia original)
+
+Output: lista de variantes YAML, cada una con `variant_name`, `direction`, `symbol`, `timeframe`, `entry_rules`, `exit_rules`, `indicators_needed`, `notes`.
+
+### Step 4: Strategy Translator
 
 Invocar skill: `/strategy-translator`
 
-Input: lista de nombres de estrategias guardadas en Step 2+5, y el `notebook_id` del Step 2.
+Input: la lista de variantes del Step 3.
 
-El skill se encarga de:
-- Estructurar las ideas para el frontend (limpiar parametros, reglas, etc.) y actualizar la BD
-- Generar variantes IBKR JSON draft para cada idea valida (creative proposer)
+El translator traduce CADA variante a un JSON draft IBKR (1 variante = 1 JSON). Es una traduccion literal, sin decisiones creativas. Guarda los drafts en la BD con `upsert_draft()`.
 
-### Step 4: Cleanup y registro de historial
+### Step 5: Cleanup y registro de historial
 
 **Si `save_conversations` es true**, guardar el historial ANTES de borrar el notebook:
 
@@ -181,7 +195,7 @@ with sync_session_ctx() as session:
 
 Si `DATABASE_URL` no esta configurado, usar fallback YAML: anadir entradas a `data/research/history.yaml` bajo `researched_videos`.
 
-### Step 5: DB Manager
+### Step 6: DB Manager
 
 Guarda las estrategias en PostgreSQL con deduplicacion:
 
@@ -198,7 +212,7 @@ with sync_session_ctx() as session:
 
 El `strategy_data` dict debe tener: `name` (required), `description`, `source_videos`, `parameters`, `entry_rules`, `exit_rules`, `risk_management`, `notes`.
 
-### Step 6: Resumen
+### Step 7: Resumen
 
 Devuelve al orchestrator:
 
@@ -249,6 +263,6 @@ If `DATABASE_URL` is not set, the pipeline still runs but without session tracki
 
 ## Error Handling
 
-- Si un paso falla, NO continuar al siguiente (excepto Step 4: cleanup)
-- Step 4 (cleanup NotebookLM) se ejecuta SIEMPRE, incluso si Step 2 o 3 fallan
+- Si un paso falla, NO continuar al siguiente (excepto Step 5: cleanup)
+- Step 5 (cleanup NotebookLM) se ejecuta SIEMPRE, incluso si Steps 2-4 fallan
 - Reportar en que paso fallo y por que
