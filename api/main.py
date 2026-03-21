@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import settings
 from api.middleware.auth import ApiKeyMiddleware
-from api.routers import channels, export, health, history, research, stats, strategies, topics
+from api.routers import channels, export, health, history, instruments, research, stats, strategies, topics
 from api.services.research_watcher import ResearchWatcher
 
 logger = logging.getLogger(__name__)
@@ -67,4 +67,5 @@ app.include_router(strategies.router)
 app.include_router(history.router)
 app.include_router(stats.router)
 app.include_router(export.router)
+app.include_router(instruments.router)
 app.include_router(research.router)
