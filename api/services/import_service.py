@@ -182,14 +182,14 @@ def _extract_todo_fields(data, prefix=""):
     if isinstance(data, dict):
         for key, value in data.items():
             current = f"{prefix}.{key}" if prefix else key
-            if value == "_TODO":
+            if isinstance(value, str) and "_TODO" in value:
                 paths.append(current)
             else:
                 paths.extend(_extract_todo_fields(value, current))
     elif isinstance(data, list):
         for idx, item in enumerate(data):
             current = f"{prefix}[{idx}]"
-            if item == "_TODO":
+            if isinstance(item, str) and "_TODO" in item:
                 paths.append(current)
             else:
                 paths.extend(_extract_todo_fields(item, current))

@@ -43,16 +43,16 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
         : 'ERROR';
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 space-y-3">
+    <div className="bg-surface-1 border border-border rounded-lg p-5 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StepIndicator status={session.status} />
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-text-primary">
             Sesion #{session.id} - {session.topic}
           </span>
         </div>
-        <span className="text-xs text-slate-400">{statusLabel}</span>
+        <span className="text-xs text-text-muted">{statusLabel}</span>
       </div>
 
       {/* Progress bar */}
@@ -62,18 +62,18 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
 
       {/* Details */}
       <div className="space-y-1 text-sm">
-        <p className="text-slate-300">
-          <span className="text-slate-500">Paso:</span>{' '}
+        <p className="text-text-secondary">
+          <span className="text-text-muted">Paso:</span>{' '}
           {session.step} - {getStepDisplay(session.step_name, session.step_display)}
         </p>
         {session.channel && (
-          <p className="text-slate-300">
-            <span className="text-slate-500">Canal:</span> {session.channel}
+          <p className="text-text-secondary">
+            <span className="text-text-muted">Canal:</span> {session.channel}
           </p>
         )}
         {session.videos_processing && session.videos_processing.length > 0 && (
-          <div className="text-slate-300">
-            <span className="text-slate-500">Videos:</span>{' '}
+          <div className="text-text-secondary">
+            <span className="text-text-muted">Videos:</span>{' '}
             {session.videos_processing.map((vid, i) => (
               <span key={i}>
                 {i > 0 && ', '}
@@ -81,7 +81,7 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
                   href={`https://www.youtube.com/watch?v=${vid}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary-400 hover:text-primary-300"
+                  className="text-accent hover:text-accent-hover"
                 >
                   {vid}
                 </a>
@@ -90,25 +90,25 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
           </div>
         )}
         {session.started_at && (
-          <p className="text-slate-400 text-xs">{timeAgo(session.started_at)}</p>
+          <p className="text-text-muted text-xs">{timeAgo(session.started_at)}</p>
         )}
       </div>
 
       {/* Error detail */}
       {session.status === 'error' && session.error_detail && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded p-3 text-xs text-red-400">
+        <div className="bg-red-500/10 border border-red-500/20 rounded p-3 text-xs text-danger">
           {session.error_detail}
         </div>
       )}
 
       {/* Completion summary */}
       {session.status === 'completed' && session.result_summary && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded p-3 text-xs text-green-400">
+        <div className="bg-accent/10 border border-green-500/20 rounded p-3 text-xs text-accent">
           <p className="font-medium mb-1">Investigacion completada</p>
           <p>{JSON.stringify(session.result_summary)}</p>
           <a
             href="/strategies"
-            className="text-primary-400 hover:text-primary-300 mt-1 inline-block"
+            className="text-accent hover:text-accent-hover mt-1 inline-block"
           >
             Ver estrategias
           </a>

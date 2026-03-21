@@ -11,22 +11,22 @@ export default function ChannelCard({ channel, onDelete }: ChannelCardProps) {
     : 'Nunca';
 
   return (
-    <div className="flex items-center justify-between py-2 px-3 bg-slate-700/30 border border-slate-700 rounded">
+    <div className="flex items-center justify-between py-2 px-3 bg-surface-2/30 border border-border rounded">
       <div className="flex items-center gap-4 min-w-0">
-        <span className="text-sm font-medium text-slate-200 truncate">{channel.name}</span>
+        <span className="text-sm font-medium text-text-primary truncate">{channel.name}</span>
         <a
           href={channel.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-primary-400 hover:text-primary-300 truncate"
+          className="text-xs text-accent hover:text-accent-hover truncate"
         >
           {channel.url.replace('https://www.youtube.com/', '')}
         </a>
-        <span className="text-xs text-slate-500 whitespace-nowrap">{lastFetched}</span>
+        <span className="text-xs text-text-muted whitespace-nowrap">{lastFetched}</span>
       </div>
       <button
         onClick={onDelete}
-        className="text-xs text-slate-500 hover:text-red-400 ml-2 transition-colors"
+        className="text-xs text-text-muted hover:text-danger ml-2 transition-colors"
         title="Eliminar canal"
       >
         Borrar

@@ -24,43 +24,43 @@ export default function TopicForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-slate-700/50 border border-slate-600 rounded p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-surface-2/50 border border-border rounded p-4 space-y-3">
       {!editMode && (
         <div>
-          <label className="block text-xs text-slate-400 mb-1">Slug</label>
+          <label className="block text-xs text-text-muted mb-1">Slug</label>
           <input
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="ej: futures"
-            className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
+            className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
             required
             autoFocus
           />
         </div>
       )}
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Descripcion</label>
+        <label className="block text-xs text-text-muted mb-1">Descripcion</label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="ej: Estrategias de futuros"
-          className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
+          className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           autoFocus={editMode}
         />
       </div>
       <div className="flex gap-2">
         <button
           type="submit"
-          className="px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
+          className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
           {editMode ? 'Guardar' : 'Crear'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1.5 text-sm bg-slate-600 hover:bg-slate-500 text-slate-300 rounded transition-colors"
+          className="px-3 py-1.5 text-sm bg-surface-3 hover:bg-surface-3 text-text-secondary rounded transition-colors"
         >
           Cancelar
         </button>

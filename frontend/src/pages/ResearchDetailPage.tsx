@@ -19,13 +19,13 @@ function formatDuration(seconds: number): string {
 function ClassificationBadge({ classification }: { classification: string | null }) {
   if (classification === 'irrelevant') {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-600 text-slate-300">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-3 text-text-secondary">
         irrelevant
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-accent/20 text-accent">
       strategy
     </span>
   );
@@ -40,10 +40,10 @@ function IrrelevantVideosSection({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
+    <div className="bg-surface-1 border border-border rounded-lg p-5">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-slate-300 transition-colors w-full text-left"
+        className="flex items-center gap-2 text-sm font-semibold text-text-muted hover:text-text-secondary transition-colors w-full text-left"
       >
         <span className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>
           {'\u25B6'}
@@ -57,12 +57,12 @@ function IrrelevantVideosSection({
 
 function StepStatusIcon({ status }: { status: PipelineStep['status'] }) {
   if (status === 'ok') {
-    return <span className="text-green-400 text-sm font-bold">{'\u2713'}</span>;
+    return <span className="text-accent text-sm font-bold">{'\u2713'}</span>;
   }
   if (status === 'skipped') {
-    return <span className="text-slate-500 text-sm font-bold">{'\u2192'}</span>;
+    return <span className="text-text-muted text-sm font-bold">{'\u2192'}</span>;
   }
-  return <span className="text-red-400 text-sm font-bold">{'\u2717'}</span>;
+  return <span className="text-danger text-sm font-bold">{'\u2717'}</span>;
 }
 
 export default function ResearchDetailPage() {
@@ -98,8 +98,8 @@ export default function ResearchDetailPage() {
   if (!session) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">Sesion no encontrada</p>
-        <Link to="/research" className="text-primary-400 hover:text-primary-300 text-sm mt-2 inline-block">
+        <p className="text-text-muted">Sesion no encontrada</p>
+        <Link to="/research" className="text-accent hover:text-accent-hover text-sm mt-2 inline-block">
           Volver a investigaciones
         </Link>
       </div>
@@ -121,15 +121,15 @@ export default function ResearchDetailPage() {
       <div className="flex items-center gap-3">
         <Link
           to="/research"
-          className="text-slate-400 hover:text-white transition-colors"
+          className="text-text-muted hover:text-text-primary transition-colors"
         >
           {'\u2190'}
         </Link>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-white">
+          <h1 className="text-xl font-bold text-text-primary">
             {session.topic ?? 'Sin topic'}
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-text-muted">
             {session.started_at
               ? new Date(session.started_at).toLocaleDateString('es-ES', {
                   day: 'numeric',
@@ -146,44 +146,44 @@ export default function ResearchDetailPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-white">{totalVideos}</p>
-          <p className="text-xs text-slate-400 mt-1">Videos procesados</p>
+        <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-text-primary">{totalVideos}</p>
+          <p className="text-xs text-text-muted mt-1">Videos procesados</p>
         </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-yellow-400">{totalStrategies}</p>
-          <p className="text-xs text-slate-400 mt-1">Ideas encontradas</p>
+        <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-warn">{totalStrategies}</p>
+          <p className="text-xs text-text-muted mt-1">Ideas encontradas</p>
         </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-slate-300">
+        <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-text-secondary">
             {channelsProcessed.length}
           </p>
-          <p className="text-xs text-slate-400 mt-1">Canales</p>
+          <p className="text-xs text-text-muted mt-1">Canales</p>
         </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-slate-300">
+        <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
+          <p className="text-2xl font-bold text-text-secondary">
             {session.duration_seconds != null
               ? formatDuration(session.duration_seconds)
               : '-'}
           </p>
-          <p className="text-xs text-slate-400 mt-1">Duracion</p>
+          <p className="text-xs text-text-muted mt-1">Duracion</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Pipeline steps */}
         {pipelineSteps.length > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
-            <h2 className="text-sm font-semibold text-slate-300 mb-3">
+          <div className="bg-surface-1 border border-border rounded-lg p-5">
+            <h2 className="text-sm font-semibold text-text-secondary mb-3">
               Pipeline
             </h2>
             <div className="space-y-2">
               {pipelineSteps.map((step) => (
                 <div key={step.step} className="flex items-center gap-3 text-sm">
                   <StepStatusIcon status={step.status} />
-                  <span className="text-slate-300 w-44 truncate">{step.name}</span>
+                  <span className="text-text-secondary w-44 truncate">{step.name}</span>
                   {step.detail && (
-                    <span className="text-slate-500 truncate text-xs">
+                    <span className="text-text-muted truncate text-xs">
                       {step.detail}
                     </span>
                   )}
@@ -195,8 +195,8 @@ export default function ResearchDetailPage() {
 
         {/* Channels breakdown */}
         {channelsProcessed.length > 0 && (
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
-            <h2 className="text-sm font-semibold text-slate-300 mb-3">
+          <div className="bg-surface-1 border border-border rounded-lg p-5">
+            <h2 className="text-sm font-semibold text-text-secondary mb-3">
               Canales procesados
             </h2>
             <div className="space-y-2">
@@ -205,8 +205,8 @@ export default function ResearchDetailPage() {
                   key={ch.name}
                   className="flex items-center justify-between text-sm"
                 >
-                  <span className="text-slate-300 truncate">{ch.name}</span>
-                  <span className="text-slate-500 whitespace-nowrap">
+                  <span className="text-text-secondary truncate">{ch.name}</span>
+                  <span className="text-text-muted whitespace-nowrap">
                     {ch.videos} videos / {ch.strategies} ideas
                   </span>
                 </div>
@@ -218,9 +218,9 @@ export default function ResearchDetailPage() {
 
       {/* Error detail */}
       {session.error_detail && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-red-400 mb-1">Error</h2>
-          <p className="text-sm text-red-300">{session.error_detail}</p>
+        <div className="bg-red-500/10 border border-danger/30 rounded-lg p-4">
+          <h2 className="text-sm font-semibold text-danger mb-1">Error</h2>
+          <p className="text-sm text-danger-hover">{session.error_detail}</p>
         </div>
       )}
 
@@ -234,17 +234,17 @@ export default function ResearchDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700">
-                  <th className="text-left py-2 px-3 text-slate-400 font-medium">
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 text-text-muted font-medium">
                     Video ID
                   </th>
-                  <th className="text-left py-2 px-3 text-slate-400 font-medium">
+                  <th className="text-left py-2 px-3 text-text-muted font-medium">
                     Canal
                   </th>
-                  <th className="text-left py-2 px-3 text-slate-400 font-medium">
+                  <th className="text-left py-2 px-3 text-text-muted font-medium">
                     Clasificacion
                   </th>
-                  <th className="text-left py-2 px-3 text-slate-400 font-medium">
+                  <th className="text-left py-2 px-3 text-text-muted font-medium">
                     Ideas
                   </th>
                 </tr>
@@ -253,25 +253,25 @@ export default function ResearchDetailPage() {
                 {videos.map((v, i) => (
                   <tr
                     key={`${v.video_id}-${i}`}
-                    className="border-b border-slate-700/50 hover:bg-slate-700/30"
+                    className="border-b border-border/50 hover:bg-surface-2/30"
                   >
                     <td className="py-2 px-3">
                       <a
                         href={`https://www.youtube.com/watch?v=${v.video_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary-400 hover:text-primary-300"
+                        className="text-accent hover:text-accent-hover"
                       >
                         {v.title || v.video_id}
                       </a>
                     </td>
-                    <td className="py-2 px-3 text-slate-300">
+                    <td className="py-2 px-3 text-text-secondary">
                       {v.channel || '-'}
                     </td>
                     <td className="py-2 px-3">
                       <ClassificationBadge classification={v.classification} />
                     </td>
-                    <td className="py-2 px-3 text-slate-300">
+                    <td className="py-2 px-3 text-text-secondary">
                       {v.strategies_found}
                     </td>
                   </tr>
@@ -283,14 +283,14 @@ export default function ResearchDetailPage() {
 
         return (
           <>
-            <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
-              <h2 className="text-sm font-semibold text-slate-300 mb-3">
+            <div className="bg-surface-1 border border-border rounded-lg p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">
                 Videos procesados ({strategyVideos.length})
               </h2>
               {strategyVideos.length > 0 ? (
                 renderVideoTable(strategyVideos)
               ) : (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-text-muted">
                   No se procesaron videos en esta sesion
                 </p>
               )}
@@ -308,7 +308,7 @@ export default function ResearchDetailPage() {
 
       {/* Ideas found — detail view or grouped list */}
       {selectedIdea ? (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
+        <div className="bg-surface-1 border border-border rounded-lg p-5">
           <StrategyDetail
             strategy={selectedIdea}
             onClose={() => setSelectedIdea(null)}
@@ -316,8 +316,8 @@ export default function ResearchDetailPage() {
           />
         </div>
       ) : (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5">
-          <h2 className="text-sm font-semibold text-slate-300 mb-3">
+        <div className="bg-surface-1 border border-border rounded-lg p-5">
+          <h2 className="text-sm font-semibold text-text-secondary mb-3">
             Ideas encontradas ({strategies.length})
           </h2>
           {loadingIdea && <LoadingSpinner />}
@@ -340,34 +340,34 @@ export default function ResearchDetailPage() {
                           href={`https://www.youtube.com/watch?v=${videoId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-primary-400 hover:text-primary-300 font-medium"
+                          className="text-xs text-accent hover:text-accent-hover font-medium"
                         >
                           {videoId}
                         </a>
                       ) : (
-                        <span className="text-xs text-slate-500 font-medium">Sin video</span>
+                        <span className="text-xs text-text-muted font-medium">Sin video</span>
                       )}
                       {channel && (
-                        <span className="text-xs text-slate-500">/ {channel}</span>
+                        <span className="text-xs text-text-muted">/ {channel}</span>
                       )}
-                      <span className="text-xs text-slate-600">({ideas.length})</span>
+                      <span className="text-xs text-text-muted">({ideas.length})</span>
                     </div>
                     <div className="space-y-1 ml-3">
                       {ideas.map((s) => (
                         <button
                           key={s.id}
                           onClick={() => handleIdeaClick(s.name)}
-                          className="w-full text-left flex items-center justify-between py-1.5 px-3 bg-slate-700/30 rounded hover:bg-slate-700/60 cursor-pointer transition-colors"
+                          className="w-full text-left flex items-center justify-between py-1.5 px-3 bg-surface-2/30 rounded hover:bg-surface-2/60 cursor-pointer transition-colors"
                         >
                           <div>
-                            <p className="text-sm text-white font-medium">{s.name}</p>
+                            <p className="text-sm text-text-primary font-medium">{s.name}</p>
                             {s.description && (
-                              <p className="text-xs text-slate-400 mt-0.5 truncate max-w-md">
+                              <p className="text-xs text-text-muted mt-0.5 truncate max-w-md">
                                 {s.description}
                               </p>
                             )}
                           </div>
-                          <span className="text-slate-500 text-xs ml-2">{'\u203A'}</span>
+                          <span className="text-text-muted text-xs ml-2">{'\u203A'}</span>
                         </button>
                       ))}
                     </div>
@@ -376,7 +376,7 @@ export default function ResearchDetailPage() {
               })()}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-text-muted">
               No se encontraron ideas en esta sesion
             </p>
           )}

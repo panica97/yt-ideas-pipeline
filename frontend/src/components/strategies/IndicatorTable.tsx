@@ -34,26 +34,26 @@ export default function IndicatorTable({ indicators, todoFields = [] }: Indicato
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-slate-700">
-            <th className="text-left py-1 px-2 text-slate-500">Indicador</th>
-            <th className="text-left py-1 px-2 text-slate-500">Parametros</th>
-            <th className="text-left py-1 px-2 text-slate-500">Timeframe</th>
-            <th className="text-left py-1 px-2 text-slate-500">Alias</th>
+          <tr className="border-b border-border">
+            <th className="text-left py-1 px-2 text-text-muted">Indicador</th>
+            <th className="text-left py-1 px-2 text-text-muted">Parametros</th>
+            <th className="text-left py-1 px-2 text-text-muted">Timeframe</th>
+            <th className="text-left py-1 px-2 text-text-muted">Alias</th>
           </tr>
         </thead>
         <tbody>
           {indicators.map((ind, i) => (
-            <tr key={i} className="border-b border-slate-700/50">
-              <td className="py-1 px-2 text-slate-300 font-medium">
+            <tr key={i} className="border-b border-border/50">
+              <td className="py-1 px-2 text-text-secondary font-medium">
                 {renderValue(ind.indicator, `indicators.${i}.indicator`, todoFields)}
               </td>
-              <td className="py-1 px-2 text-slate-400">
+              <td className="py-1 px-2 text-text-muted">
                 {ind.params ? renderValue(ind.params, `indicators.${i}.params`, todoFields) : '-'}
               </td>
-              <td className="py-1 px-2 text-slate-400">
+              <td className="py-1 px-2 text-text-muted">
                 {renderValue(ind.timeframe, `indicators.${i}.timeframe`, todoFields)}
               </td>
-              <td className="py-1 px-2 text-slate-400">
+              <td className="py-1 px-2 text-text-muted">
                 {renderValue(ind.alias, `indicators.${i}.alias`, todoFields)}
               </td>
             </tr>

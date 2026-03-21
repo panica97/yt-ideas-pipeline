@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
@@ -8,6 +10,12 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
 }
+
+const variantClasses = {
+  danger: 'bg-danger hover:bg-danger-hover',
+  success: 'bg-accent hover:bg-accent-hover',
+  primary: 'bg-accent hover:bg-accent-hover',
+};
 
 export default function ConfirmDialog({
   open,
@@ -22,27 +30,30 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/60" onClick={onCancel} />
-      <div className="relative bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-sm w-full mx-4">
-        <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-        <p className="text-sm text-slate-300 mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative glass rounded-xl p-6 max-w-sm w-full mx-4 shadow-glow-accent animate-slide-in">
+        <div className="flex items-start gap-3 mb-4">
+          {confirmVariant === 'danger' && (
+            <div className="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-danger" />
+            </div>
+          )}
+          <div>
+            <h3 className="text-base font-semibold text-text-primary">{title}</h3>
+            <p className="text-sm text-text-secondary mt-1">{message}</p>
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded transition-colors"
+            className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary bg-surface-2 hover:bg-surface-3 rounded-lg transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm text-white rounded transition-colors ${
-              confirmVariant === 'success'
-                ? 'bg-green-600 hover:bg-green-700'
-                : confirmVariant === 'primary'
-                ? 'bg-cyan-600 hover:bg-cyan-700'
-                : 'bg-red-600 hover:bg-red-700'
-            }`}
+            className={`px-4 py-2 text-sm text-text-primary rounded-lg transition-colors ${variantClasses[confirmVariant]}`}
           >
             {confirmLabel}
           </button>

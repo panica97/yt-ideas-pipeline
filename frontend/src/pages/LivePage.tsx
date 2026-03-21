@@ -11,18 +11,18 @@ export default function LivePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Estado del Research en Tiempo Real</h1>
-        <span className={`text-xs ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+        <h1 className="text-xl font-bold text-text-primary">Estado del Research en Tiempo Real</h1>
+        <span className={`text-xs ${isConnected ? 'text-accent' : 'text-danger'}`}>
           {isConnected ? 'Conectado' : 'Desconectado'}
         </span>
       </div>
 
       {/* No active sessions */}
       {runningSessions.length === 0 && completedSessions.length === 0 && errorSessions.length === 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-12 text-center">
-          <span className="inline-block w-4 h-4 rounded-full bg-slate-500 mb-3" />
-          <p className="text-slate-400 text-sm">No hay investigacion en curso</p>
-          <p className="text-slate-600 text-xs mt-1">
+        <div className="bg-surface-1 border border-border rounded-lg p-12 text-center">
+          <span className="inline-block w-4 h-4 rounded-full bg-surface-3 mb-3" />
+          <p className="text-text-muted text-sm">No hay investigacion en curso</p>
+          <p className="text-text-muted text-xs mt-1">
             Lanza una con /research {'<topic>'} en el CLI
           </p>
         </div>
@@ -40,7 +40,7 @@ export default function LivePage() {
       {/* Completed sessions */}
       {completedSessions.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-400">Completadas</h2>
+          <h2 className="text-sm font-semibold text-text-muted">Completadas</h2>
           {completedSessions.map((session) => (
             <ResearchStatus key={session.id} session={session} />
           ))}
@@ -50,7 +50,7 @@ export default function LivePage() {
       {/* Error sessions */}
       {errorSessions.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-slate-400">Con errores</h2>
+          <h2 className="text-sm font-semibold text-text-muted">Con errores</h2>
           {errorSessions.map((session) => (
             <ResearchStatus key={session.id} session={session} />
           ))}

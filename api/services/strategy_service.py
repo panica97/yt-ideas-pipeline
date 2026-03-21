@@ -186,7 +186,7 @@ def _extract_todo_fields(
     if isinstance(data, dict):
         for key, value in data.items():
             path = f"{prefix}.{key}" if prefix else key
-            if isinstance(value, str) and value.strip() == "_TODO":
+            if isinstance(value, str) and "_TODO" in value:
                 results.append({"path": path, "context": None})
             else:
                 results.extend(_extract_todo_fields(value, path))
@@ -414,10 +414,10 @@ async def fill_todo(
             )
         current_value = parent[final_key]
 
-    if not (isinstance(current_value, str) and current_value.strip() == "_TODO"):
+    if not (isinstance(current_value, str) and "_TODO" in current_value):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"El valor en '{path}' no es '_TODO' (valor actual: {current_value!r})",
+            detail=f"El valor en '{path}' no contiene '_TODO' (valor actual: {current_value!r})",
         )
 
     # Apply the new value

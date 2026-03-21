@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 interface TodoBadgeProps {
   count: number;
 }
@@ -5,11 +7,14 @@ interface TodoBadgeProps {
 export default function TodoBadge({ count }: TodoBadgeProps) {
   if (count === 0) return null;
 
-  const bgClass = count > 3 ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+  const isHigh = count > 3;
+  const classes = isHigh
+    ? 'bg-danger/10 text-danger border-danger/20'
+    : 'bg-warn/10 text-warn border-warn/20';
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${bgClass}`}>
-      <span className="text-sm">{'\u26A0'}</span>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${classes}`}>
+      <AlertTriangle size={12} />
       {count} TODO{count > 1 ? 's' : ''}
     </span>
   );

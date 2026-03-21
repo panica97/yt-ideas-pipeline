@@ -28,7 +28,8 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
       if (!pre) return;
 
       const lastKey = field.split('.').pop() ?? field;
-      const regex = new RegExp(`"${lastKey}"\\s*:\\s*"_TODO"`);
+      // Match both exact "_TODO" and embedded "_TODO" within strings
+      const regex = new RegExp(`"${lastKey}"\\s*:\\s*"[^"]*_TODO[^"]*"`);
       const text = pre.textContent ?? '';
       const match = regex.exec(text);
       if (!match) return;
@@ -47,7 +48,7 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
           pre.scrollTop = pre.scrollTop + rect.top - preRect.top - preRect.height / 3;
 
           const mark = document.createElement('mark');
-          mark.className = 'bg-amber-400/30 text-amber-200 rounded';
+          mark.className = 'bg-warn/30 text-warn rounded px-0.5';
           range.surroundContents(mark);
           setTimeout(() => {
             const parent = mark.parentNode;
@@ -67,8 +68,8 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
   if (!parsed) {
     return (
       <div>
-        <p className="text-xs text-slate-500 italic mb-2">No se pudo interpretar la estructura del draft</p>
-        <pre className="text-xs text-slate-300 bg-slate-900/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
+        <p className="text-xs text-text-muted italic mb-2">No se pudo interpretar la estructura del draft</p>
+        <pre className="text-xs text-text-secondary bg-surface-0/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
           {JSON.stringify(draft.data, null, 2)}
         </pre>
       </div>
@@ -107,13 +108,13 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
       {/* TODO fields — at the bottom, click opens JSON and highlights */}
       {todoFields.length > 0 && (
         <div>
-          <h5 className="text-xs font-semibold text-amber-400 uppercase mb-1">Campos pendientes</h5>
+          <h5 className="text-xs font-semibold text-warn uppercase mb-1">Campos pendientes</h5>
           <ul className="space-y-0.5">
             {todoFields.map((field, i) => (
               <li
                 key={i}
                 onClick={() => scrollToFieldInJson(field)}
-                className="text-xs text-amber-300/80 font-mono bg-amber-500/10 rounded px-2 py-1 cursor-pointer hover:bg-amber-500/20 hover:text-amber-200 transition-colors"
+                className="text-xs text-warn font-mono bg-warn/10 border border-warn/20 rounded px-2 py-1 cursor-pointer hover:bg-warn/20 hover:border-warn/30 transition-colors"
               >
                 {humanizeFieldPath(field, parsed)}
               </li>
@@ -126,12 +127,12 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
       <div>
         <button
           onClick={() => setShowJson(!showJson)}
-          className="text-xs text-slate-500 hover:text-slate-300 transition-colors underline"
+          className="text-xs text-text-muted hover:text-text-secondary transition-colors underline"
         >
           {showJson ? 'Ocultar JSON' : 'Ver JSON'}
         </button>
         {showJson && (
-          <pre ref={preRef} className="mt-2 text-xs text-slate-300 bg-slate-900/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
+          <pre ref={preRef} className="mt-2 text-xs text-text-secondary bg-surface-0/50 rounded p-3 overflow-x-auto max-h-80 overflow-y-auto">
             {JSON.stringify(draft.data, null, 2)}
           </pre>
         )}

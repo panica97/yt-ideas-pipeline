@@ -12,26 +12,26 @@ function ConditionBlock({ cond }: { cond: Condition }) {
     : cond.cond;
 
   return (
-    <div className="flex items-start gap-2 p-2 bg-slate-800/40 rounded border border-slate-700/50">
-      <span className="text-[10px] font-mono text-slate-500 mt-0.5 shrink-0">{cond.condCode}</span>
+    <div className="flex items-start gap-2 p-2 bg-surface-1/40 rounded border border-border/50">
+      <span className="text-[10px] font-mono text-text-muted mt-0.5 shrink-0">{cond.condCode}</span>
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-slate-200 font-mono">{displayCond}</div>
+        <div className="text-sm text-text-primary font-mono">{displayCond}</div>
         <div className="flex flex-wrap gap-2 mt-1">
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400 border border-slate-600/50">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2/50 text-text-muted border border-border/50">
             {cond.cond_type}
           </span>
           {cond.shift_1 != null && cond.shift_1 >= 1 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2/50 text-text-muted">
               shift&#x2081;: {cond.shift_1}
             </span>
           )}
           {cond.shift_2 != null && cond.shift_2 >= 1 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2/50 text-text-muted">
               shift&#x2082;: {cond.shift_2}
             </span>
           )}
           {cond.mode === 'force' && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-danger/20 text-danger border border-danger/30 font-bold">
               FORCE EXIT
             </span>
           )}
@@ -45,20 +45,20 @@ function EntryConditions({ conditions, label, bgClass }: { conditions: Condition
   if (conditions.length === 0) {
     return (
       <div className={`rounded-lg p-3 ${bgClass}`}>
-        <div className="text-xs font-semibold uppercase mb-2 text-slate-400">{label}</div>
-        <p className="text-xs text-slate-500 italic">Sin condiciones</p>
+        <div className="text-xs font-semibold uppercase mb-2 text-text-muted">{label}</div>
+        <p className="text-xs text-text-muted italic">Sin condiciones</p>
       </div>
     );
   }
 
   return (
     <div className={`rounded-lg p-3 ${bgClass}`}>
-      <div className="text-xs font-semibold uppercase mb-2 text-slate-400">{label}</div>
+      <div className="text-xs font-semibold uppercase mb-2 text-text-muted">{label}</div>
       <div className="space-y-1">
         {conditions.map((c, i) => (
           <div key={i}>
             {i > 0 && (
-              <div className="text-[10px] text-center text-slate-500 my-0.5">AND</div>
+              <div className="text-[10px] text-center text-text-muted my-0.5">AND</div>
             )}
             <ConditionBlock cond={c} />
           </div>
@@ -71,9 +71,9 @@ function EntryConditions({ conditions, label, bgClass }: { conditions: Condition
 function ExitConditions({ conditions }: { conditions: Condition[] }) {
   if (conditions.length === 0) {
     return (
-      <div className="rounded-lg p-3 bg-slate-700/20 border border-slate-700/30">
-        <div className="text-xs font-semibold uppercase mb-2 text-slate-400">Salida</div>
-        <p className="text-xs text-slate-500 italic">Sin condiciones de salida</p>
+      <div className="rounded-lg p-3 bg-surface-2/20 border border-border/30">
+        <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Salida</div>
+        <p className="text-xs text-text-muted italic">Sin condiciones de salida</p>
       </div>
     );
   }
@@ -98,15 +98,15 @@ function ExitConditions({ conditions }: { conditions: Condition[] }) {
   let blockIndex = 0;
 
   return (
-    <div className="rounded-lg p-3 bg-slate-700/20 border border-slate-700/30">
-      <div className="text-xs font-semibold uppercase mb-2 text-slate-400">Salida</div>
+    <div className="rounded-lg p-3 bg-surface-2/20 border border-border/30">
+      <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Salida</div>
       <div className="space-y-1">
         {/* Force conditions first */}
         {forceConditions.map((c, i) => {
           const showOr = blockIndex++ > 0;
           return (
             <div key={`force-${i}`}>
-              {showOr && <div className="text-[10px] text-center text-slate-500 font-bold my-1">OR</div>}
+              {showOr && <div className="text-[10px] text-center text-text-muted font-bold my-1">OR</div>}
               <ConditionBlock cond={c} />
             </div>
           );
@@ -117,11 +117,11 @@ function ExitConditions({ conditions }: { conditions: Condition[] }) {
           const showOr = blockIndex++ > 0;
           return (
             <div key={`group-${gi}`}>
-              {showOr && <div className="text-[10px] text-center text-slate-500 font-bold my-1">OR</div>}
+              {showOr && <div className="text-[10px] text-center text-text-muted font-bold my-1">OR</div>}
               <div className="space-y-1">
                 {conds.map((c, ci) => (
                   <div key={ci}>
-                    {ci > 0 && <div className="text-[10px] text-center text-slate-500 my-0.5">AND</div>}
+                    {ci > 0 && <div className="text-[10px] text-center text-text-muted my-0.5">AND</div>}
                     <ConditionBlock cond={c} />
                   </div>
                 ))}
@@ -135,7 +135,7 @@ function ExitConditions({ conditions }: { conditions: Condition[] }) {
           const showOr = blockIndex++ > 0;
           return (
             <div key={`single-${i}`}>
-              {showOr && <div className="text-[10px] text-center text-slate-500 font-bold my-1">OR</div>}
+              {showOr && <div className="text-[10px] text-center text-text-muted font-bold my-1">OR</div>}
               <ConditionBlock cond={c} />
             </div>
           );
@@ -153,7 +153,7 @@ export default function ConditionsSection({ data, sectionType }: Props) {
           <EntryConditions
             conditions={data.long_conds}
             label="Long"
-            bgClass="bg-green-500/5 border border-green-500/10"
+            bgClass="bg-accent/5 border border-green-500/10"
           />
           <EntryConditions
             conditions={data.short_conds}

@@ -15,41 +15,41 @@ export default function ChannelForm({ onSubmit, onCancel }: ChannelFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-slate-700/50 border border-slate-600 rounded p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-surface-2/50 border border-border rounded p-4 space-y-3">
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Nombre del canal</label>
+        <label className="block text-xs text-text-muted mb-1">Nombre del canal</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="ej: Jacob Amaral"
-          className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
+          className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           required
           autoFocus
         />
       </div>
       <div>
-        <label className="block text-xs text-slate-400 mb-1">URL de YouTube</label>
+        <label className="block text-xs text-text-muted mb-1">URL de YouTube</label>
         <input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://www.youtube.com/@canal"
-          className="w-full px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500"
+          className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           required
         />
       </div>
       <div className="flex gap-2">
         <button
           type="submit"
-          className="px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
+          className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
           Anadir
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1.5 text-sm bg-slate-600 hover:bg-slate-500 text-slate-300 rounded transition-colors"
+          className="px-3 py-1.5 text-sm bg-surface-3 hover:bg-surface-3 text-text-secondary rounded transition-colors"
         >
           Cancelar
         </button>

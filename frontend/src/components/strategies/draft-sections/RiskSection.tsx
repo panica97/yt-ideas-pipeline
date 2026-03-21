@@ -17,11 +17,11 @@ function StopLevelCard({ label, params, todoFields, prefix }: {
   const hasTodoInSection = todoFields.some(f => f.startsWith(prefix));
 
   return (
-    <div className="bg-slate-800/40 rounded-lg p-3 border border-slate-700/50">
-      <div className="text-xs font-semibold uppercase text-slate-400 mb-2">{label}</div>
-      <div className="text-sm text-slate-200">
+    <div className="bg-surface-1/40 rounded-lg p-3 border border-border/50">
+      <div className="text-xs font-semibold uppercase text-text-muted mb-2">{label}</div>
+      <div className="text-sm text-text-primary">
         {formatted === 'No definido' ? (
-          <span className="text-slate-500 italic">{formatted}</span>
+          <span className="text-text-muted italic">{formatted}</span>
         ) : (
           <span className="font-mono">
             {formatted}
@@ -32,13 +32,13 @@ function StopLevelCard({ label, params, todoFields, prefix }: {
         )}
       </div>
       <div className="flex gap-3 mt-2 text-[10px]">
-        <span className={params.indicator ? 'text-green-400' : 'text-slate-600'}>
+        <span className={params.indicator ? 'text-accent' : 'text-text-muted'}>
           {params.indicator ? '\u2713' : '\u2717'} Indicador
         </span>
-        <span className={params.pips ? 'text-green-400' : 'text-slate-600'}>
+        <span className={params.pips ? 'text-accent' : 'text-text-muted'}>
           {params.pips ? '\u2713' : '\u2717'} Pips
         </span>
-        <span className={params.percent ? 'text-green-400' : 'text-slate-600'}>
+        <span className={params.percent ? 'text-accent' : 'text-text-muted'}>
           {params.percent ? '\u2713' : '\u2717'} Porcentaje
         </span>
       </div>
@@ -59,11 +59,11 @@ export default function RiskSection({ data, todoFields }: Props) {
       {/* Management */}
       {mgmt && (
         <div className="flex gap-4 text-xs">
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.breakeven?.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.breakeven?.action ? 'bg-accent/10 text-accent' : 'bg-surface-1/40 text-text-muted'}`}>
             <span>{mgmt.breakeven?.action ? '\u2713' : '\u2717'}</span>
             <span>Breakeven (ratio: {mgmt.breakeven?.profitRatio ?? '-'})</span>
           </div>
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.trailing?.action ? 'bg-green-500/10 text-green-400' : 'bg-slate-800/40 text-slate-500'}`}>
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded ${mgmt.trailing?.action ? 'bg-accent/10 text-accent' : 'bg-surface-1/40 text-text-muted'}`}>
             <span>{mgmt.trailing?.action ? '\u2713' : '\u2717'}</span>
             <span>Trailing (ratio: {mgmt.trailing?.trailingRatio ?? '-'})</span>
           </div>

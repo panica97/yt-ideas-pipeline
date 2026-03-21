@@ -1,11 +1,23 @@
 <!doctype html>
-<html lang="es" class="dark">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#09090B" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>IRT Dashboard</title>
+    <script>
+      // Prevent flash of wrong theme
+      (function() {
+        var theme = localStorage.getItem('irt_theme');
+        if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
   </head>
-  <body class="bg-slate-900 text-slate-100">
+  <body class="bg-surface-0 text-text-primary scrollbar-thin">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

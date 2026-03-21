@@ -48,11 +48,11 @@ export function getIndicatorColors(category: string): string {
   switch (category) {
     case 'trend': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
     case 'oscillator': return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-    case 'volatility': return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
-    case 'price': return 'bg-slate-600/30 text-slate-300 border-slate-500/30';
+    case 'volatility': return 'bg-warn/20 text-orange-300 border-warn/30';
+    case 'price': return 'bg-surface-3/30 text-text-secondary border-border-hover/30';
     case 'custom': return 'bg-teal-500/20 text-teal-300 border-teal-500/30';
-    case 'data': return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    default: return 'bg-slate-600/30 text-slate-300 border-slate-500/30';
+    case 'data': return 'bg-surface-3/20 text-text-muted border-border-hover/30';
+    default: return 'bg-surface-3/30 text-text-secondary border-border-hover/30';
   }
 }
 

@@ -35,21 +35,21 @@ export default function TopicGroup({
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+    <div className="bg-surface-1 border border-border rounded-lg overflow-hidden">
       {/* Topic header */}
       <div
-        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-750"
+        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-surface-2"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 text-xs">{expanded ? '\u25BC' : '\u25B6'}</span>
-          <span className="font-semibold text-slate-200">{slug}</span>
-          <span className="text-xs text-slate-500">({channels.length} canal{channels.length !== 1 ? 'es' : ''})</span>
+          <span className="text-text-muted text-xs">{expanded ? '\u25BC' : '\u25B6'}</span>
+          <span className="font-semibold text-text-primary">{slug}</span>
+          <span className="text-xs text-text-muted">({channels.length} canal{channels.length !== 1 ? 'es' : ''})</span>
         </div>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setEditing(true)}
-            className="text-xs text-slate-400 hover:text-primary-400 transition-colors"
+            className="text-xs text-text-muted hover:text-accent transition-colors"
           >
             Editar
           </button>
@@ -57,8 +57,8 @@ export default function TopicGroup({
             onClick={canDeleteTopic ? onDeleteTopic : undefined}
             className={`text-xs transition-colors ${
               canDeleteTopic
-                ? 'text-slate-400 hover:text-red-400'
-                : 'text-slate-600 cursor-not-allowed'
+                ? 'text-text-muted hover:text-danger'
+                : 'text-text-muted cursor-not-allowed'
             }`}
             title={canDeleteTopic ? 'Eliminar topic' : 'No se puede eliminar un topic con canales'}
           >
@@ -75,19 +75,19 @@ export default function TopicGroup({
               type="text"
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
-              className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+              className="flex-1 px-2 py-1 bg-surface-2 border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent/50"
               autoFocus
             />
-            <button onClick={handleSaveEdit} className="text-xs text-primary-400 hover:text-primary-300">
+            <button onClick={handleSaveEdit} className="text-xs text-accent hover:text-accent-hover">
               Guardar
             </button>
-            <button onClick={() => setEditing(false)} className="text-xs text-slate-500 hover:text-slate-300">
+            <button onClick={() => setEditing(false)} className="text-xs text-text-muted hover:text-text-secondary">
               Cancelar
             </button>
           </div>
         </div>
       ) : description ? (
-        <p className="px-4 pb-2 text-xs text-slate-500">{description}</p>
+        <p className="px-4 pb-2 text-xs text-text-muted">{description}</p>
       ) : null}
 
       {/* Channels list */}
@@ -112,7 +112,7 @@ export default function TopicGroup({
           ) : (
             <button
               onClick={() => setShowChannelForm(true)}
-              className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
+              className="text-xs text-accent hover:text-accent-hover transition-colors"
             >
               + Anadir canal
             </button>

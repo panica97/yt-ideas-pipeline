@@ -65,7 +65,7 @@ export default function ChannelsPage() {
 
   if (error) {
     return (
-      <div className="text-red-400 text-sm">
+      <div className="text-danger text-sm">
         Error al cargar canales: {(error as Error).message}
       </div>
     );
@@ -76,10 +76,10 @@ export default function ChannelsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Canales</h1>
+        <h1 className="text-xl font-bold text-text-primary">Canales</h1>
         <button
           onClick={() => setShowTopicForm(true)}
-          className="px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
+          className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
           + Anadir topic
         </button>
@@ -95,13 +95,13 @@ export default function ChannelsPage() {
       )}
 
       {createTopicMut.isError && (
-        <p className="text-sm text-red-400">
+        <p className="text-sm text-danger">
           Error: {(createTopicMut.error as Error).message}
         </p>
       )}
 
       {Object.keys(topics).length === 0 && !showTopicForm && (
-        <p className="text-sm text-slate-500">No hay topics registrados. Crea uno para empezar.</p>
+        <p className="text-sm text-text-muted">No hay topics registrados. Crea uno para empezar.</p>
       )}
 
       <div className="space-y-3">

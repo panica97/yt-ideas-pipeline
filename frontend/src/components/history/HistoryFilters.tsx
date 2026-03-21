@@ -26,11 +26,11 @@ export default function HistoryFilters({
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Topic</label>
+        <label className="block text-xs text-text-muted mb-1">Topic</label>
         <select
           value={selectedTopic}
           onChange={(e) => onTopicChange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+          className="px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent/50"
         >
           <option value="">Todos</option>
           {topics.map((t) => (
@@ -40,11 +40,11 @@ export default function HistoryFilters({
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Canal</label>
+        <label className="block text-xs text-text-muted mb-1">Canal</label>
         <select
           value={selectedChannel}
           onChange={(e) => onChannelChange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+          className="px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent/50"
         >
           <option value="">Todos</option>
           {channels.map((c) => (
@@ -54,22 +54,22 @@ export default function HistoryFilters({
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Desde</label>
+        <label className="block text-xs text-text-muted mb-1">Desde</label>
         <input
           type="date"
           value={dateFrom}
           onChange={(e) => onDateFromChange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+          className="px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent/50"
         />
       </div>
 
       <div>
-        <label className="block text-xs text-slate-400 mb-1">Hasta</label>
+        <label className="block text-xs text-text-muted mb-1">Hasta</label>
         <input
           type="date"
           value={dateTo}
           onChange={(e) => onDateToChange(e.target.value)}
-          className="px-3 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-slate-100 focus:outline-none focus:border-primary-500"
+          className="px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary focus:outline-none focus:border-accent/50"
         />
       </div>
     </div>

@@ -10,14 +10,14 @@ export default function IndicatorsSection({ data }: Props) {
   const timeframes = Object.keys(data.ind_list);
 
   if (timeframes.length === 0) {
-    return <p className="text-sm text-slate-500 italic">Sin indicadores definidos</p>;
+    return <p className="text-sm text-text-muted italic">Sin indicadores definidos</p>;
   }
 
   return (
     <div className="space-y-3">
       {timeframes.map(tf => (
         <div key={tf}>
-          <div className="text-xs font-medium text-slate-400 uppercase mb-2 flex items-center gap-2">
+          <div className="text-xs font-medium text-text-muted uppercase mb-2 flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-indigo-400" />
             {tf}
           </div>

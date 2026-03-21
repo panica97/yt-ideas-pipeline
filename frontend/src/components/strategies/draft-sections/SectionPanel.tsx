@@ -24,17 +24,17 @@ export default function SectionPanel({ id, title, icon, children, defaultOpen = 
   }, [forceOpen, open]);
 
   return (
-    <div ref={ref} id={`section-${id}`} className="border border-slate-700 rounded-lg overflow-hidden">
+    <div ref={ref} id={`section-${id}`} className="border border-border rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-left bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-left bg-surface-1/50 hover:bg-surface-2/50 transition-colors"
       >
         <span className="text-sm">{icon}</span>
-        <span className="text-sm font-medium text-slate-200 flex-1">{title}</span>
-        <span className="text-xs text-slate-500">{open ? '\u25B2' : '\u25BC'}</span>
+        <span className="text-sm font-medium text-text-primary flex-1">{title}</span>
+        <span className="text-xs text-text-muted">{open ? '\u25B2' : '\u25BC'}</span>
       </button>
       {open && (
-        <div className="p-3 bg-slate-800/20">
+        <div className="p-3 bg-surface-1/20">
           {children}
         </div>
       )}

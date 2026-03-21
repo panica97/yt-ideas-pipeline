@@ -32,18 +32,18 @@ function SessionGroup({
   const totalStrategies = session.result_summary?.total_strategies ?? 0;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+    <div className="bg-surface-1 border border-border rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-700/50 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-2/50 transition-colors text-left"
       >
         <div className="flex items-center gap-3">
-          <span className="text-slate-400 text-xs">{isExpanded ? '\u25BC' : '\u25B6'}</span>
+          <span className="text-text-muted text-xs">{isExpanded ? '\u25BC' : '\u25B6'}</span>
           <div>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-text-primary">
               {session.topic ?? 'Sin topic'}
             </span>
-            <span className="text-xs text-slate-400 ml-3">
+            <span className="text-xs text-text-muted ml-3">
               {session.started_at
                 ? new Date(session.started_at).toLocaleString('es-ES', {
                     day: 'numeric',
@@ -57,11 +57,11 @@ function SessionGroup({
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-text-muted">
             {totalVideos}v / {totalStrategies}s
           </span>
           {session.duration_seconds != null && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-text-muted">
               {formatDuration(session.duration_seconds)}
             </span>
           )}
@@ -69,7 +69,7 @@ function SessionGroup({
           <Link
             to={`/research/${session.id}`}
             onClick={(e) => e.stopPropagation()}
-            className="text-xs text-primary-400 hover:text-primary-300"
+            className="text-xs text-accent hover:text-accent-hover"
           >
             Detalle
           </Link>
@@ -77,30 +77,30 @@ function SessionGroup({
       </button>
 
       {isExpanded && session.videos && session.videos.length > 0 && (
-        <div className="border-t border-slate-700 px-4 py-2">
+        <div className="border-t border-border px-4 py-2">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left py-2 px-3 text-slate-400 font-medium">Video ID</th>
-                <th className="text-left py-2 px-3 text-slate-400 font-medium">Canal</th>
-                <th className="text-left py-2 px-3 text-slate-400 font-medium">Estrategias</th>
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Video ID</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Canal</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Estrategias</th>
               </tr>
             </thead>
             <tbody>
               {session.videos.map((v, i) => (
-                <tr key={`${v.video_id}-${i}`} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <tr key={`${v.video_id}-${i}`} className="border-b border-border/50 hover:bg-surface-2/30">
                   <td className="py-2 px-3">
                     <a
                       href={`https://www.youtube.com/watch?v=${v.video_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary-400 hover:text-primary-300"
+                      className="text-accent hover:text-accent-hover"
                     >
                       {v.title || v.video_id}
                     </a>
                   </td>
-                  <td className="py-2 px-3 text-slate-300">{v.channel || '-'}</td>
-                  <td className="py-2 px-3 text-slate-300">{v.strategies_found}</td>
+                  <td className="py-2 px-3 text-text-secondary">{v.channel || '-'}</td>
+                  <td className="py-2 px-3 text-text-secondary">{v.strategies_found}</td>
                 </tr>
               ))}
             </tbody>
@@ -109,8 +109,8 @@ function SessionGroup({
       )}
 
       {isExpanded && (!session.videos || session.videos.length === 0) && (
-        <div className="border-t border-slate-700 px-4 py-3">
-          <p className="text-xs text-slate-500">Sin videos en esta sesion</p>
+        <div className="border-t border-border px-4 py-3">
+          <p className="text-xs text-text-muted">Sin videos en esta sesion</p>
         </div>
       )}
     </div>
@@ -176,18 +176,18 @@ export default function HistoryPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white">Historial de investigacion</h1>
+        <h1 className="text-xl font-bold text-text-primary">Historial de investigacion</h1>
         <div className="flex items-center gap-3">
           {viewMode === 'flat' && (
-            <span className="text-sm text-slate-400">Total: {data?.total ?? 0} videos</span>
+            <span className="text-sm text-text-muted">Total: {data?.total ?? 0} videos</span>
           )}
-          <div className="flex gap-1 bg-slate-800 border border-slate-700 rounded p-0.5">
+          <div className="flex gap-1 bg-surface-1 border border-border rounded p-0.5">
             <button
               onClick={() => setViewMode('grouped')}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 viewMode === 'grouped'
-                  ? 'bg-primary-600 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-accent text-text-primary'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               Por sesion
@@ -196,8 +196,8 @@ export default function HistoryPage() {
               onClick={() => setViewMode('flat')}
               className={`px-3 py-1 text-xs rounded transition-colors ${
                 viewMode === 'flat'
-                  ? 'bg-primary-600 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-accent text-text-primary'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               Lista plana
@@ -232,17 +232,17 @@ export default function HistoryPage() {
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-300 rounded transition-colors"
+                    className="px-3 py-1 text-sm bg-surface-2 hover:bg-surface-3 disabled:bg-surface-1 disabled:text-text-muted text-text-secondary rounded transition-colors"
                   >
                     Anterior
                   </button>
-                  <span className="text-sm text-slate-400">
+                  <span className="text-sm text-text-muted">
                     Pagina {page} de {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-300 rounded transition-colors"
+                    className="px-3 py-1 text-sm bg-surface-2 hover:bg-surface-3 disabled:bg-surface-1 disabled:text-text-muted text-text-secondary rounded transition-colors"
                   >
                     Siguiente
                   </button>
@@ -260,7 +260,7 @@ export default function HistoryPage() {
           ) : (
             <div className="space-y-3">
               {(sessionsData?.sessions ?? []).length === 0 ? (
-                <p className="text-sm text-slate-500 py-8 text-center">
+                <p className="text-sm text-text-muted py-8 text-center">
                   No se han realizado investigaciones todavia
                 </p>
               ) : (

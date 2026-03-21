@@ -9,13 +9,13 @@ interface Props {
 
 function StatCell({ label, value, isTodoVal }: { label: string; value: unknown; isTodoVal: boolean }) {
   return (
-    <div className="bg-slate-800/40 rounded p-2 border border-slate-700/50">
-      <div className="text-[10px] text-slate-500 uppercase mb-0.5">{label}</div>
+    <div className="bg-surface-1/40 rounded p-2 border border-border/50">
+      <div className="text-[10px] text-text-muted uppercase mb-0.5">{label}</div>
       <div className="text-sm">
         {isTodoVal ? (
           <TodoHighlight>_TODO</TodoHighlight>
         ) : (
-          <span className="text-slate-200 font-mono">{String(value ?? 'N/A')}</span>
+          <span className="text-text-primary font-mono">{String(value ?? 'N/A')}</span>
         )}
       </div>
     </div>
@@ -28,7 +28,7 @@ export default function BacktestSection({ data }: Props) {
 
   if (!cp || !op) {
     return (
-      <div className="bg-slate-800/40 rounded p-3 border border-slate-700/50 text-sm text-slate-500 italic">
+      <div className="bg-surface-1/40 rounded p-3 border border-border/50 text-sm text-text-muted italic">
         Parámetros de control no disponibles
       </div>
     );

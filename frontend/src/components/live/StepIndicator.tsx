@@ -3,7 +3,7 @@ interface StepIndicatorProps {
 }
 
 export default function StepIndicator({ status }: StepIndicatorProps) {
-  let dotClass = 'bg-slate-500';
+  let dotClass = 'bg-surface-3';
   if (status === 'running') {
     dotClass = 'bg-green-400 animate-pulse';
   } else if (status === 'completed') {
