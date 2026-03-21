@@ -77,6 +77,69 @@ export function formatStopLevel(params: DraftData['stop_loss_init']): string {
   return 'No definido';
 }
 
+/** Human-readable labels for TODO field paths */
+const TOP_LEVEL_LABELS: Record<string, string> = {
+  multiplier: 'Multiplicador del contrato',
+  minTick: 'Tick mínimo',
+  max_timePeriod: 'Período máximo',
+  symbol: 'Símbolo',
+  secType: 'Tipo de instrumento',
+  exchange: 'Exchange',
+  currency: 'Moneda',
+};
+
+const PARAM_LABELS: Record<string, string> = {
+  timePeriod_1: 'Período',
+  price_1: 'Precio',
+  price_2: 'Precio 2',
+  price_3: 'Precio 3',
+  nbdevup: 'Desviación superior',
+  nbdevdn: 'Desviación inferior',
+  multiple: 'Múltiple',
+};
+
+export function humanizeFieldPath(path: string, data: DraftData | null): string {
+  // Top-level fields
+  if (TOP_LEVEL_LABELS[path]) return TOP_LEVEL_LABELS[path];
+
+  // ind_list paths: ind_list.TIMEFRAME[INDEX].params.PARAM
+  const indMatch = path.match(/^ind_list\.(.+)\[(\d+)]\.params\.(\w+)$/);
+  if (indMatch && data) {
+    const [, tf, idxStr, param] = indMatch;
+    const idx = parseInt(idxStr, 10);
+    const indicators = data.ind_list?.[tf];
+    const ind = indicators?.[idx];
+    const indCode = ind?.params?.indCode ?? ind?.indicator ?? `#${idx}`;
+    const paramLabel = PARAM_LABELS[param] ?? param;
+    return `${indCode}: ${paramLabel}`;
+  }
+
+  // control_params / order_params (kept for backward compat, even if section removed)
+  const cpMatch = path.match(/^control_params\.(\w+)$/);
+  if (cpMatch) {
+    const labels: Record<string, string> = {
+      start_date: 'Fecha inicio backtest',
+      end_date: 'Fecha fin backtest',
+      timestamp: 'Timestamp',
+      slippage_amount: 'Slippage',
+      comm_per_contract: 'Comisión/contrato',
+      primary_timeframe: 'Timeframe principal',
+    };
+    return labels[cpMatch[1]] ?? cpMatch[1];
+  }
+
+  // stop_loss / take_profit
+  const slMatch = path.match(/^(stop_loss|take_profit)_init\.indicator_params\.(\w+)$/);
+  if (slMatch) {
+    const side = slMatch[1] === 'stop_loss' ? 'Stop Loss' : 'Take Profit';
+    const paramLabel = PARAM_LABELS[slMatch[2]] ?? slMatch[2];
+    return `${side}: ${paramLabel}`;
+  }
+
+  // Fallback: return path as-is
+  return path;
+}
+
 /** Sections that field paths map to, for TODO click-to-scroll */
 type SectionId = 'instrument' | 'indicators' | 'conditions' | 'risk' | 'notes' | 'backtest';
 

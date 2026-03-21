@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import re
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -21,6 +23,7 @@ async def list_strategies(
     search: str | None = None,
     session_id: int | None = None,
     has_draft: bool | None = None,
+    has_todos: bool | None = None,
     status: str | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Return (total, strategies) with optional channel/FTS filters."""
@@ -35,6 +38,23 @@ async def list_strategies(
     elif has_draft is False:
         query = query.where(
             ~Strategy.id.in_(select(Draft.strategy_id).where(Draft.strategy_id.isnot(None)))
+        )
+
+    if has_todos is True:
+        query = query.where(
+            Strategy.id.in_(
+                select(Draft.strategy_id)
+                .where(Draft.strategy_id.isnot(None))
+                .where(Draft.todo_count > 0)
+            )
+        )
+    elif has_todos is False:
+        query = query.where(
+            Strategy.id.in_(
+                select(Draft.strategy_id)
+                .where(Draft.strategy_id.isnot(None))
+                .where(Draft.todo_count == 0)
+            )
         )
 
     if status:
@@ -180,8 +200,14 @@ def _extract_todo_fields(
 async def list_drafts(
     db: AsyncSession,
     has_todos: bool | None = None,
+    status: str | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     query = select(Draft)
+
+    if status:
+        query = query.join(Strategy, Draft.strategy_id == Strategy.id).where(
+            Strategy.status == status
+        )
 
     if has_todos is True:
         query = query.where(Draft.todo_count > 0)
@@ -287,3 +313,128 @@ async def get_draft_by_code(
         "created_at": draft.created_at,
         "updated_at": draft.updated_at,
     }
+
+
+# ---------------------------------------------------------------------------
+# Fill TODO
+# ---------------------------------------------------------------------------
+
+def _parse_path_segments(path: str) -> list[str | int]:
+    """Parse a dot/bracket path into a list of keys and indices.
+
+    Examples:
+        "multiplier"                          -> ["multiplier"]
+        "control_params.start_date"           -> ["control_params", "start_date"]
+        "ind_list.4 hours[1].params.timePeriod_1"
+            -> ["ind_list", "4 hours", 1, "params", "timePeriod_1"]
+    """
+    segments: list[str | int] = []
+    # Split by '.' but preserve keys that contain spaces (e.g. "4 hours")
+    # Strategy: split on '[' first, then handle dots inside each part.
+    # We use a regex to tokenize: either a bracket index or a dot-separated key.
+    tokens = re.split(r"\[(\d+)\]", path)
+    for i, token in enumerate(tokens):
+        if i % 2 == 1:
+            # This is a bracket index capture
+            segments.append(int(token))
+        else:
+            # This is a dot-separated string portion
+            if token:
+                # Strip leading/trailing dots
+                token = token.strip(".")
+                if token:
+                    segments.extend(token.split("."))
+    return segments
+
+
+def _navigate_to_parent(
+    data: Any, segments: list[str | int]
+) -> tuple[Any, str | int]:
+    """Walk *data* following *segments* and return (parent, final_key).
+
+    Raises ValueError with a descriptive message on navigation failure.
+    """
+    current = data
+    for seg in segments[:-1]:
+        if isinstance(seg, int):
+            if not isinstance(current, list) or seg >= len(current):
+                raise ValueError(f"Índice [{seg}] fuera de rango o tipo incorrecto")
+            current = current[seg]
+        else:
+            if not isinstance(current, dict) or seg not in current:
+                raise ValueError(f"Clave '{seg}' no encontrada en el path")
+            current = current[seg]
+    return current, segments[-1]
+
+
+async def fill_todo(
+    db: AsyncSession, strat_code: int, path: str, value: Any
+) -> dict[str, Any]:
+    """Replace a ``_TODO`` sentinel inside a draft's JSONB *data* field."""
+    result = await db.execute(
+        select(Draft).where(Draft.strat_code == strat_code)
+    )
+    draft = result.scalar_one_or_none()
+    if not draft:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Draft con strat_code {strat_code} no encontrado",
+        )
+
+    segments = _parse_path_segments(path)
+    if not segments:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Path vacío",
+        )
+
+    data = copy.deepcopy(draft.data) if draft.data else {}
+
+    try:
+        parent, final_key = _navigate_to_parent(data, segments)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Path inválido: {exc}",
+        )
+
+    # Resolve final key
+    if isinstance(final_key, int):
+        if not isinstance(parent, list) or final_key >= len(parent):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Índice [{final_key}] fuera de rango",
+            )
+        current_value = parent[final_key]
+    else:
+        if not isinstance(parent, dict) or final_key not in parent:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Path '{path}' no existe en data",
+            )
+        current_value = parent[final_key]
+
+    if not (isinstance(current_value, str) and current_value.strip() == "_TODO"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"El valor en '{path}' no es '_TODO' (valor actual: {current_value!r})",
+        )
+
+    # Apply the new value
+    if isinstance(final_key, int):
+        parent[final_key] = value
+    else:
+        parent[final_key] = value
+
+    # Recalculate todo_fields and todo_count
+    todo_details = _extract_todo_fields(data)
+    todo_paths = [t["path"] for t in todo_details]
+
+    draft.data = data
+    draft.todo_fields = todo_paths
+    draft.todo_count = len(todo_paths)
+
+    await db.commit()
+    await db.refresh(draft)
+
+    return await get_draft_by_code(db, strat_code)

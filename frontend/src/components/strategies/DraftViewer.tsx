@@ -1,13 +1,11 @@
 import { useState, useCallback, useRef } from 'react';
 import type { DraftDetail } from '../../types/draft';
-import { parseDraftData, getTodoFieldsForSection } from './draft-utils';
+import { parseDraftData, getTodoFieldsForSection, humanizeFieldPath } from './draft-utils';
 import SectionPanel from './draft-sections/SectionPanel';
 import InstrumentSection from './draft-sections/InstrumentSection';
 import IndicatorsSection from './draft-sections/IndicatorsSection';
 import ConditionsSection from './draft-sections/ConditionsSection';
-import RiskSection from './draft-sections/RiskSection';
 import NotesSection from './draft-sections/NotesSection';
-import BacktestSection from './draft-sections/BacktestSection';
 
 interface DraftViewerProps {
   draft: DraftDetail;
@@ -89,7 +87,7 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
           <IndicatorsSection data={parsed} todoFields={getTodoFieldsForSection(todoFields, 'indicators')} />
         </SectionPanel>
 
-        <SectionPanel id="conditions" title="Condiciones" icon={'\u2699\uFE0F'}>
+        <SectionPanel id="conditions" title="Entradas" icon={'\u2699\uFE0F'}>
           <ConditionsSection data={parsed} todoFields={getTodoFieldsForSection(todoFields, 'conditions')} sectionType="entry" />
         </SectionPanel>
 
@@ -99,19 +97,11 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
           </SectionPanel>
         )}
 
-        <SectionPanel id="risk" title="Riesgo (SL/TP)" icon={'\uD83D\uDEE1\uFE0F'}>
-          <RiskSection data={parsed} todoFields={getTodoFieldsForSection(todoFields, 'risk')} />
-        </SectionPanel>
-
         {parsed._notes && Object.keys(parsed._notes).length > 0 && (
           <SectionPanel id="notes" title="Notas" icon={'\uD83D\uDCDD'}>
             <NotesSection notes={parsed._notes} />
           </SectionPanel>
         )}
-
-        <SectionPanel id="backtest" title="Backtest / Control" icon={'\u2699\uFE0F'}>
-          <BacktestSection data={parsed} todoFields={getTodoFieldsForSection(todoFields, 'backtest')} />
-        </SectionPanel>
       </div>
 
       {/* TODO fields — at the bottom, click opens JSON and highlights */}
@@ -125,7 +115,7 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
                 onClick={() => scrollToFieldInJson(field)}
                 className="text-xs text-amber-300/80 font-mono bg-amber-500/10 rounded px-2 py-1 cursor-pointer hover:bg-amber-500/20 hover:text-amber-200 transition-colors"
               >
-                {field}
+                {humanizeFieldPath(field, parsed)}
               </li>
             ))}
           </ul>

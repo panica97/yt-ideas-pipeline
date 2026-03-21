@@ -26,6 +26,14 @@ export default function BacktestSection({ data }: Props) {
   const cp = data.control_params;
   const op = data.order_params;
 
+  if (!cp || !op) {
+    return (
+      <div className="bg-slate-800/40 rounded p-3 border border-slate-700/50 text-sm text-slate-500 italic">
+        Parámetros de control no disponibles
+      </div>
+    );
+  }
+
   const stats = [
     { label: 'Start Date', value: cp.start_date, todo: isTodo(cp.start_date) },
     { label: 'End Date', value: cp.end_date, todo: isTodo(cp.end_date) },

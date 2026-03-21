@@ -8,9 +8,11 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import type { Strategy } from '../types/strategy';
 
 type Tab = 'pending' | 'ideas' | 'estrategias';
+type StrategiaSubTab = 'con_todos' | 'completas';
 
 export default function StrategiesPage() {
   const [tab, setTab] = useState<Tab>('pending');
+  const [estrategiasSubTab, setEstrategiasSubTab] = useState<StrategiaSubTab>('con_todos');
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
   const [sessionFilter, setSessionFilter] = useState('');
@@ -46,17 +48,34 @@ export default function StrategiesPage() {
     enabled: tab === 'ideas',
   });
 
-  // Finales tab: strategies with status='validated'
-  const { data: estrategiasData, isLoading: loadingFinales } = useQuery({
-    queryKey: ['validated-strategies', search, channelFilter, sessionFilter],
+  // Estrategias tab: sub-tab "con_todos" (validated + has_todos=true)
+  const { data: conTodosData, isLoading: loadingConTodos } = useQuery({
+    queryKey: ['validated-strategies-con-todos', search, channelFilter, sessionFilter],
     queryFn: () => getStrategies({
       search: search || undefined,
       channel: channelFilter || undefined,
       session_id: sessionFilter ? Number(sessionFilter) : undefined,
       status: 'validated',
+      has_todos: true,
     }),
-    enabled: tab === 'estrategias',
+    enabled: tab === 'estrategias' && estrategiasSubTab === 'con_todos',
   });
+
+  // Estrategias tab: sub-tab "completas" (validated + has_todos=false)
+  const { data: completasData, isLoading: loadingCompletas } = useQuery({
+    queryKey: ['validated-strategies-completas', search, channelFilter, sessionFilter],
+    queryFn: () => getStrategies({
+      search: search || undefined,
+      channel: channelFilter || undefined,
+      session_id: sessionFilter ? Number(sessionFilter) : undefined,
+      status: 'validated',
+      has_todos: false,
+    }),
+    enabled: tab === 'estrategias' && estrategiasSubTab === 'completas',
+  });
+
+  const estrategiasData = estrategiasSubTab === 'con_todos' ? conTodosData : completasData;
+  const loadingFinales = estrategiasSubTab === 'con_todos' ? loadingConTodos : loadingCompletas;
 
   const handleStrategyClick = async (name: string) => {
     setLoadingDetail(true);
@@ -83,7 +102,9 @@ export default function StrategiesPage() {
   const emptyMessages: Record<Tab, string> = {
     pending: 'No hay estrategias pendientes de revision',
     ideas: 'No hay ideas todavia. Valida estrategias desde la pestana Pendientes.',
-    estrategias: 'No hay estrategias validadas todavia',
+    estrategias: estrategiasSubTab === 'con_todos'
+      ? 'No hay estrategias validadas con TODOs pendientes'
+      : 'No hay estrategias validadas completas todavia',
   };
 
   return (
@@ -117,6 +138,27 @@ export default function StrategiesPage() {
           Estrategias
         </button>
       </div>
+
+      {tab === 'estrategias' && (
+        <div className="flex gap-1 bg-slate-900 border border-slate-700 rounded-md p-0.5 w-fit ml-1">
+          <button
+            onClick={() => { setEstrategiasSubTab('con_todos'); setSelectedStrategy(null); }}
+            className={`px-3 py-1 text-xs rounded transition-colors ${
+              estrategiasSubTab === 'con_todos' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Con TODOs
+          </button>
+          <button
+            onClick={() => { setEstrategiasSubTab('completas'); setSelectedStrategy(null); }}
+            className={`px-3 py-1 text-xs rounded transition-colors ${
+              estrategiasSubTab === 'completas' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Completas
+          </button>
+        </div>
+      )}
 
       {/* Filters (shared between all tabs) */}
       <div className="flex gap-3 flex-wrap">

@@ -47,6 +47,11 @@ class DraftDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
+class FillTodoRequest(BaseModel):
+    path: str
+    value: Any
+
+
 class DraftsListResponse(BaseModel):
     total: int
     drafts: list[DraftSummary]

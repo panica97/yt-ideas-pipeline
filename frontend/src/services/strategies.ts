@@ -7,6 +7,7 @@ interface StrategyFilters {
   search?: string;
   session_id?: number;
   has_draft?: boolean;
+  has_todos?: boolean;
   status?: 'pending' | 'idea' | 'validated';
 }
 
@@ -16,6 +17,7 @@ export async function getStrategies(filters: StrategyFilters = {}): Promise<Stra
   if (filters.search) params.set('search', filters.search);
   if (filters.session_id) params.set('session_id', String(filters.session_id));
   if (filters.has_draft !== undefined) params.set('has_draft', String(filters.has_draft));
+  if (filters.has_todos !== undefined) params.set('has_todos', String(filters.has_todos));
   if (filters.status) params.set('status', filters.status);
 
   const { data } = await api.get<StrategiesResponse>(`/strategies?${params.toString()}`);
