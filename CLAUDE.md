@@ -5,27 +5,43 @@ Pipeline de investigación de estrategias de trading. Monitorea canales de YouTu
 ## Stack
 
 - Claude Code CLI como orquestador
-- Python 3.12 para herramientas y scripts
-- Docker para desarrollo local y deploy en VPS
-- NotebookLM para extracción de estrategias
+- Python 3.12, FastAPI (backend API)
+- React 18 + TypeScript + Tailwind CSS + Lucide React (frontend)
+- PostgreSQL 16
+- Docker + Docker Compose para desarrollo local y deploy en VPS
+- NotebookLM (notebooklm-py) para extracción de estrategias
+- yt-dlp para scraping de YouTube
 
 ## Estructura
 
 ```
+api/                    FastAPI backend (puerto 8000)
+  routers/              Endpoints REST
+  models/               Modelos SQLAlchemy
+  services/             Lógica de negocio
+  alembic/              Migraciones de BD
+frontend/               React dashboard (puerto 5173)
+  src/                  Código fuente TypeScript
 .claude/skills/         Skills del pipeline (cada una con SKILL.md)
   research/             Trigger del pipeline de investigación
   yt-scraper/           Fetch videos por topic desde canales registrados
   notebooklm/           API completa de NotebookLM
   notebooklm-analyst/   Extracción de estrategias desde videos
+  video-classifier/     Filtrar videos irrelevantes
+  strategy-variants/    Purificar, split long/short, variantes
+  strategy-translator/  Traducción a JSON IBKR
   db-manager/           Persistencia en PostgreSQL con deduplicación
+  todo-fill/            Rellenar TODOs pendientes en estrategias
 .claude/agents/         Agentes con contexto propio
   research/             Agente de investigación (pipeline completo)
 tools/                  Scripts Python ejecutables
   youtube/              Búsqueda y scraping (yt-dlp)
+scripts/                Scripts auxiliares
 config/                 Configuración global
 data/                   Datos persistentes
   channels/             Base de datos de canales YouTube (YAML)
   strategies/           Estrategias extraídas (YAML)
+openspec/               Artefactos SDD (cambios planificados)
 docs/                   Documentación del proyecto
 planes/                 Planes y roadmap (gitignored)
 ```
@@ -46,9 +62,13 @@ El skill `/research` actúa como orquestador de research, lanzando sub-agentes p
 
 ```
 /research <topic>
-  1. yt-scraper         → videos recientes del topic
-  2. notebooklm-analyst → extracción de estrategias (YAML)
-  3. db-manager         → guardar con deduplicación
+  0. Preflight            → notebooklm auth check
+  1. yt-scraper           → videos recientes del topic
+  1.5 video-classifier    → filtrar videos irrelevantes
+  2. notebooklm-analyst   → extracción de estrategias (YAML)
+  3. strategy-variants    → purificar, split long/short, variantes
+  4. strategy-translator  → traducción a JSON IBKR
+  5. db-manager           → guardar con deduplicación
 ```
 
 Parada temprana: `NO_VIDEOS_FOUND`, `NO_STRATEGIES_FOUND` detienen el pipeline.
@@ -61,7 +81,15 @@ Las skills SDD ya están disponibles vía `~/.claude/CLAUDE.md`.
 ## Cómo ejecutar
 
 ```bash
-docker compose build
+# Levantar todos los servicios
+docker compose up -d
+
+# Dashboard: http://localhost:5173
+# API:       http://localhost:8000
+
+# Ejecutar el pipeline manualmente
 docker compose run pipeline python -m tools.youtube.search "futures trading" --count 5
+
+# Ver canales registrados
 docker compose run pipeline python -m tools.youtube.channels --db data/channels/channels.yaml topics
 ```

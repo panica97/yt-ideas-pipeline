@@ -1,12 +1,12 @@
 # IRT (Ideas Research Team)
 
-Pipeline de investigación de estrategias de trading. Monitorea canales de YouTube, extrae estrategias con NotebookLM y las persiste en PostgreSQL con un dashboard en tiempo real.
+Pipeline de investigación de estrategias de trading. Monitorea canales de YouTube, extrae estrategias con NotebookLM, las traduce a formato IBKR y las persiste en PostgreSQL con un dashboard en tiempo real.
 
 ## Stack
 
 - **Orquestador:** Claude Code CLI
 - **Backend:** Python 3.12, FastAPI
-- **Frontend:** React 18 + TypeScript + Tailwind CSS
+- **Frontend:** React 18 + TypeScript + Tailwind CSS + Lucide React
 - **Base de datos:** PostgreSQL 16
 - **Scraping:** yt-dlp
 - **Análisis:** NotebookLM (notebooklm-py)
@@ -15,13 +15,16 @@ Pipeline de investigación de estrategias de trading. Monitorea canales de YouTu
 ## Pipeline de investigación
 
 ```
-yt-scraper → notebooklm-analyst → translator → db-manager
+preflight → yt-scraper → video-classifier → notebooklm-analyst → strategy-variants → strategy-translator → db-manager
 ```
 
+0. **Preflight** — verifica autenticación con NotebookLM
 1. **yt-scraper** — busca vídeos recientes en canales de trading registrados
-2. **notebooklm-analyst** — analiza los vídeos y extrae estrategias estructuradas
-3. **translator** — traduce las estrategias a formato JSON normalizado
-4. **db-manager** — guarda en PostgreSQL con deduplicación
+2. **video-classifier** — filtra vídeos irrelevantes para el topic
+3. **notebooklm-analyst** — analiza los vídeos y extrae estrategias estructuradas (YAML)
+4. **strategy-variants** — purifica, split long/short, genera variantes
+5. **strategy-translator** — traduce las estrategias a formato JSON IBKR
+6. **db-manager** — guarda en PostgreSQL con deduplicación
 
 Se lanza con `/research <topic>` desde Claude Code.
 
@@ -29,15 +32,24 @@ Se lanza con `/research <topic>` desde Claude Code.
 
 ```
 api/                    FastAPI backend (puerto 8000)
+  routers/              Endpoints REST
+  models/               Modelos SQLAlchemy
+  services/             Lógica de negocio
+  alembic/              Migraciones de BD
 frontend/               React dashboard (puerto 5173)
+  src/                  Código fuente TypeScript
 tools/                  Scripts Python del pipeline
   youtube/              Búsqueda y scraping (yt-dlp)
   notebooklm/           Integración con NotebookLM
   database/             Gestión de base de datos
+scripts/                Scripts auxiliares
 config/                 Configuración global
 data/                   Datos persistentes (channels, strategies)
+openspec/               Artefactos SDD (cambios planificados)
 docs/                   Documentación
-.claude/skills/         Skills de Claude Code (research, yt-scraper, etc.)
+.claude/skills/         Skills de Claude Code (9 skills: research, yt-scraper,
+                        notebooklm, notebooklm-analyst, video-classifier,
+                        strategy-variants, strategy-translator, db-manager, todo-fill)
 ```
 
 ## Requisitos

@@ -45,6 +45,49 @@ python -m tools.youtube.channels --db data/channels/channels.yaml <comando>
 | `add <topic> <url> [--name N]` | Anade canal a un topic |
 | `remove <topic> <url>` | Elimina canal de un topic |
 
+## Base de datos (`tools/db/`)
+
+Capa de acceso a datos con SQLAlchemy 2.0 y PostgreSQL 16.
+
+### Modelos ORM (`models.py`)
+
+| Modelo | Tabla | Descripcion |
+|--------|-------|-------------|
+| `Topic` | `topics` | Topics de investigacion (slug, descripcion) |
+| `Channel` | `channels` | Canales YouTube vinculados a un topic |
+| `Strategy` | `strategies` | Estrategias extraidas (nombre, reglas, parametros en JSONB) |
+| `Draft` | `drafts` | Borradores de estrategias con deteccion de TODOs |
+| `Instrument` | `instruments` | Tabla de referencia de instrumentos (symbol, exchange, multiplier, min_tick) |
+| `ResearchHistory` | `research_history` | Videos investigados (video_id + topic, unique) |
+| `ResearchSession` | `research_sessions` | Sesiones de research en curso (status, step, progress) |
+
+Todos los modelos con timestamps usan `TimestampMixin` (created_at, updated_at).
+
+### Session management (`session.py`)
+
+Provee `sync_session_ctx()`, un context manager para obtener sesiones sincronas:
+
+```python
+from tools.db.session import sync_session_ctx
+
+with sync_session_ctx() as session:
+    # operaciones con la BD
+    pass
+```
+
+Requiere la variable de entorno `DATABASE_URL`.
+
+### Repositorios
+
+| Archivo | Funciones principales |
+|---------|----------------------|
+| `strategy_repo.py` | CRUD de estrategias, busqueda full-text |
+| `draft_repo.py` | CRUD de drafts, deteccion de campos TODO, activacion/desactivacion |
+| `channel_repo.py` | CRUD de canales por topic |
+| `instrument_repo.py` | CRUD de instrumentos de referencia |
+| `history_repo.py` | Registro de videos investigados, `get_researched_video_ids()` |
+| `research_repo.py` | Gestion de sesiones de research (crear, actualizar paso, completar) |
+
 ## Slash commands
 
 Los slash commands son la interfaz principal desde Claude Code:
