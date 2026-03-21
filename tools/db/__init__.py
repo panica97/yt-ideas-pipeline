@@ -4,6 +4,7 @@ from .base import Base, TimestampMixin
 from .models import (
     Channel,
     Draft,
+    Instrument,
     ResearchHistory,
     ResearchSession,
     Strategy,
@@ -24,6 +25,7 @@ __all__ = [
     "Channel",
     "Strategy",
     "Draft",
+    "Instrument",
     "ResearchHistory",
     "ResearchSession",
     "get_sync_engine",

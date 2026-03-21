@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from sqlalchemy import (
     Boolean,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -106,6 +107,19 @@ class Draft(Base, TimestampMixin):
     active: Mapped[bool] = mapped_column(Boolean, default=False)
     tested: Mapped[bool] = mapped_column(Boolean, default=False)
     prod: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Instrument(Base, TimestampMixin):
+    __tablename__ = "instruments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    symbol: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    sec_type: Mapped[str] = mapped_column(String(10), nullable=False)
+    exchange: Mapped[str] = mapped_column(String(20), nullable=False)
+    currency: Mapped[str] = mapped_column(String(5), nullable=False, default="USD")
+    multiplier: Mapped[float] = mapped_column(Float, nullable=False)
+    min_tick: Mapped[float] = mapped_column(Float, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
 
 class ResearchHistory(Base):
