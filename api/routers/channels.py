@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.channel import (
     ChannelCreate,
     ChannelResponse,
@@ -14,7 +14,7 @@ from api.models.schemas.channel import (
 )
 from api.services import channel_service
 
-router = APIRouter(prefix="/api/channels", tags=["channels"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/channels", tags=["channels"])
 
 
 @router.get("", response_model=ChannelsListResponse)

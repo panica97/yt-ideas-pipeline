@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.export import ExportFormat
 from api.services import export_service
 
-router = APIRouter(prefix="/api/export", tags=["export"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/export", tags=["export"])
 
 
 def _file_response(content: str, filename: str, fmt: ExportFormat) -> Response:

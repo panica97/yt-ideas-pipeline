@@ -4,13 +4,7 @@ import { getResearchSessions } from '../services/research';
 import type { ResearchSessionDetail } from '../services/research';
 import StatusBadge from '../components/common/StatusBadge';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-}
+import { formatDuration } from '../utils/formatDuration';
 
 function SessionCard({ session }: { session: ResearchSessionDetail }) {
   const totalVideos =

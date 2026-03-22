@@ -8,13 +8,7 @@ import type { Strategy } from '../types/strategy';
 import StatusBadge from '../components/common/StatusBadge';
 import StrategyDetail from '../components/strategies/StrategyDetail';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-}
+import { formatDuration } from '../utils/formatDuration';
 
 function ClassificationBadge({ classification }: { classification: string | null }) {
   if (classification === 'irrelevant') {

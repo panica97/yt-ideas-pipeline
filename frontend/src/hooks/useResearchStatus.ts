@@ -8,7 +8,15 @@ export function useResearchStatus() {
   const apiKey = localStorage.getItem('irt_api_key') || '';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = import.meta.env.VITE_WS_URL || `${protocol}//${window.location.host}`;
-  const url = `${host}/api/research/status?api_key=${encodeURIComponent(apiKey)}`;
+  const url = `${host}/api/research/status`;
+
+  // Send API key as first message after connection (avoids exposing key in URL)
+  const handleOpen = useCallback(
+    (ws: WebSocket) => {
+      ws.send(JSON.stringify({ type: 'auth', api_key: apiKey }));
+    },
+    [apiKey]
+  );
 
   const handleMessage = useCallback((data: unknown) => {
     const msg = data as ResearchStatusMessage;
@@ -36,6 +44,7 @@ export function useResearchStatus() {
   const { isConnected } = useWebSocket({
     url,
     onMessage: handleMessage,
+    onOpen: handleOpen,
     enabled: !!apiKey,
   });
 

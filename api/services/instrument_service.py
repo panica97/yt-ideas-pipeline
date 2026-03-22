@@ -46,7 +46,7 @@ async def create_instrument(
 
     instrument = Instrument(**data.model_dump())
     db.add(instrument)
-    await db.flush()
+    await db.commit()
     await db.refresh(instrument)
     return instrument
 
@@ -61,7 +61,7 @@ async def update_instrument(
     for field, value in update_data.items():
         setattr(instrument, field, value)
 
-    await db.flush()
+    await db.commit()
     await db.refresh(instrument)
     return instrument
 
@@ -70,4 +70,4 @@ async def delete_instrument(db: AsyncSession, symbol: str) -> None:
     """Delete an instrument by symbol. Raise 404 if not found."""
     instrument = await get_instrument(db, symbol)
     await db.delete(instrument)
-    await db.flush()
+    await db.commit()

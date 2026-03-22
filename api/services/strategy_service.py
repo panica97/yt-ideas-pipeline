@@ -480,6 +480,13 @@ async def fill_todo(
             )
         current_value = parent[final_key]
 
+    # Validate that the field actually contains a _TODO sentinel
+    if not (isinstance(current_value, str) and "_TODO" in current_value):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Field at path '{path}' is not a TODO field",
+        )
+
     # Apply the new value
     if isinstance(final_key, int):
         parent[final_key] = value

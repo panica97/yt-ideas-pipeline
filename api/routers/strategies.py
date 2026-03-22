@@ -5,13 +5,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from pydantic import BaseModel
 from api.models.schemas.draft import DraftsListResponse, FillTodoRequest
 from api.models.schemas.strategy import StrategiesListResponse, StatusUpdate, StrategyResponse
 from api.services import strategy_service
 
-router = APIRouter(prefix="/api/strategies", tags=["strategies"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/strategies", tags=["strategies"])
 
 
 class UpdateDraftDataRequest(BaseModel):

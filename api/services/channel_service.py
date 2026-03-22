@@ -58,7 +58,7 @@ async def add_channel(
 
     channel = Channel(topic_id=topic.id, name=name, url=url)
     db.add(channel)
-    await db.flush()
+    await db.commit()
     await db.refresh(channel)
     return channel
 
@@ -88,7 +88,8 @@ async def delete_channel(
             detail=f"Channel '{channel_name}' not found in topic '{topic_slug}'",
         )
 
-    # Check if it's the last channel
+    # A topic must have at least one channel to be functional in the
+    # research pipeline, so deleting the last one is not allowed.
     count_result = await db.execute(
         select(func.count())
         .select_from(Channel)
@@ -102,4 +103,4 @@ async def delete_channel(
         )
 
     await db.delete(channel)
-    await db.flush()
+    await db.commit()

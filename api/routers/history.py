@@ -7,11 +7,11 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.history import HistoryListResponse, HistoryStatsResponse
 from api.services import history_service
 
-router = APIRouter(prefix="/api/history", tags=["history"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/history", tags=["history"])
 
 
 @router.get("", response_model=HistoryListResponse)

@@ -5,11 +5,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.topic import TopicCreate, TopicResponse, TopicUpdate
 from api.services import topic_service
 
-router = APIRouter(prefix="/api/topics", tags=["topics"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/topics", tags=["topics"])
 
 
 @router.post("", response_model=TopicResponse, status_code=status.HTTP_201_CREATED)

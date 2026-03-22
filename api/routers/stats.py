@@ -5,11 +5,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.stats import StatsResponse
 from api.services import stats_service
 
-router = APIRouter(prefix="/api/stats", tags=["stats"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/stats", tags=["stats"])
 
 
 @router.get("", response_model=StatsResponse)

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
 import type { DraftDetail } from '../../types/draft';
 import type { Instrument } from '../../types/instrument';
 import { parseDraftData, getTodoFieldsForSection, humanizeFieldPath } from './draft-utils';
@@ -52,8 +53,8 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
       setEditMode(false);
       setJsonError(null);
     },
-    onError: (error: any) => {
-      const detail = error?.response?.data?.detail;
+    onError: (error: AxiosError<{ detail: string | { errors: string[]; message: string } }>) => {
+      const detail = error.response?.data?.detail;
       if (typeof detail === 'object' && detail?.errors) {
         setJsonError(detail.errors.join('\n'));
       } else if (typeof detail === 'string') {

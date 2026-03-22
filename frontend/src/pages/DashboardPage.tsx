@@ -19,13 +19,7 @@ import {
   XCircle,
   SkipForward,
 } from 'lucide-react';
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-}
+import { formatDuration } from '../utils/formatDuration';
 
 function StepStatusIcon({ status }: { status: PipelineStep['status'] }) {
   if (status === 'ok') return <CheckCircle2 size={12} className="text-accent" />;

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
-from sqlalchemy import inspect, text
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from api.database import engine
 
@@ -16,6 +17,7 @@ _EXPECTED_TABLES = [
     "drafts",
     "research_history",
     "research_sessions",
+    "instruments",
 ]
 
 
@@ -42,8 +44,11 @@ async def health_check():
             "tables": tables,
         }
     except Exception:
-        return {
-            "status": "degraded",
-            "database": "disconnected",
-            "tables": {t: False for t in _EXPECTED_TABLES},
-        }
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "database": "disconnected",
+                "tables": {t: False for t in _EXPECTED_TABLES},
+            },
+        )

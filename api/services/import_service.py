@@ -177,23 +177,14 @@ def import_strategies(session, data_dir: Path) -> dict[str, int]:
 
 
 def _extract_todo_fields(data, prefix=""):
-    """Recursively find _TODO values in a dict/list."""
-    paths = []
-    if isinstance(data, dict):
-        for key, value in data.items():
-            current = f"{prefix}.{key}" if prefix else key
-            if isinstance(value, str) and "_TODO" in value:
-                paths.append(current)
-            else:
-                paths.extend(_extract_todo_fields(value, current))
-    elif isinstance(data, list):
-        for idx, item in enumerate(data):
-            current = f"{prefix}[{idx}]"
-            if isinstance(item, str) and "_TODO" in item:
-                paths.append(current)
-            else:
-                paths.extend(_extract_todo_fields(item, current))
-    return paths
+    """Extract TODO field paths from nested data.
+
+    Delegates to strategy_service._extract_todo_fields which returns richer
+    dicts (with 'path' and 'context' keys). This wrapper keeps backward
+    compatibility by returning a flat list of path strings.
+    """
+    from api.services.strategy_service import _extract_todo_fields as _extract_rich
+    return [entry["path"] for entry in _extract_rich(data, prefix)]
 
 
 def import_drafts(session, data_dir: Path) -> dict[str, int]:

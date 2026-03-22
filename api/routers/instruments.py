@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.dependencies import get_db, verify_api_key
+from api.dependencies import get_db
 from api.models.schemas.instrument import (
     InstrumentCreate,
     InstrumentResponse,
@@ -14,7 +14,7 @@ from api.models.schemas.instrument import (
 )
 from api.services import instrument_service
 
-router = APIRouter(prefix="/api/instruments", tags=["instruments"], dependencies=[Depends(verify_api_key)])
+router = APIRouter(prefix="/api/instruments", tags=["instruments"])
 
 
 @router.get("", response_model=InstrumentsListResponse)

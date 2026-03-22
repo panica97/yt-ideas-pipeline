@@ -8,15 +8,9 @@ import HistoryFilters from '../components/history/HistoryFilters';
 import HistoryTable from '../components/history/HistoryTable';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import StatusBadge from '../components/common/StatusBadge';
+import { formatDuration } from '../utils/formatDuration';
 
 type ViewMode = 'flat' | 'grouped';
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-}
 
 function SessionGroup({
   session,
@@ -153,11 +147,7 @@ export default function HistoryPage() {
   });
 
   const topics = stats ? Object.keys(stats.by_topic) : [];
-  const channels = stats
-    ? topic
-      ? Object.keys(stats.by_channel).filter(() => true)
-      : Object.keys(stats.by_channel)
-    : [];
+  const channels = stats ? Object.keys(stats.by_channel) : [];
 
   const totalPages = data ? Math.ceil(data.total / limit) : 1;
 

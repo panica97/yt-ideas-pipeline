@@ -65,19 +65,19 @@ class Strategy(Base, TimestampMixin):
         ForeignKey("channels.id")
     )
     source_videos: Mapped[Optional[list]] = mapped_column(ARRAY(Text))
-    parameters: Mapped[Optional[dict]] = mapped_column(
+    parameters: Mapped[Optional[list]] = mapped_column(
         JSONB, server_default="[]"
     )
-    entry_rules: Mapped[Optional[dict]] = mapped_column(
+    entry_rules: Mapped[Optional[list]] = mapped_column(
         JSONB, server_default="[]"
     )
-    exit_rules: Mapped[Optional[dict]] = mapped_column(
+    exit_rules: Mapped[Optional[list]] = mapped_column(
         JSONB, server_default="[]"
     )
-    risk_management: Mapped[Optional[dict]] = mapped_column(
+    risk_management: Mapped[Optional[list]] = mapped_column(
         JSONB, server_default="[]"
     )
-    notes: Mapped[Optional[dict]] = mapped_column(JSONB, server_default="[]")
+    notes: Mapped[Optional[list]] = mapped_column(JSONB, server_default="[]")
 
     __table_args__ = (
         Index(

@@ -76,7 +76,13 @@ async def list_history(
     total = (await db.execute(count_q)).scalar_one()
 
     # Sort
-    sort_col = _VALID_SORT_FIELDS.get(sort, ResearchHistory.researched_at)
+    if sort not in _VALID_SORT_FIELDS:
+        from fastapi import HTTPException
+        valid_fields = ", ".join(sorted(_VALID_SORT_FIELDS.keys()))
+        raise HTTPException(
+            422, detail=f"Invalid sort field '{sort}'. Valid: {valid_fields}"
+        )
+    sort_col = _VALID_SORT_FIELDS[sort]
     direction = desc if order == "desc" else asc
     query = query.order_by(direction(sort_col))
 

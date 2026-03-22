@@ -9,3 +9,4 @@ pydantic-settings
 python-multipart
 pyyaml
 ruamel.yaml
+slowapi

@@ -23,7 +23,7 @@ async def create_topic(db: AsyncSession, slug: str, description: str | None) -> 
         )
     topic = Topic(slug=slug, description=description)
     db.add(topic)
-    await db.flush()
+    await db.commit()
     await db.refresh(topic)
     return topic
 
@@ -36,7 +36,7 @@ async def update_topic(db: AsyncSession, slug: str, description: str) -> Topic:
             detail=f"Topic '{slug}' not found",
         )
     topic.description = description
-    await db.flush()
+    await db.commit()
     await db.refresh(topic)
     return topic
 
@@ -59,4 +59,4 @@ async def delete_topic(db: AsyncSession, slug: str) -> None:
             detail="Cannot delete a topic with associated channels",
         )
     await db.delete(topic)
-    await db.flush()
+    await db.commit()

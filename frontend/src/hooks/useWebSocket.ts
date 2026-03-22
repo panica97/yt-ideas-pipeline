@@ -3,19 +3,30 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 interface UseWebSocketOptions {
   url: string;
   onMessage: (data: unknown) => void;
+  onOpen?: (ws: WebSocket) => void;
   enabled?: boolean;
 }
 
-export function useWebSocket({ url, onMessage, enabled = true }: UseWebSocketOptions) {
+const MAX_RETRIES = 20;
+
+export function useWebSocket({ url, onMessage, onOpen, enabled = true }: UseWebSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionFailed, setConnectionFailed] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const retriesRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
+  const onOpenRef = useRef(onOpen);
+  onOpenRef.current = onOpen;
 
   const connect = useCallback(() => {
     if (!enabled) return;
+
+    if (retriesRef.current >= MAX_RETRIES) {
+      setConnectionFailed(true);
+      return;
+    }
 
     try {
       const ws = new WebSocket(url);
@@ -23,7 +34,9 @@ export function useWebSocket({ url, onMessage, enabled = true }: UseWebSocketOpt
 
       ws.onopen = () => {
         setIsConnected(true);
+        setConnectionFailed(false);
         retriesRef.current = 0;
+        onOpenRef.current?.(ws);
       };
 
       ws.onmessage = (event) => {
@@ -38,6 +51,11 @@ export function useWebSocket({ url, onMessage, enabled = true }: UseWebSocketOpt
       ws.onclose = () => {
         setIsConnected(false);
         wsRef.current = null;
+
+        if (retriesRef.current >= MAX_RETRIES) {
+          setConnectionFailed(true);
+          return;
+        }
 
         // Exponential backoff: 1s, 2s, 4s, 8s, ..., max 30s
         const delay = Math.min(1000 * Math.pow(2, retriesRef.current), 30000);
@@ -67,5 +85,5 @@ export function useWebSocket({ url, onMessage, enabled = true }: UseWebSocketOpt
     };
   }, [connect]);
 
-  return { isConnected };
+  return { isConnected, connectionFailed };
 }
