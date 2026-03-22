@@ -41,11 +41,11 @@ function SessionGroup({
           <span className="text-text-muted text-xs">{isExpanded ? '\u25BC' : '\u25B6'}</span>
           <div>
             <span className="text-sm font-medium text-text-primary">
-              {session.topic ?? 'Sin topic'}
+              {session.topic ?? 'No topic'}
             </span>
             <span className="text-xs text-text-muted ml-3">
               {session.started_at
-                ? new Date(session.started_at).toLocaleString('es-ES', {
+                ? new Date(session.started_at).toLocaleString('en-US', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
@@ -71,7 +71,7 @@ function SessionGroup({
             onClick={(e) => e.stopPropagation()}
             className="text-xs text-accent hover:text-accent-hover"
           >
-            Detalle
+            Detail
           </Link>
         </div>
       </button>
@@ -82,8 +82,8 @@ function SessionGroup({
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-2 px-3 text-text-muted font-medium">Video ID</th>
-                <th className="text-left py-2 px-3 text-text-muted font-medium">Canal</th>
-                <th className="text-left py-2 px-3 text-text-muted font-medium">Estrategias</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Channel</th>
+                <th className="text-left py-2 px-3 text-text-muted font-medium">Strategies</th>
               </tr>
             </thead>
             <tbody>
@@ -110,7 +110,7 @@ function SessionGroup({
 
       {isExpanded && (!session.videos || session.videos.length === 0) && (
         <div className="border-t border-border px-4 py-3">
-          <p className="text-xs text-text-muted">Sin videos en esta sesion</p>
+          <p className="text-xs text-text-muted">No videos in this session</p>
         </div>
       )}
     </div>
@@ -176,7 +176,7 @@ export default function HistoryPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-text-primary">Historial de investigacion</h1>
+        <h1 className="text-xl font-bold text-text-primary">Research History</h1>
         <div className="flex items-center gap-3">
           {viewMode === 'flat' && (
             <span className="text-sm text-text-muted">Total: {data?.total ?? 0} videos</span>
@@ -190,7 +190,7 @@ export default function HistoryPage() {
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
-              Por sesion
+              By Session
             </button>
             <button
               onClick={() => setViewMode('flat')}
@@ -200,7 +200,7 @@ export default function HistoryPage() {
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
-              Lista plana
+              Flat List
             </button>
           </div>
         </div>
@@ -234,17 +234,17 @@ export default function HistoryPage() {
                     disabled={page === 1}
                     className="px-3 py-1 text-sm bg-surface-2 hover:bg-surface-3 disabled:bg-surface-1 disabled:text-text-muted text-text-secondary rounded transition-colors"
                   >
-                    Anterior
+                    Previous
                   </button>
                   <span className="text-sm text-text-muted">
-                    Pagina {page} de {totalPages}
+                    Page {page} of {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
                     className="px-3 py-1 text-sm bg-surface-2 hover:bg-surface-3 disabled:bg-surface-1 disabled:text-text-muted text-text-secondary rounded transition-colors"
                   >
-                    Siguiente
+                    Next
                   </button>
                 </div>
               )}
@@ -261,7 +261,7 @@ export default function HistoryPage() {
             <div className="space-y-3">
               {(sessionsData?.sessions ?? []).length === 0 ? (
                 <p className="text-sm text-text-muted py-8 text-center">
-                  No se han realizado investigaciones todavia
+                  No research has been performed yet
                 </p>
               ) : (
                 (sessionsData?.sessions ?? []).map((session) => (

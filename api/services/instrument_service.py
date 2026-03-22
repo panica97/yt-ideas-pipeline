@@ -26,7 +26,7 @@ async def get_instrument(db: AsyncSession, symbol: str) -> Instrument:
     if not instrument:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Instrumento '{symbol}' no encontrado",
+            detail=f"Instrument '{symbol}' not found",
         )
     return instrument
 
@@ -41,7 +41,7 @@ async def create_instrument(
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Instrumento con symbol '{data.symbol}' ya existe",
+            detail=f"Instrument with symbol '{data.symbol}' already exists",
         )
 
     instrument = Instrument(**data.model_dump())

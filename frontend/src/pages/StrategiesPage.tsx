@@ -96,23 +96,23 @@ export default function StrategiesPage() {
   const activeLoading = tab === 'pending' ? loadingPending : tab === 'ideas' ? loadingIdeas : loadingFinales;
 
   const emptyMessages: Record<Tab, string> = {
-    pending: 'No hay estrategias pendientes de revision',
-    ideas: 'No hay ideas todavia. Valida estrategias desde la pestana Pendientes.',
+    pending: 'No strategies pending review',
+    ideas: 'No ideas yet. Validate strategies from the Pending tab.',
     estrategias: estrategiasSubTab === 'con_todos'
-      ? 'No hay estrategias validadas con TODOs pendientes'
-      : 'No hay estrategias validadas completas todavia',
+      ? 'No validated strategies with pending TODOs'
+      : 'No complete validated strategies yet',
   };
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <h1 className="text-lg font-semibold text-text-primary">Resultados</h1>
+      <h1 className="text-lg font-semibold text-text-primary">Results</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 glass rounded-lg p-1 w-fit">
         {[
-          { key: 'pending' as Tab, label: 'Pendientes' },
+          { key: 'pending' as Tab, label: 'Pending' },
           { key: 'ideas' as Tab, label: 'Ideas' },
-          { key: 'estrategias' as Tab, label: 'Estrategias' },
+          { key: 'estrategias' as Tab, label: 'Strategies' },
         ].map((t) => (
           <button
             key={t.key}
@@ -138,7 +138,7 @@ export default function StrategiesPage() {
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Con TODOs
+            With TODOs
           </button>
           <button
             onClick={() => { setEstrategiasSubTab('completas'); setSelectedStrategy(null); }}
@@ -148,7 +148,7 @@ export default function StrategiesPage() {
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Completas
+            Complete
           </button>
         </div>
       )}
@@ -161,7 +161,7 @@ export default function StrategiesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar..."
+            placeholder="Search..."
             className="w-full pl-9 pr-3 py-1.5 bg-surface-2 border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/30 transition-all"
           />
         </div>
@@ -170,7 +170,7 @@ export default function StrategiesPage() {
           onChange={(e) => setChannelFilter(e.target.value)}
           className="px-3 py-1.5 bg-surface-2 border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-all"
         >
-          <option value="">Canal: Todos</option>
+          <option value="">Channel: All</option>
           {channels.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
@@ -180,11 +180,11 @@ export default function StrategiesPage() {
           onChange={(e) => setSessionFilter(e.target.value)}
           className="px-3 py-1.5 bg-surface-2 border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent/50 transition-all"
         >
-          <option value="">Sesion: Todas</option>
+          <option value="">Session: All</option>
           {(sessionsData?.sessions ?? []).map((s) => (
             <option key={s.id} value={String(s.id)}>
-              {s.topic ?? 'Sin topic'} -{' '}
-              {s.started_at ? new Date(s.started_at).toLocaleDateString('es-ES') : '-'}
+              {s.topic ?? 'No topic'} -{' '}
+              {s.started_at ? new Date(s.started_at).toLocaleDateString('en-US') : '-'}
             </option>
           ))}
         </select>
@@ -210,7 +210,7 @@ export default function StrategiesPage() {
             <>
               <p className="text-xs text-text-muted">
                 Total: <span className="font-mono text-text-secondary">{activeData?.total ?? 0}</span>{' '}
-                {tab === 'pending' ? 'pendientes' : tab === 'ideas' ? 'ideas' : 'estrategias validadas'}
+                {tab === 'pending' ? 'pending' : tab === 'ideas' ? 'ideas' : 'validated strategies'}
               </p>
               <div className="space-y-2">
                 {(activeData?.strategies ?? []).map((s) => (

@@ -10,7 +10,7 @@ export default function StrategyCard({ strategy, onClick }: StrategyCardProps) {
     ? strategy.description.length > 150
       ? strategy.description.slice(0, 150) + '...'
       : strategy.description
-    : 'Sin descripcion';
+    : 'No description';
 
   return (
     <div
@@ -24,7 +24,7 @@ export default function StrategyCard({ strategy, onClick }: StrategyCardProps) {
         )}
         {strategy.source_videos && strategy.source_videos.length > 0 && (
           <span className="text-xs text-text-muted">
-            {strategy.source_videos.length} video{strategy.source_videos.length > 1 ? 's' : ''} fuente
+            {strategy.source_videos.length} source video{strategy.source_videos.length > 1 ? 's' : ''}
           </span>
         )}
       </div>

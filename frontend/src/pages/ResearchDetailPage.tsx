@@ -48,7 +48,7 @@ function IrrelevantVideosSection({
         <span className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>
           {'\u25B6'}
         </span>
-        Videos irrelevantes ({videos.length})
+        Irrelevant videos ({videos.length})
       </button>
       {open && <div className="mt-3">{renderTable(videos)}</div>}
     </div>
@@ -98,9 +98,9 @@ export default function ResearchDetailPage() {
   if (!session) {
     return (
       <div className="text-center py-12">
-        <p className="text-text-muted">Sesion no encontrada</p>
+        <p className="text-text-muted">Session not found</p>
         <Link to="/research" className="text-accent hover:text-accent-hover text-sm mt-2 inline-block">
-          Volver a investigaciones
+          Back to Research
         </Link>
       </div>
     );
@@ -127,11 +127,11 @@ export default function ResearchDetailPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-text-primary">
-            {session.topic ?? 'Sin topic'}
+            {session.topic ?? 'No topic'}
           </h1>
           <p className="text-sm text-text-muted">
             {session.started_at
-              ? new Date(session.started_at).toLocaleDateString('es-ES', {
+              ? new Date(session.started_at).toLocaleDateString('en-US', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',
@@ -148,17 +148,17 @@ export default function ResearchDetailPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-text-primary">{totalVideos}</p>
-          <p className="text-xs text-text-muted mt-1">Videos procesados</p>
+          <p className="text-xs text-text-muted mt-1">Processed Videos</p>
         </div>
         <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-warn">{totalStrategies}</p>
-          <p className="text-xs text-text-muted mt-1">Ideas encontradas</p>
+          <p className="text-xs text-text-muted mt-1">Ideas Found</p>
         </div>
         <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-text-secondary">
             {channelsProcessed.length}
           </p>
-          <p className="text-xs text-text-muted mt-1">Canales</p>
+          <p className="text-xs text-text-muted mt-1">Channels</p>
         </div>
         <div className="bg-surface-1 border border-border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-text-secondary">
@@ -166,7 +166,7 @@ export default function ResearchDetailPage() {
               ? formatDuration(session.duration_seconds)
               : '-'}
           </p>
-          <p className="text-xs text-text-muted mt-1">Duracion</p>
+          <p className="text-xs text-text-muted mt-1">Duration</p>
         </div>
       </div>
 
@@ -197,7 +197,7 @@ export default function ResearchDetailPage() {
         {channelsProcessed.length > 0 && (
           <div className="bg-surface-1 border border-border rounded-lg p-5">
             <h2 className="text-sm font-semibold text-text-secondary mb-3">
-              Canales procesados
+              Processed Channels
             </h2>
             <div className="space-y-2">
               {channelsProcessed.map((ch) => (
@@ -239,10 +239,10 @@ export default function ResearchDetailPage() {
                     Video ID
                   </th>
                   <th className="text-left py-2 px-3 text-text-muted font-medium">
-                    Canal
+                    Channel
                   </th>
                   <th className="text-left py-2 px-3 text-text-muted font-medium">
-                    Clasificacion
+                    Classification
                   </th>
                   <th className="text-left py-2 px-3 text-text-muted font-medium">
                     Ideas
@@ -285,13 +285,13 @@ export default function ResearchDetailPage() {
           <>
             <div className="bg-surface-1 border border-border rounded-lg p-5">
               <h2 className="text-sm font-semibold text-text-secondary mb-3">
-                Videos procesados ({strategyVideos.length})
+                Processed Videos ({strategyVideos.length})
               </h2>
               {strategyVideos.length > 0 ? (
                 renderVideoTable(strategyVideos)
               ) : (
                 <p className="text-sm text-text-muted">
-                  No se procesaron videos en esta sesion
+                  No videos processed in this session
                 </p>
               )}
             </div>
@@ -318,7 +318,7 @@ export default function ResearchDetailPage() {
       ) : (
         <div className="bg-surface-1 border border-border rounded-lg p-5">
           <h2 className="text-sm font-semibold text-text-secondary mb-3">
-            Ideas encontradas ({strategies.length})
+            Ideas Found ({strategies.length})
           </h2>
           {loadingIdea && <LoadingSpinner />}
           {strategies.length > 0 ? (
@@ -326,7 +326,7 @@ export default function ResearchDetailPage() {
               {(() => {
                 const groups = new Map<string, { channel: string | null; ideas: typeof strategies }>();
                 for (const s of strategies) {
-                  const videoKey = s.source_videos?.[0] ?? 'sin-video';
+                  const videoKey = s.source_videos?.[0] ?? 'no-video';
                   if (!groups.has(videoKey)) {
                     groups.set(videoKey, { channel: s.source_channel, ideas: [] });
                   }
@@ -335,7 +335,7 @@ export default function ResearchDetailPage() {
                 return Array.from(groups.entries()).map(([videoId, { channel, ideas }]) => (
                   <div key={videoId}>
                     <div className="flex items-center gap-2 mb-2">
-                      {videoId !== 'sin-video' ? (
+                      {videoId !== 'no-video' ? (
                         <a
                           href={`https://www.youtube.com/watch?v=${videoId}`}
                           target="_blank"
@@ -345,7 +345,7 @@ export default function ResearchDetailPage() {
                           {videoId}
                         </a>
                       ) : (
-                        <span className="text-xs text-text-muted font-medium">Sin video</span>
+                        <span className="text-xs text-text-muted font-medium">No video</span>
                       )}
                       {channel && (
                         <span className="text-xs text-text-muted">/ {channel}</span>
@@ -377,7 +377,7 @@ export default function ResearchDetailPage() {
             </div>
           ) : (
             <p className="text-sm text-text-muted">
-              No se encontraron ideas en esta sesion
+              No ideas found in this session
             </p>
           )}
         </div>

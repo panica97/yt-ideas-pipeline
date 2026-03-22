@@ -10,13 +10,13 @@ const config = {
     icon: Activity,
     classes: 'bg-accent/10 text-accent border-accent/20',
     dotClass: 'bg-accent animate-pulse',
-    label: 'En curso',
+    label: 'Running',
   },
   completed: {
     icon: CheckCircle2,
     classes: 'bg-accent/10 text-accent border-accent/20',
     dotClass: 'bg-accent',
-    label: 'Completado',
+    label: 'Completed',
   },
   error: {
     icon: XCircle,
@@ -28,7 +28,7 @@ const config = {
     icon: MinusCircle,
     classes: 'bg-surface-2 text-text-muted border-border',
     dotClass: 'bg-text-muted',
-    label: 'Inactivo',
+    label: 'Idle',
   },
 };
 

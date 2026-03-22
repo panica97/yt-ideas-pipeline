@@ -44,14 +44,14 @@ export default function TopicGroup({
         <div className="flex items-center gap-2">
           <span className="text-text-muted text-xs">{expanded ? '\u25BC' : '\u25B6'}</span>
           <span className="font-semibold text-text-primary">{slug}</span>
-          <span className="text-xs text-text-muted">({channels.length} canal{channels.length !== 1 ? 'es' : ''})</span>
+          <span className="text-xs text-text-muted">({channels.length} channel{channels.length !== 1 ? 's' : ''})</span>
         </div>
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setEditing(true)}
             className="text-xs text-text-muted hover:text-accent transition-colors"
           >
-            Editar
+            Edit
           </button>
           <button
             onClick={canDeleteTopic ? onDeleteTopic : undefined}
@@ -60,9 +60,9 @@ export default function TopicGroup({
                 ? 'text-text-muted hover:text-danger'
                 : 'text-text-muted cursor-not-allowed'
             }`}
-            title={canDeleteTopic ? 'Eliminar topic' : 'No se puede eliminar un topic con canales'}
+            title={canDeleteTopic ? 'Delete topic' : 'Cannot delete a topic with channels'}
           >
-            Borrar
+            Delete
           </button>
         </div>
       </div>
@@ -79,10 +79,10 @@ export default function TopicGroup({
               autoFocus
             />
             <button onClick={handleSaveEdit} className="text-xs text-accent hover:text-accent-hover">
-              Guardar
+              Save
             </button>
             <button onClick={() => setEditing(false)} className="text-xs text-text-muted hover:text-text-secondary">
-              Cancelar
+              Cancel
             </button>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function TopicGroup({
               onClick={() => setShowChannelForm(true)}
               className="text-xs text-accent hover:text-accent-hover transition-colors"
             >
-              + Anadir canal
+              + Add Channel
             </button>
           )}
         </div>

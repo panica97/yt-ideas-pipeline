@@ -8,7 +8,7 @@ export default function HistoryTable({ items }: HistoryTableProps) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-text-muted py-8 text-center">
-        No se han investigado videos todavia
+        No videos have been researched yet
       </p>
     );
   }
@@ -19,10 +19,10 @@ export default function HistoryTable({ items }: HistoryTableProps) {
         <thead>
           <tr className="border-b border-border">
             <th className="text-left py-2 px-3 text-text-muted font-medium">Video ID</th>
-            <th className="text-left py-2 px-3 text-text-muted font-medium">Canal</th>
+            <th className="text-left py-2 px-3 text-text-muted font-medium">Channel</th>
             <th className="text-left py-2 px-3 text-text-muted font-medium">Topic</th>
-            <th className="text-left py-2 px-3 text-text-muted font-medium">Fecha</th>
-            <th className="text-left py-2 px-3 text-text-muted font-medium">Estrategias</th>
+            <th className="text-left py-2 px-3 text-text-muted font-medium">Date</th>
+            <th className="text-left py-2 px-3 text-text-muted font-medium">Strategies</th>
           </tr>
         </thead>
         <tbody>
@@ -43,7 +43,7 @@ export default function HistoryTable({ items }: HistoryTableProps) {
               <td className="py-2 px-3 text-text-secondary">{item.topic || '-'}</td>
               <td className="py-2 px-3 text-text-muted">
                 {item.researched_at
-                  ? new Date(item.researched_at).toLocaleDateString('es-ES')
+                  ? new Date(item.researched_at).toLocaleDateString('en-US')
                   : '-'}
               </td>
               <td className="py-2 px-3 text-text-secondary">{item.strategies_found}</td>

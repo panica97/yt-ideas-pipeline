@@ -18,7 +18,7 @@ export default function Header() {
         {hasRunning && (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 animate-fade-in">
             <Activity size={14} className="text-accent animate-pulse" />
-            <span className="text-xs text-accent font-medium">Investigando...</span>
+            <span className="text-xs text-accent font-medium">Researching...</span>
           </div>
         )}
 
@@ -26,7 +26,7 @@ export default function Header() {
         <button
           onClick={toggle}
           className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all duration-200"
-          title={isDark ? 'Modo claro' : 'Modo oscuro'}
+          title={isDark ? 'Light mode' : 'Dark mode'}
         >
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
@@ -39,7 +39,7 @@ export default function Header() {
             <WifiOff size={14} className="text-danger" />
           )}
           <span className="text-[11px] text-text-muted">
-            {isConnected ? 'Conectado' : 'Desconectado'}
+            {isConnected ? 'Connected' : 'Disconnected'}
           </span>
         </div>
       </div>

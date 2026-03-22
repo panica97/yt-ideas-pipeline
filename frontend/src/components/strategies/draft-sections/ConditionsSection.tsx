@@ -8,7 +8,7 @@ interface Props {
 
 function ConditionBlock({ cond }: { cond: Condition }) {
   const displayCond = cond.cond_type === 'num_bars'
-    ? `Salir tras ${cond.cond} barras`
+    ? `Exit after ${cond.cond} bars`
     : cond.cond;
 
   return (
@@ -46,7 +46,7 @@ function EntryConditions({ conditions, label, bgClass }: { conditions: Condition
     return (
       <div className={`rounded-lg p-3 ${bgClass}`}>
         <div className="text-xs font-semibold uppercase mb-2 text-text-muted">{label}</div>
-        <p className="text-xs text-text-muted italic">Sin condiciones</p>
+        <p className="text-xs text-text-muted italic">No conditions</p>
       </div>
     );
   }
@@ -72,8 +72,8 @@ function ExitConditions({ conditions }: { conditions: Condition[] }) {
   if (conditions.length === 0) {
     return (
       <div className="rounded-lg p-3 bg-surface-2/20 border border-border/30">
-        <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Salida</div>
-        <p className="text-xs text-text-muted italic">Sin condiciones de salida</p>
+        <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Exit</div>
+        <p className="text-xs text-text-muted italic">No exit conditions</p>
       </div>
     );
   }
@@ -99,7 +99,7 @@ function ExitConditions({ conditions }: { conditions: Condition[] }) {
 
   return (
     <div className="rounded-lg p-3 bg-surface-2/20 border border-border/30">
-      <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Salida</div>
+      <div className="text-xs font-semibold uppercase mb-2 text-text-muted">Exit</div>
       <div className="space-y-1">
         {/* Force conditions first */}
         {forceConditions.map((c, i) => {

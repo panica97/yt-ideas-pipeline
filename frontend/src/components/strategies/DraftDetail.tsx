@@ -52,17 +52,17 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
           onClick={onClose}
           className="text-text-muted hover:text-text-secondary text-sm transition-colors"
         >
-          Cerrar
+          Close
         </button>
       </div>
 
       {/* Instrumento */}
       {instrument && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Instrumento</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Instrument</h4>
           <div className="bg-surface-2/30 rounded p-3 space-y-1">
             {renderField('Symbol', instrument.symbol, todoFields, 'instrument.symbol')}
-            {renderField('Tipo', instrument.secType, todoFields, 'instrument.secType')}
+            {renderField('Type', instrument.secType, todoFields, 'instrument.secType')}
             {renderField('Exchange', instrument.exchange, todoFields, 'instrument.exchange')}
             {renderField('Currency', instrument.currency, todoFields, 'instrument.currency')}
             {renderField('Multiplier', instrument.multiplier, todoFields, 'instrument.multiplier')}
@@ -73,7 +73,7 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
       {/* Indicadores */}
       {indicators && indicators.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Indicadores</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Indicators</h4>
           <IndicatorTable indicators={indicators} todoFields={todoFields} />
         </div>
       )}
@@ -81,7 +81,7 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
       {/* Condiciones Long */}
       {condLong && condLong.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Condiciones Long</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Long Conditions</h4>
           <ConditionList conditions={condLong} todoFields={todoFields} basePath="conditions_long" />
         </div>
       )}
@@ -89,7 +89,7 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
       {/* Condiciones Short */}
       {condShort && condShort.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Condiciones Short</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Short Conditions</h4>
           <ConditionList conditions={condShort} todoFields={todoFields} basePath="conditions_short" />
         </div>
       )}
@@ -126,7 +126,7 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
       {/* Parametros de control */}
       {controlParams && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Parametros de control</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Control Parameters</h4>
           <div className="bg-surface-2/30 rounded p-3 space-y-1">
             {Object.entries(controlParams).map(([key, val]) => (
               <div key={key}>
@@ -140,7 +140,7 @@ export default function DraftDetail({ draft, onClose }: DraftDetailProps) {
       {/* Notas */}
       {notes && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Notas</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Notes</h4>
           <div className="bg-surface-2/30 rounded p-3 text-xs text-text-secondary leading-relaxed">
             {typeof notes === 'string' ? (
               <p>{notes}</p>

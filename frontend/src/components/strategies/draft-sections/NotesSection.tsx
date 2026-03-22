@@ -5,7 +5,7 @@ interface Props {
 export default function NotesSection({ notes }: Props) {
   // Handle string notes (legacy format)
   if (typeof notes === 'string') {
-    if (!notes) return <p className="text-sm text-text-muted italic">Sin notas</p>;
+    if (!notes) return <p className="text-sm text-text-muted italic">No notes</p>;
     return (
       <div className="bg-surface-1/40 rounded p-2.5 border border-border/50">
         <div className="text-sm text-text-secondary leading-relaxed">{notes}</div>
@@ -16,7 +16,7 @@ export default function NotesSection({ notes }: Props) {
   const entries = Object.entries(notes);
 
   if (entries.length === 0) {
-    return <p className="text-sm text-text-muted italic">Sin notas</p>;
+    return <p className="text-sm text-text-muted italic">No notes</p>;
   }
 
   return (

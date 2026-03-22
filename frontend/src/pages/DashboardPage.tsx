@@ -88,18 +88,18 @@ export default function DashboardPage() {
       {/* Stats cards 3x2 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatsCard icon={FolderOpen} label="Topics" value={stats?.total_topics ?? 0} />
-        <StatsCard icon={Tv} label="Canales" value={stats?.total_channels ?? 0} />
-        <StatsCard icon={Film} label="Videos investigados" value={stats?.total_videos_researched ?? 0} />
+        <StatsCard icon={Tv} label="Channels" value={stats?.total_channels ?? 0} />
+        <StatsCard icon={Film} label="Researched Videos" value={stats?.total_videos_researched ?? 0} />
         <StatsCard icon={Lightbulb} label="Ideas" value={stats?.total_strategies ?? 0} />
-        <StatsCard icon={Trophy} label="Estrategias" value={stats?.total_drafts ?? 0} color="accent" />
-        <StatsCard icon={AlertTriangle} label="Con TODOs" value={stats?.drafts_with_todos ?? 0} color="warn" />
+        <StatsCard icon={Trophy} label="Strategies" value={stats?.total_drafts ?? 0} color="accent" />
+        <StatsCard icon={AlertTriangle} label="With TODOs" value={stats?.drafts_with_todos ?? 0} color="warn" />
       </div>
 
       {/* Bottom sections */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Estado actual */}
         <div className="card p-5">
-          <h2 className="text-xs text-text-muted uppercase tracking-wider mb-3">Estado actual</h2>
+          <h2 className="text-xs text-text-muted uppercase tracking-wider mb-3">Current Status</h2>
           {runningSessions.length > 0 ? (
             <div className="space-y-3">
               {runningSessions.map((session) => (
@@ -111,13 +111,13 @@ export default function DashboardPage() {
                 </div>
               ))}
               <Link to="/live" className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors">
-                Ver detalle <ArrowRight size={12} />
+                View Details <ArrowRight size={12} />
               </Link>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-text-muted" />
-              <span className="text-sm text-text-muted">Sin actividad</span>
+              <span className="text-sm text-text-muted">No Activity</span>
             </div>
           )}
         </div>
@@ -128,9 +128,9 @@ export default function DashboardPage() {
           className="card card-interactive p-5 block"
         >
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs text-text-muted uppercase tracking-wider">Ultima investigacion</h2>
+            <h2 className="text-xs text-text-muted uppercase tracking-wider">Last Research</h2>
             <span className="text-xs text-text-muted flex items-center gap-1">
-              Ver detalle <ArrowRight size={12} />
+              View Details <ArrowRight size={12} />
             </span>
           </div>
           {lastSession ? (
@@ -141,19 +141,19 @@ export default function DashboardPage() {
                   <span className="text-text-secondary">{lastSession.topic ?? '-'}</span>
                 </p>
                 <p>
-                  <span className="text-text-muted text-xs">Estado:</span>{' '}
+                  <span className="text-text-muted text-xs">Status:</span>{' '}
                   <span className={lastSession.status === 'completed' ? 'text-accent' : 'text-danger'}>
-                    {lastSession.status === 'completed' ? 'Completado' : 'Error'}
+                    {lastSession.status === 'completed' ? 'Completed' : 'Error'}
                   </span>
                 </p>
                 <p>
-                  <span className="text-text-muted text-xs">Fecha:</span>{' '}
+                  <span className="text-text-muted text-xs">Date:</span>{' '}
                   <span className="text-text-secondary">
-                    {lastSession.started_at ? new Date(lastSession.started_at).toLocaleDateString('es-ES') : '-'}
+                    {lastSession.started_at ? new Date(lastSession.started_at).toLocaleDateString('en-US') : '-'}
                   </span>
                 </p>
                 <p>
-                  <span className="text-text-muted text-xs">Duracion:</span>{' '}
+                  <span className="text-text-muted text-xs">Duration:</span>{' '}
                   <span className="text-text-secondary font-mono">
                     {lastSession.duration_seconds != null ? formatDuration(lastSession.duration_seconds) : '-'}
                   </span>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 lastSession.result_summary.channels_processed.length > 0 && (
                   <div>
                     <h3 className="text-[10px] text-text-muted uppercase tracking-wider mb-1">
-                      Canales procesados
+                      Processed Channels
                     </h3>
                     <ChannelBreakdown channels={lastSession.result_summary.channels_processed} />
                   </div>
@@ -195,7 +195,7 @@ export default function DashboardPage() {
               )}
             </div>
           ) : (
-            <p className="text-sm text-text-muted">No se han realizado investigaciones todavia</p>
+            <p className="text-sm text-text-muted">No research has been performed yet</p>
           )}
         </Link>
       </div>
@@ -206,19 +206,19 @@ export default function DashboardPage() {
           to="/channels"
           className="px-4 py-2 text-xs bg-surface-1 border border-border rounded-lg hover:border-border-hover hover:bg-surface-2 text-text-secondary transition-all flex items-center gap-2"
         >
-          <Tv size={14} /> Canales
+          <Tv size={14} /> Channels
         </Link>
         <Link
           to="/history"
           className="px-4 py-2 text-xs bg-surface-1 border border-border rounded-lg hover:border-border-hover hover:bg-surface-2 text-text-secondary transition-all flex items-center gap-2"
         >
-          <Film size={14} /> Historial
+          <Film size={14} /> History
         </Link>
         <Link
           to="/strategies"
           className="px-4 py-2 text-xs bg-surface-1 border border-border rounded-lg hover:border-border-hover hover:bg-surface-2 text-text-secondary transition-all flex items-center gap-2"
         >
-          <Trophy size={14} /> Resultados
+          <Trophy size={14} /> Results
         </Link>
       </div>
     </div>

@@ -40,7 +40,7 @@ async def get_research_session_detail(
     """Return a single research session with full details."""
     session = await research_session_service.get_session_by_id(db, session_id)
     if session is None:
-        raise HTTPException(status_code=404, detail="Sesion no encontrada")
+        raise HTTPException(status_code=404, detail="Session not found")
     return session
 
 
@@ -57,7 +57,7 @@ async def research_status_ws(
     """
     # Auth check
     if not api_key or api_key != settings.DASHBOARD_API_KEY:
-        await websocket.close(code=4001, reason="API key invalida o no proporcionada")
+        await websocket.close(code=4001, reason="Invalid or missing API key")
         return
 
     await websocket.accept()

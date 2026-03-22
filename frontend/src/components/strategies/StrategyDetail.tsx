@@ -75,28 +75,28 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
             <button
               onClick={() => openConfirm({
                 targetStatus: 'idea',
-                title: 'Marcar como idea',
-                message: 'Esta estrategia pasara a la pestana Ideas.',
-                confirmLabel: 'Marcar como idea',
+                title: 'Mark as Idea',
+                message: 'This strategy will move to the Ideas tab.',
+                confirmLabel: 'Mark as Idea',
                 confirmVariant: 'primary',
               })}
               disabled={updating}
               className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-text-primary bg-accent hover:bg-accent-hover"
             >
-              Marcar como idea
+              Mark as Idea
             </button>
             <button
               onClick={() => openConfirm({
                 targetStatus: 'validated',
-                title: 'Marcar como estrategia',
-                message: 'Esta estrategia pasara directamente a la pestana de Estrategias.',
-                confirmLabel: 'Marcar como estrategia',
+                title: 'Mark as Strategy',
+                message: 'This strategy will move directly to the Strategies tab.',
+                confirmLabel: 'Mark as Strategy',
                 confirmVariant: 'success',
               })}
               disabled={updating}
               className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-text-primary bg-accent hover:bg-accent-hover"
             >
-              Marcar como estrategia
+              Mark as Strategy
             </button>
           </>
         );
@@ -106,28 +106,28 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
             <button
               onClick={() => openConfirm({
                 targetStatus: 'validated',
-                title: 'Promover a estrategia',
-                message: 'Esta idea pasara a la pestana de Estrategias.',
-                confirmLabel: 'Promover',
+                title: 'Promote to Strategy',
+                message: 'This idea will move to the Strategies tab.',
+                confirmLabel: 'Promote',
                 confirmVariant: 'success',
               })}
               disabled={updating}
               className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-text-primary bg-accent hover:bg-accent-hover"
             >
-              Promover a estrategia
+              Promote to Strategy
             </button>
             <button
               onClick={() => openConfirm({
                 targetStatus: 'pending',
-                title: 'Devolver a pendientes',
-                message: 'Esta idea volvera a la pestana Pendientes.',
-                confirmLabel: 'Devolver',
+                title: 'Return to Pending',
+                message: 'This idea will return to the Pending tab.',
+                confirmLabel: 'Return',
                 confirmVariant: 'danger',
               })}
               disabled={updating}
               className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-text-primary bg-surface-3 hover:bg-surface-2"
             >
-              Devolver a pendientes
+              Return to Pending
             </button>
           </>
         );
@@ -136,15 +136,15 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
           <button
             onClick={() => openConfirm({
               targetStatus: 'idea',
-              title: 'Devolver a ideas',
-              message: 'Esta estrategia volvera a la pestana Ideas.',
-              confirmLabel: 'Devolver',
+              title: 'Return to Ideas',
+              message: 'This strategy will return to the Ideas tab.',
+              confirmLabel: 'Return',
               confirmVariant: 'danger',
             })}
             disabled={updating}
             className="px-3 py-1 text-sm rounded transition-colors disabled:opacity-50 text-text-primary bg-warn hover:bg-warn-hover"
           >
-            Devolver a ideas
+            Return to Ideas
           </button>
         );
     }
@@ -165,7 +165,7 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
             onClick={onClose}
             className="text-text-muted hover:text-text-secondary text-sm transition-colors"
           >
-            Cerrar
+            Close
           </button>
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
         open={!!confirmAction}
         title={confirmAction?.title ?? ''}
         message={confirmAction?.message ?? ''}
-        confirmLabel={confirmAction?.confirmLabel ?? 'Confirmar'}
+        confirmLabel={confirmAction?.confirmLabel ?? 'Confirm'}
         confirmVariant={confirmAction?.confirmVariant ?? 'danger'}
         onConfirm={handleConfirm}
         onCancel={() => setConfirmAction(null)}
@@ -182,7 +182,7 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
 
       {strategy.description && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-1">Descripcion</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-1">Description</h4>
           <p className="text-sm text-text-secondary leading-relaxed">{strategy.description}</p>
         </div>
       )}
@@ -190,15 +190,15 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
       {/* Parameters table */}
       {strategy.parameters && strategy.parameters.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Parametros</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Parameters</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-1 px-2 text-text-muted">Nombre</th>
-                  <th className="text-left py-1 px-2 text-text-muted">Tipo</th>
+                  <th className="text-left py-1 px-2 text-text-muted">Name</th>
+                  <th className="text-left py-1 px-2 text-text-muted">Type</th>
                   <th className="text-left py-1 px-2 text-text-muted">Default</th>
-                  <th className="text-left py-1 px-2 text-text-muted">Rango</th>
+                  <th className="text-left py-1 px-2 text-text-muted">Range</th>
                 </tr>
               </thead>
               <tbody>
@@ -216,15 +216,15 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
         </div>
       )}
 
-      <RuleList title="Reglas de entrada" rules={strategy.entry_rules} />
-      <RuleList title="Reglas de salida" rules={strategy.exit_rules} />
-      <RuleList title="Gestion de riesgo" rules={strategy.risk_management} />
-      <RuleList title="Notas" rules={strategy.notes} />
+      <RuleList title="Entry Rules" rules={strategy.entry_rules} />
+      <RuleList title="Exit Rules" rules={strategy.exit_rules} />
+      <RuleList title="Risk Management" rules={strategy.risk_management} />
+      <RuleList title="Notes" rules={strategy.notes} />
 
       {/* Source videos */}
       {strategy.source_videos && strategy.source_videos.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Videos fuente</h4>
+          <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">Source Videos</h4>
           <div className="flex flex-wrap gap-2">
             {strategy.source_videos.map((vid, i) => (
               <a
@@ -245,7 +245,7 @@ export default function StrategyDetail({ strategy, onClose, onStatusChange }: St
       {drafts && drafts.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-text-muted uppercase mb-2">
-            Propuestas IBKR ({drafts.length})
+            IBKR Drafts ({drafts.length})
           </h4>
           <div className="space-y-2">
             {drafts.map((draft) => (

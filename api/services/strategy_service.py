@@ -125,7 +125,7 @@ async def get_strategy_by_name(
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Estrategia '{name}' no encontrada",
+            detail=f"Strategy '{name}' not found",
         )
 
     strat = row[0]
@@ -157,7 +157,7 @@ async def set_strategy_status(
     if new_status not in VALID_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Estado invalido '{new_status}'. Valores validos: {', '.join(sorted(VALID_STATUSES))}",
+            detail=f"Invalid status '{new_status}'. Valid values: {', '.join(sorted(VALID_STATUSES))}",
         )
     result = await db.execute(
         select(Strategy).where(Strategy.name == name)
@@ -166,7 +166,7 @@ async def set_strategy_status(
     if not strat:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Estrategia '{name}' no encontrada",
+            detail=f"Strategy '{name}' not found",
         )
     strat.status = new_status
     await db.commit()
@@ -189,28 +189,28 @@ def _validate_draft_structure(data: dict[str, Any]) -> None:
     required_strings = ["strat_name", "symbol", "secType", "exchange", "currency"]
     for key in required_strings:
         if key not in data:
-            errors.append(f"Falta clave requerida: '{key}'")
+            errors.append(f"Missing required key: '{key}'")
         elif not isinstance(data[key], str):
-            errors.append(f"'{key}' debe ser string, recibido {type(data[key]).__name__}")
+            errors.append(f"'{key}' must be string, got {type(data[key]).__name__}")
 
     # Required int key
     if "strat_code" not in data:
-        errors.append("Falta clave requerida: 'strat_code'")
+        errors.append("Missing required key: 'strat_code'")
     elif not isinstance(data["strat_code"], int):
-        errors.append(f"'strat_code' debe ser int, recibido {type(data['strat_code']).__name__}")
+        errors.append(f"'strat_code' must be int, got {type(data['strat_code']).__name__}")
 
     # Optional keys with type constraints
     if "ind_list" in data and not isinstance(data["ind_list"], dict):
-        errors.append(f"'ind_list' debe ser dict, recibido {type(data['ind_list']).__name__}")
+        errors.append(f"'ind_list' must be dict, got {type(data['ind_list']).__name__}")
 
     for cond_key in ["long_conds", "short_conds", "exit_conds"]:
         if cond_key in data and not isinstance(data[cond_key], list):
-            errors.append(f"'{cond_key}' debe ser list, recibido {type(data[cond_key]).__name__}")
+            errors.append(f"'{cond_key}' must be list, got {type(data[cond_key]).__name__}")
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Estructura de draft invalida", "errors": errors},
+            detail={"message": "Invalid draft structure", "errors": errors},
         )
 
 
@@ -288,7 +288,7 @@ async def get_drafts_by_strategy(
     if not strat:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Estrategia '{strategy_name}' no encontrada",
+            detail=f"Strategy '{strategy_name}' not found",
         )
 
     drafts_result = await db.execute(
@@ -328,7 +328,7 @@ async def get_draft_by_code(
     if not draft:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Draft con strat_code {strat_code} no encontrado",
+            detail=f"Draft with strat_code {strat_code} not found",
         )
 
     todo_fields_detail = _extract_todo_fields(draft.data) if draft.data else []
@@ -364,7 +364,7 @@ async def update_draft_data(
     if not draft:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Draft con strat_code {strat_code} no encontrado",
+            detail=f"Draft with strat_code {strat_code} not found",
         )
 
     draft.data = data
@@ -424,11 +424,11 @@ def _navigate_to_parent(
     for seg in segments[:-1]:
         if isinstance(seg, int):
             if not isinstance(current, list) or seg >= len(current):
-                raise ValueError(f"Índice [{seg}] fuera de rango o tipo incorrecto")
+                raise ValueError(f"Index [{seg}] out of range or wrong type")
             current = current[seg]
         else:
             if not isinstance(current, dict) or seg not in current:
-                raise ValueError(f"Clave '{seg}' no encontrada en el path")
+                raise ValueError(f"Key '{seg}' not found in path")
             current = current[seg]
     return current, segments[-1]
 
@@ -444,14 +444,14 @@ async def fill_todo(
     if not draft:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Draft con strat_code {strat_code} no encontrado",
+            detail=f"Draft with strat_code {strat_code} not found",
         )
 
     segments = _parse_path_segments(path)
     if not segments:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Path vacío",
+            detail="Empty path",
         )
 
     data = copy.deepcopy(draft.data) if draft.data else {}
@@ -461,7 +461,7 @@ async def fill_todo(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Path inválido: {exc}",
+            detail=f"Invalid path: {exc}",
         )
 
     # Resolve final key
@@ -469,14 +469,14 @@ async def fill_todo(
         if not isinstance(parent, list) or final_key >= len(parent):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Índice [{final_key}] fuera de rango",
+                detail=f"Index [{final_key}] out of range",
             )
         current_value = parent[final_key]
     else:
         if not isinstance(parent, dict) or final_key not in parent:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Path '{path}' no existe en data",
+                detail=f"Path '{path}' does not exist in data",
             )
         current_value = parent[final_key]
 

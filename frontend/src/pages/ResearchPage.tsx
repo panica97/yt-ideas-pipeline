@@ -25,11 +25,11 @@ function SessionCard({ session }: { session: ResearchSessionDetail }) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold text-text-primary">
-            {session.topic ?? 'Sin topic'}
+            {session.topic ?? 'No topic'}
           </h3>
           <p className="text-xs text-text-muted mt-0.5">
             {session.started_at
-              ? new Date(session.started_at).toLocaleDateString('es-ES', {
+              ? new Date(session.started_at).toLocaleDateString('en-US', {
                   day: 'numeric',
                   month: 'short',
                   year: 'numeric',
@@ -57,7 +57,7 @@ function SessionCard({ session }: { session: ResearchSessionDetail }) {
               ? formatDuration(session.duration_seconds)
               : '-'}
           </p>
-          <p className="text-xs text-text-muted">Duracion</p>
+          <p className="text-xs text-text-muted">Duration</p>
         </div>
       </div>
 
@@ -99,15 +99,15 @@ export default function ResearchPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-text-primary">Investigaciones</h1>
+        <h1 className="text-xl font-bold text-text-primary">Research Sessions</h1>
         <span className="text-sm text-text-muted">
-          Total: {sessions.length} sesiones
+          Total: {sessions.length} sessions
         </span>
       </div>
 
       {sessions.length === 0 ? (
         <p className="text-sm text-text-muted py-8 text-center">
-          No se han realizado investigaciones todavia
+          No research has been performed yet
         </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

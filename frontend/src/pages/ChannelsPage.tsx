@@ -66,7 +66,7 @@ export default function ChannelsPage() {
   if (error) {
     return (
       <div className="text-danger text-sm">
-        Error al cargar canales: {(error as Error).message}
+        Error loading channels: {(error as Error).message}
       </div>
     );
   }
@@ -76,12 +76,12 @@ export default function ChannelsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-text-primary">Canales</h1>
+        <h1 className="text-xl font-bold text-text-primary">Channels</h1>
         <button
           onClick={() => setShowTopicForm(true)}
           className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
-          + Anadir topic
+          + Add Topic
         </button>
       </div>
 
@@ -101,7 +101,7 @@ export default function ChannelsPage() {
       )}
 
       {Object.keys(topics).length === 0 && !showTopicForm && (
-        <p className="text-sm text-text-muted">No hay topics registrados. Crea uno para empezar.</p>
+        <p className="text-sm text-text-muted">No topics registered. Create one to start.</p>
       )}
 
       <div className="space-y-3">
@@ -129,13 +129,13 @@ export default function ChannelsPage() {
 
       <ConfirmDialog
         open={confirmDelete !== null}
-        title={confirmDelete?.type === 'topic' ? 'Eliminar topic' : 'Eliminar canal'}
+        title={confirmDelete?.type === 'topic' ? 'Delete topic' : 'Delete channel'}
         message={
           confirmDelete?.type === 'topic'
-            ? `Seguro que quieres eliminar el topic "${confirmDelete.topic}"?`
-            : `Seguro que quieres eliminar el canal "${confirmDelete?.channel}" del topic "${confirmDelete?.topic}"?`
+            ? `Are you sure you want to delete the topic "${confirmDelete.topic}"?`
+            : `Are you sure you want to delete the channel "${confirmDelete?.channel}" from topic "${confirmDelete?.topic}"?`
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Delete"
         onConfirm={() => {
           if (confirmDelete?.type === 'topic') {
             deleteTopicMut.mutate(confirmDelete.topic);

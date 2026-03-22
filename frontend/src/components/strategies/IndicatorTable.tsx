@@ -35,8 +35,8 @@ export default function IndicatorTable({ indicators, todoFields = [] }: Indicato
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-border">
-            <th className="text-left py-1 px-2 text-text-muted">Indicador</th>
-            <th className="text-left py-1 px-2 text-text-muted">Parametros</th>
+            <th className="text-left py-1 px-2 text-text-muted">Indicator</th>
+            <th className="text-left py-1 px-2 text-text-muted">Parameters</th>
             <th className="text-left py-1 px-2 text-text-muted">Timeframe</th>
             <th className="text-left py-1 px-2 text-text-muted">Alias</th>
           </tr>

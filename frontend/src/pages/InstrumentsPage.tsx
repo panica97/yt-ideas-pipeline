@@ -131,7 +131,7 @@ export default function InstrumentsPage() {
   if (error) {
     return (
       <div className="text-danger text-sm">
-        Error al cargar instrumentos: {(error as Error).message}
+        Error loading instruments: {(error as Error).message}
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function InstrumentsPage() {
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-text-primary">Instrumentos</h1>
+          <h1 className="text-lg font-semibold text-text-primary">Instruments</h1>
           <span className="text-xs font-mono text-text-muted bg-surface-2 px-2 py-0.5 rounded-full">
             {instruments.length}
           </span>
@@ -152,7 +152,7 @@ export default function InstrumentsPage() {
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-white rounded-lg transition-all hover:shadow-glow-accent"
         >
           <Plus size={14} />
-          Nuevo
+          New
         </button>
       </div>
 
@@ -169,7 +169,7 @@ export default function InstrumentsPage() {
         >
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-text-primary">
-              {editingSymbol ? `Editar ${editingSymbol}` : 'Nuevo instrumento'}
+              {editingSymbol ? `Edit ${editingSymbol}` : 'New Instrument'}
             </h2>
             <button type="button" onClick={resetForm} className="text-text-muted hover:text-text-primary transition-colors">
               <X size={16} />
@@ -189,7 +189,7 @@ export default function InstrumentsPage() {
               />
             </div>
             <div>
-              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Tipo</label>
+              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Type</label>
               <select
                 value={form.sec_type}
                 onChange={(e) => updateField('sec_type', e.target.value)}
@@ -212,7 +212,7 @@ export default function InstrumentsPage() {
               />
             </div>
             <div>
-              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Moneda</label>
+              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Currency</label>
               <input
                 type="text"
                 value={form.currency}
@@ -223,7 +223,7 @@ export default function InstrumentsPage() {
               />
             </div>
             <div>
-              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Multiplicador</label>
+              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Multiplier</label>
               <input
                 type="number"
                 step="any"
@@ -245,7 +245,7 @@ export default function InstrumentsPage() {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Descripcion</label>
+              <label className="block text-[10px] text-text-muted uppercase tracking-widest mb-1.5">Description</label>
               <input
                 type="text"
                 value={form.description}
@@ -261,13 +261,13 @@ export default function InstrumentsPage() {
               onClick={resetForm}
               className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary bg-surface-2 hover:bg-surface-3 rounded-lg transition-colors"
             >
-              Cancelar
+              Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-white rounded-lg transition-all hover:shadow-glow-accent"
             >
-              {editingSymbol ? 'Guardar' : 'Crear'}
+              {editingSymbol ? 'Save' : 'Create'}
             </button>
           </div>
         </form>
@@ -276,7 +276,7 @@ export default function InstrumentsPage() {
       {instruments.length === 0 && !showForm && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Package size={48} className="text-text-muted mb-3" />
-          <p className="text-sm text-text-muted">No hay instrumentos registrados</p>
+          <p className="text-sm text-text-muted">No instruments registered</p>
         </div>
       )}
 
@@ -287,12 +287,12 @@ export default function InstrumentsPage() {
               <thead>
                 <tr className="bg-surface-2/50">
                   <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Symbol</th>
-                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Tipo</th>
+                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Type</th>
                   <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Exchange</th>
-                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Moneda</th>
+                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Currency</th>
                   <th className="py-3 px-4 text-right text-[10px] font-semibold text-text-muted uppercase tracking-widest">Mult.</th>
                   <th className="py-3 px-4 text-right text-[10px] font-semibold text-text-muted uppercase tracking-widest">Tick</th>
-                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Descripcion</th>
+                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Description</th>
                   <th className="py-3 px-4 w-20"></th>
                 </tr>
               </thead>
@@ -320,14 +320,14 @@ export default function InstrumentsPage() {
                         <button
                           onClick={() => startEdit(inst)}
                           className="p-1.5 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-colors"
-                          title="Editar"
+                          title="Edit"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={() => setConfirmDelete(inst.symbol)}
                           className="p-1.5 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors"
-                          title="Eliminar"
+                          title="Delete"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -343,9 +343,9 @@ export default function InstrumentsPage() {
 
       <ConfirmDialog
         open={confirmDelete !== null}
-        title="Eliminar instrumento"
-        message={`Seguro que quieres eliminar el instrumento "${confirmDelete}"?`}
-        confirmLabel="Eliminar"
+        title="Delete instrument"
+        message={`Are you sure you want to delete the instrument "${confirmDelete}"?`}
+        confirmLabel="Delete"
         onConfirm={() => {
           if (confirmDelete) {
             deleteMut.mutate(confirmDelete);

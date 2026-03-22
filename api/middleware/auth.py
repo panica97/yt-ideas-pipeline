@@ -37,7 +37,7 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         if not api_key or api_key != settings.DASHBOARD_API_KEY:
             return JSONResponse(
                 status_code=401,
-                content={"detail": "API key invalida o no proporcionada"},
+                content={"detail": "Invalid or missing API key"},
             )
 
         return await call_next(request)

@@ -23,8 +23,8 @@ class ChannelCreate(BaseModel):
         v = v.strip()
         if not _YT_URL_RE.match(v):
             raise ValueError(
-                "La URL debe ser un canal de YouTube valido "
-                "(youtube.com/@..., /c/..., o /channel/...)"
+                "URL must be a valid YouTube channel "
+                "(youtube.com/@..., /c/..., or /channel/...)"
             )
         return v
 

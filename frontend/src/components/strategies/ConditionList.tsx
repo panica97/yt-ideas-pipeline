@@ -19,7 +19,7 @@ function isTodo(value: unknown): boolean {
 
 export default function ConditionList({ conditions, todoFields = [], basePath = '' }: ConditionListProps) {
   if (!conditions || conditions.length === 0) {
-    return <p className="text-xs text-text-muted">Sin condiciones definidas</p>;
+    return <p className="text-xs text-text-muted">No conditions defined</p>;
   }
 
   return (

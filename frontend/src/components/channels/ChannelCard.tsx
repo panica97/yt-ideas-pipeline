@@ -7,8 +7,8 @@ interface ChannelCardProps {
 
 export default function ChannelCard({ channel, onDelete }: ChannelCardProps) {
   const lastFetched = channel.last_fetched
-    ? new Date(channel.last_fetched).toLocaleDateString('es-ES')
-    : 'Nunca';
+    ? new Date(channel.last_fetched).toLocaleDateString('en-US')
+    : 'Never';
 
   return (
     <div className="flex items-center justify-between py-2 px-3 bg-surface-2/30 border border-border rounded">
@@ -27,9 +27,9 @@ export default function ChannelCard({ channel, onDelete }: ChannelCardProps) {
       <button
         onClick={onDelete}
         className="text-xs text-text-muted hover:text-danger ml-2 transition-colors"
-        title="Eliminar canal"
+        title="Delete channel"
       >
-        Borrar
+        Delete
       </button>
     </div>
   );

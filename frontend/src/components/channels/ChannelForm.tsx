@@ -17,24 +17,24 @@ export default function ChannelForm({ onSubmit, onCancel }: ChannelFormProps) {
   return (
     <form onSubmit={handleSubmit} className="bg-surface-2/50 border border-border rounded p-4 space-y-3">
       <div>
-        <label className="block text-xs text-text-muted mb-1">Nombre del canal</label>
+        <label className="block text-xs text-text-muted mb-1">Channel Name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="ej: Jacob Amaral"
+          placeholder="e.g: Jacob Amaral"
           className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           required
           autoFocus
         />
       </div>
       <div>
-        <label className="block text-xs text-text-muted mb-1">URL de YouTube</label>
+        <label className="block text-xs text-text-muted mb-1">YouTube URL</label>
         <input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://www.youtube.com/@canal"
+          placeholder="https://www.youtube.com/@channel"
           className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           required
         />
@@ -44,14 +44,14 @@ export default function ChannelForm({ onSubmit, onCancel }: ChannelFormProps) {
           type="submit"
           className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
-          Anadir
+          Add
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="px-3 py-1.5 text-sm bg-surface-3 hover:bg-surface-3 text-text-secondary rounded transition-colors"
         >
-          Cancelar
+          Cancel
         </button>
       </div>
     </form>

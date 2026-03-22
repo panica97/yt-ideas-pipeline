@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="IRT Dashboard API",
-    description="API para el dashboard del pipeline de investigacion de trading",
+    description="API for the trading research pipeline dashboard",
     version="0.1.0",
     lifespan=lifespan,
 )

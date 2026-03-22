@@ -11,9 +11,9 @@ export default function LivePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-text-primary">Estado del Research en Tiempo Real</h1>
+        <h1 className="text-xl font-bold text-text-primary">Live Research Status</h1>
         <span className={`text-xs ${isConnected ? 'text-accent' : 'text-danger'}`}>
-          {isConnected ? 'Conectado' : 'Desconectado'}
+          {isConnected ? 'Connected' : 'Disconnected'}
         </span>
       </div>
 
@@ -21,9 +21,9 @@ export default function LivePage() {
       {runningSessions.length === 0 && completedSessions.length === 0 && errorSessions.length === 0 && (
         <div className="bg-surface-1 border border-border rounded-lg p-12 text-center">
           <span className="inline-block w-4 h-4 rounded-full bg-surface-3 mb-3" />
-          <p className="text-text-muted text-sm">No hay investigacion en curso</p>
+          <p className="text-text-muted text-sm">No research in progress</p>
           <p className="text-text-muted text-xs mt-1">
-            Lanza una con /research {'<topic>'} en el CLI
+            Launch one with /research {'<topic>'} in the CLI
           </p>
         </div>
       )}
@@ -40,7 +40,7 @@ export default function LivePage() {
       {/* Completed sessions */}
       {completedSessions.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-text-muted">Completadas</h2>
+          <h2 className="text-sm font-semibold text-text-muted">Completed</h2>
           {completedSessions.map((session) => (
             <ResearchStatus key={session.id} session={session} />
           ))}
@@ -50,7 +50,7 @@ export default function LivePage() {
       {/* Error sessions */}
       {errorSessions.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-text-muted">Con errores</h2>
+          <h2 className="text-sm font-semibold text-text-muted">With Errors</h2>
           {errorSessions.map((session) => (
             <ResearchStatus key={session.id} session={session} />
           ))}

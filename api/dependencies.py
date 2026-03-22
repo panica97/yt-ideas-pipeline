@@ -27,6 +27,6 @@ async def verify_api_key(
     if not x_api_key or x_api_key != settings.DASHBOARD_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key invalida o no proporcionada",
+            detail="Invalid or missing API key",
         )
     return x_api_key

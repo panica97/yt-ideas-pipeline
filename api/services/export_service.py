@@ -101,7 +101,7 @@ async def export_draft(db: AsyncSession, strat_code: int) -> dict[str, Any]:
     if not draft:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Draft con strat_code {strat_code} no encontrado",
+            detail=f"Draft with strat_code {strat_code} not found",
         )
     return draft.data
 

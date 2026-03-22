@@ -19,12 +19,12 @@ interface SidebarProps {
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/research', label: 'Investigaciones', icon: FlaskConical },
-  { to: '/channels', label: 'Canales', icon: Tv },
-  { to: '/history', label: 'Historial', icon: Clock },
-  { to: '/strategies', label: 'Resultados', icon: Trophy },
+  { to: '/research', label: 'Research', icon: FlaskConical },
+  { to: '/channels', label: 'Channels', icon: Tv },
+  { to: '/history', label: 'History', icon: Clock },
+  { to: '/strategies', label: 'Results', icon: Trophy },
   { to: '/live', label: 'Live', icon: Zap },
-  { to: '/instruments', label: 'Instrumentos', icon: Settings2 },
+  { to: '/instruments', label: 'Instruments', icon: Settings2 },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
@@ -94,7 +94,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-text-muted hover:text-text-secondary hover:bg-surface-2 transition-colors text-sm"
         >
           {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
-          {!collapsed && <span className="animate-fade-in">Colapsar</span>}
+          {!collapsed && <span className="animate-fade-in">Collapse</span>}
         </button>
 
         {/* Logout */}
@@ -106,7 +106,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-colors text-sm"
         >
           <LogOut size={18} />
-          {!collapsed && <span className="animate-fade-in">Cerrar sesion</span>}
+          {!collapsed && <span className="animate-fade-in">Sign Out</span>}
         </button>
       </div>
     </aside>

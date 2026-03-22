@@ -32,7 +32,7 @@ export default function TopicForm({
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="ej: futures"
+            placeholder="e.g: futures"
             className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
             required
             autoFocus
@@ -40,12 +40,12 @@ export default function TopicForm({
         </div>
       )}
       <div>
-        <label className="block text-xs text-text-muted mb-1">Descripcion</label>
+        <label className="block text-xs text-text-muted mb-1">Description</label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="ej: Estrategias de futuros"
+          placeholder="e.g: Futures strategies"
           className="w-full px-3 py-1.5 bg-surface-2 border border-border rounded text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50"
           autoFocus={editMode}
         />
@@ -55,14 +55,14 @@ export default function TopicForm({
           type="submit"
           className="px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-text-primary rounded transition-colors"
         >
-          {editMode ? 'Guardar' : 'Crear'}
+          {editMode ? 'Save' : 'Create'}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="px-3 py-1.5 text-sm bg-surface-3 hover:bg-surface-3 text-text-secondary rounded transition-colors"
         >
-          Cancelar
+          Cancel
         </button>
       </div>
     </form>

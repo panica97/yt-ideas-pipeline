@@ -14,7 +14,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!apiKey.trim()) {
-      setError('Introduce una API key');
+      setError('Enter an API key');
       return;
     }
 
@@ -29,7 +29,7 @@ export default function LoginPage() {
       localStorage.setItem('irt_api_key', apiKey.trim());
       navigate('/');
     } catch {
-      setError('API key invalida o servidor no disponible');
+      setError('Invalid API key or server unavailable');
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export default function LoginPage() {
       <button
         onClick={toggle}
         className="fixed top-4 right-4 z-50 w-9 h-9 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-2 transition-all duration-200 border border-border"
-        title={isDark ? 'Modo claro' : 'Modo oscuro'}
+        title={isDark ? 'Light mode' : 'Dark mode'}
       >
         {isDark ? <Sun size={16} /> : <Moon size={16} />}
       </button>
@@ -72,7 +72,7 @@ export default function LoginPage() {
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Introduce tu API key"
+                  placeholder="Enter your API key"
                   className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/30 transition-all"
                   autoFocus
                 />
@@ -94,11 +94,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Verificando...
+                  Verifying...
                 </>
               ) : (
                 <>
-                  Entrar
+                  Sign In
                   <ArrowRight size={16} />
                 </>
               )}

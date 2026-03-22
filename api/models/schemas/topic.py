@@ -16,13 +16,13 @@ class TopicCreate(BaseModel):
     def validate_slug(cls, v: str) -> str:
         v = v.strip()
         if not v:
-            raise ValueError("El slug no puede estar vacio")
+            raise ValueError("Slug cannot be empty")
         if len(v) > 50:
-            raise ValueError("El slug no puede superar 50 caracteres")
+            raise ValueError("Slug cannot exceed 50 characters")
         if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", v):
             raise ValueError(
-                "El slug debe ser minusculas, sin espacios "
-                "(solo letras, numeros y guiones)"
+                "Slug must be lowercase, no spaces "
+                "(only letters, numbers, and hyphens)"
             )
         return v
 

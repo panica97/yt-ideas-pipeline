@@ -19,7 +19,7 @@ async def create_topic(db: AsyncSession, slug: str, description: str | None) -> 
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Topic '{slug}' ya existe",
+            detail=f"Topic '{slug}' already exists",
         )
     topic = Topic(slug=slug, description=description)
     db.add(topic)
@@ -33,7 +33,7 @@ async def update_topic(db: AsyncSession, slug: str, description: str) -> Topic:
     if not topic:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Topic '{slug}' no encontrado",
+            detail=f"Topic '{slug}' not found",
         )
     topic.description = description
     await db.flush()
@@ -46,7 +46,7 @@ async def delete_topic(db: AsyncSession, slug: str) -> None:
     if not topic:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Topic '{slug}' no encontrado",
+            detail=f"Topic '{slug}' not found",
         )
     # Check if topic has channels
     channel_count_result = await db.execute(
@@ -56,7 +56,7 @@ async def delete_topic(db: AsyncSession, slug: str) -> None:
     if channel_count > 0:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="No se puede eliminar un topic con canales asociados",
+            detail="Cannot delete a topic with associated channels",
         )
     await db.delete(topic)
     await db.flush()

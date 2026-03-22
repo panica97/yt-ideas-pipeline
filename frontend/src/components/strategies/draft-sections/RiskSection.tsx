@@ -20,7 +20,7 @@ function StopLevelCard({ label, params, todoFields, prefix }: {
     <div className="bg-surface-1/40 rounded-lg p-3 border border-border/50">
       <div className="text-xs font-semibold uppercase text-text-muted mb-2">{label}</div>
       <div className="text-sm text-text-primary">
-        {formatted === 'No definido' ? (
+        {formatted === 'Not defined' ? (
           <span className="text-text-muted italic">{formatted}</span>
         ) : (
           <span className="font-mono">
@@ -33,13 +33,13 @@ function StopLevelCard({ label, params, todoFields, prefix }: {
       </div>
       <div className="flex gap-3 mt-2 text-[10px]">
         <span className={params.indicator ? 'text-accent' : 'text-text-muted'}>
-          {params.indicator ? '\u2713' : '\u2717'} Indicador
+          {params.indicator ? '\u2713' : '\u2717'} Indicator
         </span>
         <span className={params.pips ? 'text-accent' : 'text-text-muted'}>
           {params.pips ? '\u2713' : '\u2717'} Pips
         </span>
         <span className={params.percent ? 'text-accent' : 'text-text-muted'}>
-          {params.percent ? '\u2713' : '\u2717'} Porcentaje
+          {params.percent ? '\u2713' : '\u2717'} Percent
         </span>
       </div>
     </div>

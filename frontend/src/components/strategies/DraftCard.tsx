@@ -42,7 +42,7 @@ export default function DraftCard({ draft }: DraftCardProps) {
                 : 'bg-accent/20 text-accent border border-accent/30'
             }`}
           >
-            {draft.todo_count > 0 ? `${draft.todo_count} TODOs` : 'Completo'}
+            {draft.todo_count > 0 ? `${draft.todo_count} TODOs` : 'Complete'}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">

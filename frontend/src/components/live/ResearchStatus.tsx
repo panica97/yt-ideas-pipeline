@@ -7,39 +7,39 @@ interface ResearchStatusProps {
 }
 
 const STEP_DISPLAY: Record<string, string> = {
-  preflight: 'Comprobacion de autenticacion',
-  'yt-scraper': 'Buscando videos',
-  'notebooklm-analyst': 'Extrayendo estrategias',
-  translator: 'Traduciendo a JSON',
-  cleanup: 'Limpieza',
-  'db-manager': 'Guardando en base de datos',
-  summary: 'Resumen final',
+  preflight: 'Authentication Check',
+  'yt-scraper': 'Searching Videos',
+  'notebooklm-analyst': 'Extracting Strategies',
+  translator: 'Translating to JSON',
+  cleanup: 'Cleanup',
+  'db-manager': 'Saving to Database',
+  summary: 'Final Summary',
 };
 
 function getStepDisplay(stepName: string | null, stepDisplay: string | null): string {
   if (stepDisplay) return stepDisplay;
   if (stepName && STEP_DISPLAY[stepName]) return STEP_DISPLAY[stepName];
-  return stepName || 'Iniciando...';
+  return stepName || 'Starting...';
 }
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'hace un momento';
-  if (mins === 1) return 'hace 1 minuto';
-  if (mins < 60) return `hace ${mins} minutos`;
+  if (mins < 1) return 'a moment ago';
+  if (mins === 1) return '1 minute ago';
+  if (mins < 60) return `${mins} minutes ago`;
   const hours = Math.floor(mins / 60);
-  if (hours === 1) return 'hace 1 hora';
-  return `hace ${hours} horas`;
+  if (hours === 1) return '1 hour ago';
+  return `${hours} hours ago`;
 }
 
 export default function ResearchStatus({ session }: ResearchStatusProps) {
   const statusLabel =
     session.status === 'running'
-      ? 'EN CURSO'
+      ? 'RUNNING'
       : session.status === 'completed'
-        ? 'COMPLETADO'
+        ? 'COMPLETED'
         : 'ERROR';
 
   return (
@@ -49,7 +49,7 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
         <div className="flex items-center gap-2">
           <StepIndicator status={session.status} />
           <span className="text-sm font-semibold text-text-primary">
-            Sesion #{session.id} - {session.topic}
+            Session #{session.id} - {session.topic}
           </span>
         </div>
         <span className="text-xs text-text-muted">{statusLabel}</span>
@@ -63,12 +63,12 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
       {/* Details */}
       <div className="space-y-1 text-sm">
         <p className="text-text-secondary">
-          <span className="text-text-muted">Paso:</span>{' '}
+          <span className="text-text-muted">Step:</span>{' '}
           {session.step} - {getStepDisplay(session.step_name, session.step_display)}
         </p>
         {session.channel && (
           <p className="text-text-secondary">
-            <span className="text-text-muted">Canal:</span> {session.channel}
+            <span className="text-text-muted">Channel:</span> {session.channel}
           </p>
         )}
         {session.videos_processing && session.videos_processing.length > 0 && (
@@ -104,13 +104,13 @@ export default function ResearchStatus({ session }: ResearchStatusProps) {
       {/* Completion summary */}
       {session.status === 'completed' && session.result_summary && (
         <div className="bg-accent/10 border border-green-500/20 rounded p-3 text-xs text-accent">
-          <p className="font-medium mb-1">Investigacion completada</p>
+          <p className="font-medium mb-1">Research Completed</p>
           <p>{JSON.stringify(session.result_summary)}</p>
           <a
             href="/strategies"
             className="text-accent hover:text-accent-hover mt-1 inline-block"
           >
-            Ver estrategias
+            View Strategies
           </a>
         </div>
       )}

@@ -74,28 +74,28 @@ export function formatStopLevel(params: DraftData['stop_loss_init']): string {
   if (params.percent && params.percent_params?.percent != null) {
     return `${params.percent_params.percent}%`;
   }
-  return 'No definido';
+  return 'Not defined';
 }
 
 /** Human-readable labels for TODO field paths */
 const TOP_LEVEL_LABELS: Record<string, string> = {
-  multiplier: 'Multiplicador del contrato',
-  minTick: 'Tick mínimo',
-  max_timePeriod: 'Período máximo',
-  symbol: 'Símbolo',
-  secType: 'Tipo de instrumento',
+  multiplier: 'Contract multiplier',
+  minTick: 'Min tick',
+  max_timePeriod: 'Max time period',
+  symbol: 'Symbol',
+  secType: 'Instrument type',
   exchange: 'Exchange',
-  currency: 'Moneda',
+  currency: 'Currency',
 };
 
 const PARAM_LABELS: Record<string, string> = {
-  timePeriod_1: 'Período',
-  price_1: 'Precio',
-  price_2: 'Precio 2',
-  price_3: 'Precio 3',
-  nbdevup: 'Desviación superior',
-  nbdevdn: 'Desviación inferior',
-  multiple: 'Múltiple',
+  timePeriod_1: 'Period',
+  price_1: 'Price',
+  price_2: 'Price 2',
+  price_3: 'Price 3',
+  nbdevup: 'Upper deviation',
+  nbdevdn: 'Lower deviation',
+  multiple: 'Multiple',
 };
 
 export function humanizeFieldPath(path: string, data: DraftData | null): string {
@@ -118,12 +118,12 @@ export function humanizeFieldPath(path: string, data: DraftData | null): string 
   const cpMatch = path.match(/^control_params\.(\w+)$/);
   if (cpMatch) {
     const labels: Record<string, string> = {
-      start_date: 'Fecha inicio backtest',
-      end_date: 'Fecha fin backtest',
+      start_date: 'Backtest start date',
+      end_date: 'Backtest end date',
       timestamp: 'Timestamp',
       slippage_amount: 'Slippage',
-      comm_per_contract: 'Comisión/contrato',
-      primary_timeframe: 'Timeframe principal',
+      comm_per_contract: 'Commission/contract',
+      primary_timeframe: 'Primary timeframe',
     };
     return labels[cpMatch[1]] ?? cpMatch[1];
   }
