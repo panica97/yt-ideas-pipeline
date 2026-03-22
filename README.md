@@ -40,8 +40,7 @@ frontend/               React dashboard (puerto 5173)
   src/                  Código fuente TypeScript
 tools/                  Scripts Python del pipeline
   youtube/              Búsqueda y scraping (yt-dlp)
-  notebooklm/           Integración con NotebookLM
-  database/             Gestión de base de datos
+  db/                   Modelos ORM, repositorios, sesión (SQLAlchemy)
 scripts/                Scripts auxiliares
 config/                 Configuración global
 data/                   Datos persistentes (channels, strategies)

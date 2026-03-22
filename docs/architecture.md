@@ -129,8 +129,7 @@ IRT/
 │   │   ├── instrument_repo.py   Repositorio de instrumentos
 │   │   ├── history_repo.py      Repositorio de historial
 │   │   └── research_repo.py     Repositorio de sesiones de research
-│   ├── database/                 Migraciones y seeds
-│   └── notebooklm/              Utilidades NotebookLM
+│   └── __init__.py
 ├── .claude/
 │   ├── skills/                   Pipeline skills (9 skills)
 │   │   ├── research/            Orquestador del pipeline
@@ -149,7 +148,8 @@ IRT/
 ├── data/                         Datos persistentes
 │   ├── channels/                Base de datos de canales YouTube (YAML)
 │   ├── strategies/              Estrategias extraidas (YAML, legacy)
-│   └── research/                Historial de research (YAML, legacy)
+│   ├── research/                Historial de research (YAML, legacy)
+│   └── backtests/               Placeholder para backtesting futuro
 ├── docs/                         Documentacion del proyecto
 ├── openspec/                     Artefactos SDD
 └── planes/                       Planes y roadmap (gitignored)

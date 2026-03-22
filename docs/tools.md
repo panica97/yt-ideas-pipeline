@@ -92,25 +92,12 @@ Requiere la variable de entorno `DATABASE_URL`.
 
 Los slash commands son la interfaz principal desde Claude Code:
 
-### `/yt-search`
+### `/research`
 
-```
-/yt-search claude code tutorial --count 5
-/yt-search --topic futures --days 14
-/yt-search --topic trading --days 7 --count 20
-```
-
-Si incluye `--topic`, usa `fetch_topic.py`. Si no, usa `search.py`.
-
-### `/yt-channels`
-
-```
-/yt-channels topics
-/yt-channels list futures
-/yt-channels add futures https://www.youtube.com/@canal --name "Canal"
-/yt-channels remove futures https://www.youtube.com/@canal
-```
+Lanza el pipeline completo de investigacion para un topic. Ver `.claude/skills/research/SKILL.md`.
 
 ### `/notebooklm`
 
 Referencia completa en `.claude/skills/notebooklm/SKILL.md`.
+
+> **Nota:** Las operaciones de YouTube (busqueda, fetch por topic, gestion de canales) se ejecutan via `python -m tools.youtube.search`, `python -m tools.youtube.fetch_topic` y `python -m tools.youtube.channels` directamente, o a traves del skill `yt-scraper` dentro del pipeline de research. No existen como slash commands independientes.
