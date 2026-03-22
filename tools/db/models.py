@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
@@ -182,3 +183,49 @@ class ResearchSession(Base):
             postgresql_where=text("status = 'running'"),
         ),
     )
+
+
+class BacktestJob(Base, TimestampMixin):
+    __tablename__ = "backtest_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    draft_strat_code: Mapped[int] = mapped_column(
+        Integer, ForeignKey("drafts.strat_code"), nullable=False
+    )
+    symbol: Mapped[str] = mapped_column(String(20), nullable=False)
+    timeframe: Mapped[str] = mapped_column(String(10), nullable=False)
+    start_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    end_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", server_default="pending"
+    )
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    result: Mapped[Optional["BacktestResult"]] = relationship(
+        back_populates="job", uselist=False, cascade="all, delete-orphan"
+    )
+
+
+class BacktestResult(Base):
+    __tablename__ = "backtest_results"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("backtest_jobs.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    metrics: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    trades: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    job: Mapped["BacktestJob"] = relationship(back_populates="result")

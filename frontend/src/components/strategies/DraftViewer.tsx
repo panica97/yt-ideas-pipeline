@@ -11,6 +11,7 @@ import InstrumentSection from './draft-sections/InstrumentSection';
 import IndicatorsSection from './draft-sections/IndicatorsSection';
 import ConditionsSection from './draft-sections/ConditionsSection';
 import NotesSection from './draft-sections/NotesSection';
+import BacktestPanel from './BacktestPanel';
 
 const INSTRUMENT_FIELD_MAP = {
   symbol: 'symbol',
@@ -208,6 +209,14 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
             <NotesSection notes={parsed._notes} />
           </SectionPanel>
         )}
+
+        <SectionPanel id="backtest" title="Backtest" icon={'\uD83E\uDDEA'}>
+          <BacktestPanel
+            stratCode={draft.strat_code}
+            backtestable={draft.todo_count === 0}
+            defaultSymbol={parsed?.symbol}
+          />
+        </SectionPanel>
       </div>
 
       {/* TODO fields — at the bottom, click opens JSON and highlights */}
