@@ -233,7 +233,10 @@ def _extract_todo_fields(
     elif isinstance(data, list):
         for i, item in enumerate(data):
             path = f"{prefix}[{i}]"
-            results.extend(_extract_todo_fields(item, path))
+            if isinstance(item, str) and "_TODO" in item:
+                results.append({"path": path, "context": None})
+            else:
+                results.extend(_extract_todo_fields(item, path))
     return results
 
 
