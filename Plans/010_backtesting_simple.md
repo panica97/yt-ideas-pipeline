@@ -59,5 +59,33 @@ Integrate the existing backtest engine from ops-worker-v0.1.0 (packages/backtest
 - RESOLVED: --metrics-json outputs summary metrics only (total_pnl, trade_count, win_rate, sharpe_ratio, max_drawdown, initial_equity, final_equity) — individual trades deferred
 - RESOLVED: Engine packages used in-place from ops-worker-v0.1.0/packages/ — same pattern as Operations Platform. No copy needed.
 - Worker runs outside Docker on host machine, same as ops-platform pattern. Polls IRT API for jobs, runs backtest-engine via subprocess, posts results back.
-- KNOWN ISSUE: First backtest (strat_code 9007 on MES, 2023-01-03 to 2026-03-22) produced 0 trades. Strategy conditions may not be triggering — needs investigation (user will review manually)
+- KNOWN ISSUE: First backtest (strat_code 9007 on MES, 2023-01-03 to 2026-03-22) produced 0 trades. **Root cause identified** — see Phase 10.1 below.
 - Bugs fixed during verification: (1) 401 auth — worker needed API key header, (2) FileNotFoundError — symbol @ prefix mapping, (3) toFixed crash — metric field name mismatch
+
+---
+
+## Phase 10.1 — Fix Backtest Condition Format
+
+**Status:** Planned
+**Priority:** HIGH — blocks all backtesting
+**Parent Phase:** Phase 10.1 from Master Plan
+
+### Goal
+
+Fix the backtest condition format mismatch that causes the engine to produce 0 trades silently. The strategy-translator puts shift notation `(N)` inside `cond` strings (e.g., `"LOW_4h(1) < LOW_4h(2)"`), but the engine's parser expects bare indicator names only (e.g., `"LOW_4h < LOW_4h"`). Shifts must live exclusively in `shift_1`/`shift_2` fields, as defined in STRATEGY_FILE_REFERENCE.md.
+
+**Root Cause:** Strategy 9007's backtest produced 0 trades because `cond.split()` produces tokens like `"LOW_4h(1)"` instead of `"LOW_4h"`, causing column lookups to fail silently (NaN fill → all comparisons False → 0 trades).
+
+### Sub-phases
+
+| # | Task | Route | SDD Status | Status |
+|---|------|-------|------------|--------|
+| 1 | Fix strategy-translator skill: remove shift notation from cond string instructions in SKILL.md, translation-rules.md, and schema.json. Cond must use bare indicator names; shifts only in shift_1/shift_2. | quick fix | — | Planned |
+| 2 | Fix frontend condition display: update ConditionBlock in ConditionsSection.tsx to render shift notation visually when shift_1/shift_2 are present, even though stored cond uses bare names. | quick fix | — | Planned |
+| 3 | Fix existing drafts in DB: create Alembic migration or script to strip `(N)` suffixes from cond strings in data->'long_conds', data->'short_conds', and data->'exit_conds' JSONB arrays. | quick fix | — | Planned |
+
+### Notes
+
+- This is a hotfix inserted after Phase 10 completion to unblock backtesting
+- All 3 tasks are independent quick fixes — no SDD overhead needed
+- After completion, re-run the strat_code 9007 backtest to verify trades are generated

@@ -6,10 +6,47 @@ interface Props {
   sectionType: 'entry' | 'exit';
 }
 
+function isNumericToken(token: string): boolean {
+  return /^\d+(\.\d+)?$/.test(token);
+}
+
+function formatCondDisplay(cond: Condition): string {
+  const { cond_type, shift_1, shift_2 } = cond;
+
+  // num_bars: no shift annotation
+  if (cond_type === 'num_bars') return `Exit after ${cond.cond} bars`;
+
+  const parts = cond.cond.split(/\s+/);
+
+  // ind_direction: "IND direction" -> "IND(shift_1) direction"
+  if (cond_type === 'ind_direction') {
+    if (parts.length >= 2 && shift_1 != null) {
+      return `${parts[0]}(${shift_1}) ${parts.slice(1).join(' ')}`;
+    }
+    return cond.cond;
+  }
+
+  // Relation and cross types: "LEFT op RIGHT" -> "LEFT(shift_1) op RIGHT(shift_2)"
+  // num_relation / cross with numeric right: no shift on number
+  if (parts.length >= 3) {
+    const left = parts[0];
+    const right = parts[parts.length - 1];
+    const op = parts.slice(1, -1).join(' ');
+
+    const leftStr = shift_1 != null ? `${left}(${shift_1})` : left;
+    const rightStr = isNumericToken(right)
+      ? right
+      : shift_2 != null ? `${right}(${shift_2})` : right;
+
+    return `${leftStr} ${op} ${rightStr}`;
+  }
+
+  // Fallback: return as-is
+  return cond.cond;
+}
+
 function ConditionBlock({ cond }: { cond: Condition }) {
-  const displayCond = cond.cond_type === 'num_bars'
-    ? `Exit after ${cond.cond} bars`
-    : cond.cond;
+  const displayCond = formatCondDisplay(cond);
 
   return (
     <div className="flex items-start gap-2 p-2 bg-surface-1/40 rounded border border-border/50">

@@ -2,7 +2,7 @@
 
 **Project:** IRT (Ideas Research Team)
 **Created:** 2026-03-22
-**Last Updated:** 2026-03-22
+**Last Updated:** 2026-03-23
 **Current Phase:** Phase 10 — Simple Backtesting (Done)
 **Status:** In Progress
 
@@ -22,7 +22,8 @@
 | 8 | i18n & Symbol Selector | English translation, symbol dropdown, indicators table | MEDIUM | Phase 7 | /sdd-ff | Done |
 | 9 | Audit & Hardening | Full codebase audit, 29 fixes, pagination | HIGH | Phase 8 | — | Done |
 | 10 | Simple Backtesting | Backtest engine for validated strategies using Docker worker | HIGH | Phase 9 | /sdd-ff | Done |
-| 11 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 10 | /sdd-ff | Planned |
+| 10.1 | Fix Backtest Condition Format | Fix cond format mismatch causing 0 trades — strip shift notation from cond strings | HIGH | Phase 10 | quick fix | Planned |
+| 11 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 10.1 | /sdd-ff | Planned |
 | 12 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 11 | /sdd-ff | Planned |
 
 ---
@@ -31,10 +32,10 @@
 
 | Metric | Count |
 |--------|-------|
-| Total phases | 12 |
+| Total phases | 13 |
 | Completed | 10 |
 | In Progress | 0 |
-| Planned | 2 |
+| Planned | 3 |
 
 ---
 
@@ -52,3 +53,4 @@
 | 2026-03-22 | Phase 8 | Completed | SDD: symbol-selector. i18n to English, indicators table |
 | 2026-03-22 | Phase 9 | Completed | 30-finding audit, 29 resolved, pagination added |
 | 2026-03-22 | Phase 10 | Completed | Backtest engine integration: worker, API, frontend. 3 bugs fixed during verification. |
+| 2026-03-23 | Phase 10.1 | Created | Hotfix: cond format mismatch causes 0 trades — shift notation in cond strings breaks engine parser |

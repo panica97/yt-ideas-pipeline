@@ -194,7 +194,7 @@
             "num_bars"
           ]
         },
-        "cond": { "type": "string", "description": "Human-readable condition. When same indicator appears on both sides with different shifts, include shift in string: LOW_6H(0) < LOW_6H(1)" },
+        "cond": { "type": "string", "description": "Human-readable condition using bare indicator names. Shifts are encoded in shift_1/shift_2 fields, never in this string. Example: LOW_6H < LOW_6H (with shift_1=1, shift_2=2)" },
         "condCode": { "type": "string" },
         "shift_1": { "type": "integer", "default": 0, "description": "Lookback for LEFT operand. 0=most recent completed bar [-1], 1=bar before that [-2], etc." },
         "shift_2": { "type": "integer", "default": 0, "description": "Lookback for RIGHT operand. Same semantics as shift_1. Ignored for num_relation and ind_direction." },

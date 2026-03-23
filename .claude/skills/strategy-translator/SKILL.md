@@ -55,7 +55,7 @@ These come from the trading engine spec. Getting them wrong produces invalid str
 - shift 1 = most recent completed bar, shift 2 = bar before that, etc.
 
 **The `cond` string must be unambiguous**:
-- Same indicator at different shifts: `"LOW_6H(1) < LOW_6H(2)"`, never `"LOW_6H < LOW_6H"`
+- Same indicator at different shifts: `"LOW_6H < LOW_6H"` with `shift_1` and `shift_2` differentiating them. Never put shift notation like `(N)` inside the `cond` string.
 - Cross operators use `above` / `bellow` (engine spelling)
 
 **Multi-output indicators** (MACD, STOCH, BBANDS, KELTNER, ICHIMOKU):

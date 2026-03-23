@@ -36,9 +36,9 @@ Estas reglas se acumulan con el feedback del usuario.
 
 ## Reglas de mapeo (feedback del usuario)
 
-- **El campo `cond` debe ser inequivoco cuando se compara el mismo indicador a diferentes shifts.**
-  **Origen**: El translator genero `"LOW_6H < LOW_6H"` con shift_1=0, shift_2=1. Parece que compara algo consigo mismo.
-  **Ejemplo**: `"LOW_6H < LOW_6H"` → `"LOW_6H(0) < LOW_6H(1)"`
+- **El campo `cond` debe usar nombres de indicador bare (sin notacion de shift).**
+  **Origen**: El translator genero `"LOW_6H(0) < LOW_6H(1)"` con shift notation dentro del cond string. Esto rompe el parser del engine que usa cond.split() para buscar columnas en el DataFrame.
+  **Ejemplo correcto**: `"LOW_6H < LOW_6H"` con `"shift_1": 1, "shift_2": 2` — los shifts van en campos separados, no en el string.
 
 - **NO usar `group` en `long_conds` ni `short_conds`.**
   **Origen**: El translator puso `"group": 1` en las tres entry conditions de una divergencia RSI. Las entry conditions son SIEMPRE ALL AND, los groups solo aplican a `exit_conds`.
