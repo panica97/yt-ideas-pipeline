@@ -4,10 +4,74 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tools.db.models import Channel, ResearchHistory, ResearchSession, Topic
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _build_video_query(
+    session: ResearchSession,
+    *,
+    extra_columns: tuple = (),
+) -> "select":
+    """Build a query for history items linked to *session*.
+
+    Strategy:
+    1. If any history rows already carry ``session_id`` (new records), use that
+       for exact correlation -- no time-window ambiguity.
+    2. Fall back to the legacy time-window + topic_id heuristic so that
+       sessions created before the ``session_id`` column was added still
+       resolve their videos correctly.
+    """
+    base_cols = (
+        ResearchHistory.video_id,
+        ResearchHistory.url,
+        ResearchHistory.strategies_found,
+        ResearchHistory.classification,
+        ResearchHistory.title,
+    )
+    cols = base_cols + extra_columns + (Channel.name.label("channel_name"),)
+
+    video_q = (
+        select(*cols)
+        .outerjoin(Channel, ResearchHistory.channel_id == Channel.id)
+    )
+
+    # Prefer direct session_id match; fall back to time-window for old rows
+    # We combine both: rows explicitly tagged with this session_id, OR rows
+    # matching the legacy time-window heuristic (only when topic_id is set,
+    # to avoid the cross-session bleed that M-06 describes).
+    direct = ResearchHistory.session_id == session.id
+
+    if session.started_at:
+        time_filter = ResearchHistory.researched_at >= session.started_at
+        if session.completed_at:
+            time_filter = time_filter & (
+                ResearchHistory.researched_at <= session.completed_at
+            )
+        if session.topic_id is not None:
+            # Legacy: time-window scoped by topic -- safe from cross-bleed
+            legacy = time_filter & (
+                ResearchHistory.topic_id == session.topic_id
+            )
+        else:
+            # No topic_id -- legacy path would bleed across sessions, so
+            # only use it for rows that have no session_id at all (truly old).
+            legacy = time_filter & (
+                ResearchHistory.session_id.is_(None)
+            ) & (
+                ResearchHistory.topic_id.is_(None)
+            )
+        video_q = video_q.where(or_(direct, legacy))
+    else:
+        video_q = video_q.where(direct)
+
+    return video_q
 
 
 async def get_sessions(
@@ -38,39 +102,18 @@ async def get_sessions(
             duration_seconds = int(delta.total_seconds())
 
         # Fetch related history items (videos) for this session
-        # within the session's time window
+        video_q = _build_video_query(session)
+        video_rows = (await db.execute(video_q)).all()
         videos: list[dict[str, Any]] = []
-        if session.started_at:
-            video_q = (
-                select(
-                    ResearchHistory.video_id,
-                    ResearchHistory.url,
-                    ResearchHistory.strategies_found,
-                    ResearchHistory.classification,
-                    ResearchHistory.title,
-                    Channel.name.label("channel_name"),
-                )
-                .outerjoin(Channel, ResearchHistory.channel_id == Channel.id)
-                .where(ResearchHistory.researched_at >= session.started_at)
-            )
-            if session.topic_id is not None:
-                video_q = video_q.where(
-                    ResearchHistory.topic_id == session.topic_id
-                )
-            if session.completed_at:
-                video_q = video_q.where(
-                    ResearchHistory.researched_at <= session.completed_at
-                )
-            video_rows = (await db.execute(video_q)).all()
-            for vrow in video_rows:
-                videos.append({
-                    "video_id": vrow[0],
-                    "url": vrow[1],
-                    "strategies_found": vrow[2],
-                    "classification": vrow[3],
-                    "title": vrow[4],
-                    "channel": vrow[5],
-                })
+        for vrow in video_rows:
+            videos.append({
+                "video_id": vrow[0],
+                "url": vrow[1],
+                "strategies_found": vrow[2],
+                "classification": vrow[3],
+                "title": vrow[4],
+                "channel": vrow[5],
+            })
 
         results.append({
             "id": session.id,
@@ -115,41 +158,21 @@ async def get_session_by_id(
         duration_seconds = int(delta.total_seconds())
 
     # Fetch related history items (videos) for this session
-    # within the session's time window
+    video_q = _build_video_query(
+        session, extra_columns=(ResearchHistory.researched_at,)
+    )
+    video_rows = (await db.execute(video_q)).all()
     videos: list[dict[str, Any]] = []
-    if session.started_at:
-        video_q = (
-            select(
-                ResearchHistory.video_id,
-                ResearchHistory.url,
-                ResearchHistory.strategies_found,
-                ResearchHistory.classification,
-                ResearchHistory.title,
-                ResearchHistory.researched_at,
-                Channel.name.label("channel_name"),
-            )
-            .outerjoin(Channel, ResearchHistory.channel_id == Channel.id)
-            .where(ResearchHistory.researched_at >= session.started_at)
-        )
-        if session.topic_id is not None:
-            video_q = video_q.where(
-                ResearchHistory.topic_id == session.topic_id
-            )
-        if session.completed_at:
-            video_q = video_q.where(
-                ResearchHistory.researched_at <= session.completed_at
-            )
-        video_rows = (await db.execute(video_q)).all()
-        for vrow in video_rows:
-            videos.append({
-                "video_id": vrow[0],
-                "url": vrow[1],
-                "strategies_found": vrow[2],
-                "classification": vrow[3],
-                "title": vrow[4],
-                "researched_at": vrow[5],
-                "channel": vrow[6],
-            })
+    for vrow in video_rows:
+        videos.append({
+            "video_id": vrow[0],
+            "url": vrow[1],
+            "strategies_found": vrow[2],
+            "classification": vrow[3],
+            "title": vrow[4],
+            "researched_at": vrow[5],
+            "channel": vrow[6],
+        })
 
     return {
         "id": session.id,

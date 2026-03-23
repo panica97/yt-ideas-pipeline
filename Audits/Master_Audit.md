@@ -11,6 +11,7 @@
 | [audit_01](audit_01.md) | 2026-03-22 | Full codebase | 30 | 0 | 0 | 1 | 29 |
 | [audit_02](audit_02.md) | 2026-03-22 | Phase 10 Backtesting | 18 | 3 | 9 | 6 | 3 |
 | [audit_03_quick](audit_03_quick.md) | 2026-03-23 | Phase 10.3 Frontend Backtest (quick) | 6 | 0 | 3 | 3 | 0 |
+| [audit_04](audit_04.md) | 2026-03-23 | Phase 10.2 Research Pipeline Flexibility | 9 | 0 | 6 | 3 | 9 |
 
 ---
 
@@ -73,6 +74,12 @@ _No open HIGH findings._
 | 13 | audit_03 M-01 | MEDIUM | Normalize Return/DD ratio with `Math.abs()` | quick fix | Open |
 | 14 | audit_03 M-02 | MEDIUM | Add `typeof === 'number'` runtime checks for metrics | quick fix | Open |
 | 15 | audit_03 M-03 | MEDIUM | Add NaN guard on equity curve date parsing | quick fix | Open |
+| 16 | audit_04 M-01 | MEDIUM | Add `classification` and `title` params to `add_history()` | quick fix | Resolved (audit_04 batch fix) |
+| 17 | audit_04 M-02 | MEDIUM | Make `total_steps` dynamic in `create_session()` | quick fix | Resolved (audit_04 batch fix) |
+| 18 | audit_04 M-03 | MEDIUM | Fix VIDEO entry point dedup with COALESCE or IS NOT DISTINCT FROM | quick fix | Resolved (audit_04 batch fix) |
+| 19 | audit_04 M-04 | MEDIUM | Update research SKILL.md for all entry points | quick fix | Resolved (audit_04 batch fix) |
+| 20 | audit_04 M-05 | MEDIUM | Fix session-history correlation for non-topic sessions | quick fix | Resolved (audit_04 batch fix) |
+| 21 | audit_04 M-06 | MEDIUM | Add basic URL validation for VIDEO entry point | quick fix | Resolved (audit_04 batch fix) |
 
 ---
 
@@ -111,6 +118,15 @@ _No open HIGH findings._
 | 01 | HIGH | `claim_job` race condition — no row-level locking | audit_02 | 2026-03-22 |
 | 02 | HIGH | `complete_job`/`fail_job` skip status validation | audit_02 | 2026-03-22 |
 | 03 | HIGH | Worker endpoints auth documented as trade-off | audit_02 | 2026-03-22 |
+| 25 | MEDIUM | `add_history()` missing `classification` parameter | audit_04 | audit_04 batch fix |
+| 26 | MEDIUM | `total_steps=6` hardcoded, pipeline now has 8 steps | audit_04 | audit_04 batch fix |
+| 27 | MEDIUM | VIDEO entry point dedup weakness with NULL topic_id | audit_04 | audit_04 batch fix |
+| 28 | MEDIUM | Research SKILL.md not updated for new entry points | audit_04 | audit_04 batch fix |
+| 29 | MEDIUM | VIDEO session-history correlation is fragile | audit_04 | audit_04 batch fix |
+| 30 | MEDIUM | No URL validation for VIDEO entry point | audit_04 | audit_04 batch fix |
+| 31 | LOW | Preflight runs for IDEA entry point unnecessarily | audit_04 | audit_04 batch fix |
+| 32 | LOW | `_resolve_topic_id` used as public API from AGENT.md | audit_04 | audit_04 batch fix |
+| 33 | LOW | IDEA entry point: no minimum-length or content validation | audit_04 | audit_04 batch fix |
 
 ---
 
@@ -118,8 +134,8 @@ _No open HIGH findings._
 
 | Metric | Value |
 |---|---|
-| Total audits | 3 |
-| Total findings (all time) | 54 |
+| Total audits | 4 |
+| Total findings (all time) | 63 |
 | Open findings | 22 |
-| Resolved findings | 32 |
-| Resolution rate | 59% |
+| Resolved findings | 41 |
+| Resolution rate | 65% |

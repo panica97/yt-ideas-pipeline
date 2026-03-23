@@ -135,6 +135,9 @@ class ResearchHistory(Base):
     topic_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("topics.id")
     )
+    session_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("research_sessions.id"), nullable=True
+    )
     researched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )

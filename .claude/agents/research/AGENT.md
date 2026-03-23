@@ -21,8 +21,13 @@ yt-scraper -> notebooklm-analyst -> strategy-variants -> strategy-translator -> 
 Determine the entry point type from the input:
 
 1. **URL**: input matches `youtube.com/watch` or `youtu.be/` -> VIDEO entry point
+   - **Validation** (mandatory before proceeding):
+     1. For `youtube.com/watch` URLs: extract the `v` query parameter. If `v` is missing or empty, the URL is invalid.
+     2. For `youtu.be/` URLs: extract the path segment after `youtu.be/`. If it is empty (e.g. `https://youtu.be/`), the URL is invalid.
+     3. The extracted video ID must be a non-empty string (typically 11 characters, alphanumeric plus `-` and `_`).
+     4. If validation fails, tell the user: "Invalid YouTube URL: could not extract a video ID from `<url>`. Please provide a full video URL (e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ)." and **stop the pipeline immediately** (do not proceed to any step).
 2. **Topic**: input matches a slug in `data/channels/channels.yaml` -> TOPIC entry point
-3. **Idea**: anything else -> IDEA entry point
+3. **Idea**: anything else -> IDEA entry point. If the idea text is under 20 characters or doesn't contain any trading-related content (entry rules, exit rules, indicators, etc.), warn the user that the input may be too vague and ask for more detail before proceeding.
 
 ## Early Stop Signals
 
@@ -39,6 +44,8 @@ El pipeline puede detenerse en cualquier paso con una de estas senales:
 Ejecuta estos pasos **secuencialmente**. Cada paso depende del anterior.
 
 ### Step 0: Preflight Check
+
+**If entry point is IDEA, skip preflight** (NotebookLM is not used for IDEA input).
 
 Comprueba que NotebookLM esta autenticado antes de empezar:
 
@@ -107,14 +114,15 @@ Clasifica cada titulo de video tu mismo, sin ejecutar ningun script. Para cada v
 
 ```python
 from tools.db.session import sync_session_ctx
-from tools.db.research_repo import add_history, _resolve_topic_id
+from tools.db.research_repo import add_history, resolve_topic_id
 
 with sync_session_ctx() as session:
-    topic_id = _resolve_topic_id(session, "<topic_slug>")
+    topic_id = resolve_topic_id(session, "<topic_slug>")
     for video in irrelevant_videos:
         add_history(session, video_id=video["video_id"], url=video["url"],
                     channel_id=video.get("channel_id"), topic_id=topic_id,
-                    strategies_found=0, classification="irrelevant")
+                    strategies_found=0, classification="irrelevant",
+                    session_id=session_id)
 ```
 
 5. Pasar solo los videos `strategy` al Step 2
@@ -226,11 +234,11 @@ Despues de borrar el notebook, guardar los videos procesados en el historial de 
 
 ```python
 from tools.db.session import sync_session_ctx
-from tools.db.research_repo import add_history, _resolve_topic_id
+from tools.db.research_repo import add_history, resolve_topic_id
 
 with sync_session_ctx() as session:
-    topic_id = _resolve_topic_id(session, "<topic_slug>")
-    add_history(session, video_id="<id>", url="<url>", channel_id=<id>, topic_id=topic_id, strategies_found=<n>)
+    topic_id = resolve_topic_id(session, "<topic_slug>")
+    add_history(session, video_id="<id>", url="<url>", channel_id=<id>, topic_id=topic_id, strategies_found=<n>, session_id=session_id)
 ```
 
 Si `DATABASE_URL` no esta configurado, usar fallback YAML: anadir entradas a `data/research/history.yaml` bajo `researched_videos`.

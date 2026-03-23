@@ -29,7 +29,7 @@ def _notify(session: Session, session_id: int) -> None:
     )
 
 
-def _resolve_topic_id(session: Session, topic_slug: str) -> int | None:
+def resolve_topic_id(session: Session, topic_slug: str) -> int | None:
     """Resolve a topic slug to its ID."""
     stmt = select(Topic.id).where(Topic.slug == topic_slug)
     result = session.execute(stmt).scalar_one_or_none()
@@ -44,6 +44,7 @@ def create_session(
     session: Session,
     topic_slug: str | None = None,
     label: str | None = None,
+    total_steps: int = 8,
 ) -> ResearchSession:
     """Create a new research session in 'running' state.
 
@@ -51,18 +52,19 @@ def create_session(
         session: SQLAlchemy sync session.
         topic_slug: The topic slug being researched (optional).
         label: Free-text description for non-topic sessions (optional).
+        total_steps: Number of pipeline steps (TOPIC=8, VIDEO=6, IDEA=5).
 
     Returns:
         The newly created ``ResearchSession`` row.
     """
-    topic_id = _resolve_topic_id(session, topic_slug) if topic_slug else None
+    topic_id = resolve_topic_id(session, topic_slug) if topic_slug else None
     rs = ResearchSession(
         status="running",
         topic_id=topic_id,
         label=label,
         step=0,
         step_name="preflight",
-        total_steps=6,
+        total_steps=total_steps,
     )
     session.add(rs)
     session.flush()  # get the auto-generated ID
@@ -166,16 +168,29 @@ def add_history(
     channel_id: int | None = None,
     topic_id: int | None = None,
     strategies_found: int = 0,
+    classification: str | None = None,
+    title: str | None = None,
+    session_id: int | None = None,
 ) -> ResearchHistory:
     """Insert a research history entry with deduplication.
 
     If a history entry with the same ``(video_id, topic_id)`` already exists,
     the existing row is returned unchanged.
+
+    Args:
+        session_id: Optional FK to ``research_sessions.id`` for direct
+            session-history correlation (preferred over time-window matching).
     """
-    stmt = select(ResearchHistory).where(
-        ResearchHistory.video_id == video_id,
-        ResearchHistory.topic_id == topic_id,
-    )
+    if topic_id is None:
+        stmt = select(ResearchHistory).where(
+            ResearchHistory.video_id == video_id,
+            ResearchHistory.topic_id.is_(None),
+        )
+    else:
+        stmt = select(ResearchHistory).where(
+            ResearchHistory.video_id == video_id,
+            ResearchHistory.topic_id == topic_id,
+        )
     existing = session.execute(stmt).scalar_one_or_none()
     if existing is not None:
         return existing
@@ -186,6 +201,9 @@ def add_history(
         channel_id=channel_id,
         topic_id=topic_id,
         strategies_found=strategies_found,
+        classification=classification,
+        title=title,
+        session_id=session_id,
     )
     session.add(entry)
     session.flush()

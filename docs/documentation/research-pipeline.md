@@ -615,9 +615,9 @@ per_draft:
 
 3. **Record research history**:
    ```python
-   from tools.db.research_repo import add_history, _resolve_topic_id
+   from tools.db.research_repo import add_history, resolve_topic_id
    with sync_session_ctx() as session:
-       topic_id = _resolve_topic_id(session, "<topic_slug>")
+       topic_id = resolve_topic_id(session, "<topic_slug>")
        add_history(session, video_id="<id>", url="<url>",
                    channel_id=<id>, topic_id=topic_id,
                    strategies_found=<n>)

@@ -1,16 +1,18 @@
 ---
 name: research
-description: Trigger the research agent for a given topic
+description: Trigger the research agent to investigate trading strategies
 ---
 
 # Research
 
-Launches the research agent to investigate trading strategies for a topic.
+Launches the research agent to investigate trading strategies. Supports three entry points.
 
 ## Usage
 
 ```
-/research <topic>
+/research <topic>            # Research strategies for a topic (searches YouTube channels)
+/research <youtube-url>      # Research strategies from a specific YouTube video
+/research "<idea text>"      # Research strategies from a raw idea/description
 ```
 
 This activates the research agent (`.claude/agents/research/AGENT.md`) which owns the full pipeline.
