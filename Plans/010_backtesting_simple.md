@@ -164,7 +164,7 @@ Improve the backtest results display in the frontend. Replace less useful metric
 
 ## Phase 10.4 — Backtest UI Cleanup
 
-**Status:** Planned
+**Status:** Done
 **Priority:** MEDIUM — UI polish for backtest launch flow
 **Parent Phase:** Phase 10.4 from Master Plan
 **Depends on:** Phase 10
@@ -177,8 +177,8 @@ Clean up the backtest launch UI. Remove the timeframe selector from the backtest
 
 | # | Task | Route | SDD Status | Status |
 |---|------|-------|------------|--------|
-| 1 | Remove the timeframe selector from the backtest launch form. The engine already reads `primary_timeframe` from the strategy JSON — the UI dropdown is redundant and misleading. | quick fix | — | Planned |
-| 2 | Add backtest mode selection: when the backtest panel opens, show two mode buttons — "Simple Backtest" (triggers the current backtest flow) and "Complete Backtest" (disabled placeholder for a future plan). | quick fix | — | Planned |
+| 1 | Remove the timeframe selector from the backtest launch form. The engine already reads `primary_timeframe` from the strategy JSON — the UI dropdown is redundant and misleading. | quick fix | — | Done |
+| 2 | Add backtest mode selection: when the backtest panel opens, show two mode buttons — "Simple Backtest" (triggers the current backtest flow) and "Complete Backtest" (disabled placeholder for a future plan). | quick fix | — | Done |
 
 ### Files to Modify
 
