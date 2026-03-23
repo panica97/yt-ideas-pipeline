@@ -25,6 +25,7 @@
 | 10.1 | Fix Backtest Condition Format | Fix cond format mismatch causing 0 trades — strip shift notation from cond strings | HIGH | Phase 10 | quick fix | Done |
 | 10.2 | Research Pipeline Flexibility | Make pipeline produce complete frontend-visible output regardless of entry point (topic, video URL, or raw idea) | HIGH | Phase 10.1 | SDD | Done |
 | 10.3 | Backtest Result View | Improve backtest results display — Return/Drawdown ratio, Max DD %, toggleable equity curve chart | MEDIUM | Phase 10 | quick fix | Done |
+| 10.4 | Backtest UI Cleanup | Remove timeframe selector (determined by strategy JSON), add Simple/Complete backtest mode buttons | MEDIUM | Phase 10 | quick fix | Planned |
 | 11 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 10.2 | /sdd-ff | Planned |
 | 12 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 11 | /sdd-ff | Planned |
 
@@ -34,10 +35,10 @@
 
 | Metric | Count |
 |--------|-------|
-| Total phases | 15 |
+| Total phases | 16 |
 | Completed | 13 |
 | In Progress | 0 |
-| Planned | 2 |
+| Planned | 3 |
 
 ---
 

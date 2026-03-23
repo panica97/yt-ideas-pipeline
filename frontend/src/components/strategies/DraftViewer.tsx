@@ -215,6 +215,7 @@ export default function DraftViewer({ draft }: DraftViewerProps) {
             stratCode={draft.strat_code}
             backtestable={draft.todo_count === 0}
             defaultSymbol={parsed?.symbol}
+            primaryTimeframe={parsed?.control_params?.primary_timeframe}
           />
         </SectionPanel>
       </div>

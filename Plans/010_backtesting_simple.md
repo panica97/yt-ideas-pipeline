@@ -162,6 +162,36 @@ Improve the backtest results display in the frontend. Replace less useful metric
 
 ---
 
+## Phase 10.4 — Backtest UI Cleanup
+
+**Status:** Planned
+**Priority:** MEDIUM — UI polish for backtest launch flow
+**Parent Phase:** Phase 10.4 from Master Plan
+**Depends on:** Phase 10
+
+### Goal
+
+Clean up the backtest launch UI. Remove the timeframe selector from the backtest launch form (the timeframe is determined by the strategy JSON's `primary_timeframe`, so letting the user pick a different one is misleading). Add backtest mode selection buttons when the backtest panel opens: "Simple Backtest" (triggers the current backtest flow) and "Complete Backtest" (disabled placeholder for a future, more advanced backtesting mode).
+
+### Sub-phases
+
+| # | Task | Route | SDD Status | Status |
+|---|------|-------|------------|--------|
+| 1 | Remove the timeframe selector from the backtest launch form. The engine already reads `primary_timeframe` from the strategy JSON — the UI dropdown is redundant and misleading. | quick fix | — | Planned |
+| 2 | Add backtest mode selection: when the backtest panel opens, show two mode buttons — "Simple Backtest" (triggers the current backtest flow) and "Complete Backtest" (disabled placeholder for a future plan). | quick fix | — | Planned |
+
+### Files to Modify
+
+- `frontend/src/components/strategies/BacktestPanel.tsx` — remove timeframe selector, add mode buttons
+
+### Notes
+
+- The timeframe selector currently lets users pick a timeframe that may conflict with the strategy's `primary_timeframe`, leading to confusion
+- "Complete Backtest" mode is a placeholder — it should be visually present but disabled with a tooltip like "Coming soon"
+- This prepares the UI for a future advanced backtesting mode (e.g., walk-forward analysis, multi-timeframe, or Monte Carlo)
+
+---
+
 ## Interim Bugfix — TODO Counter (2da3ded)
 
 Between Phase 10.2 and 10.3, a bugfix was committed to detect `_TODO` values nested inside arrays in the todo counter. This was not a planned sub-phase but fixes a bug where nested TODO markers were not counted, causing strategies to appear ready for backtesting when they still had incomplete fields.

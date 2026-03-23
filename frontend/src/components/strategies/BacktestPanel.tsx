@@ -10,9 +10,8 @@ interface BacktestPanelProps {
   stratCode: number;
   backtestable: boolean;
   defaultSymbol?: string;
+  primaryTimeframe?: string;
 }
-
-const TIMEFRAME_OPTIONS = ['1m', '5m', '15m', '30m', '1h', '4h', '1d'];
 
 const STATUS_CONFIG = {
   pending: {
@@ -318,10 +317,10 @@ function JobItem({ job, onDelete }: { job: BacktestJobSummary; onDelete: (id: nu
   );
 }
 
-export default function BacktestPanel({ stratCode, backtestable, defaultSymbol }: BacktestPanelProps) {
+export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, primaryTimeframe }: BacktestPanelProps) {
   const [symbol, setSymbol] = useState(defaultSymbol ?? '');
-  const [timeframe, setTimeframe] = useState('1h');
   const [startDate, setStartDate] = useState('');
+  const [backtestMode, setBacktestMode] = useState<'simple' | 'complete'>('simple');
   const [endDate, setEndDate] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -379,7 +378,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol }
     createMutation.mutate({
       draft_strat_code: stratCode,
       symbol: symbol.trim(),
-      timeframe,
+      timeframe: primaryTimeframe ?? '1h',
       start_date: startDate,
       end_date: endDate,
     });
@@ -403,7 +402,29 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol }
     <div className="space-y-4">
       {/* Trigger form */}
       <div className="space-y-2">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {/* Mode selector */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setBacktestMode('simple')}
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors ${
+              backtestMode === 'simple'
+                ? 'bg-accent text-surface-0'
+                : 'bg-surface-2 text-text-muted'
+            }`}
+          >
+            <Play size={12} />
+            Simple Backtest
+          </button>
+          <button
+            disabled
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium bg-surface-2 text-text-muted cursor-not-allowed opacity-60"
+          >
+            Complete Backtest
+            <span className="text-[10px] bg-surface-3 text-text-muted rounded px-1.5 py-0.5 ml-1">Coming Soon</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="block text-xs text-text-muted mb-1">Symbol</label>
             <input
@@ -413,18 +434,6 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol }
               className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
               placeholder="e.g. MNQ"
             />
-          </div>
-          <div>
-            <label className="block text-xs text-text-muted mb-1">Timeframe</label>
-            <select
-              value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
-              className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              {TIMEFRAME_OPTIONS.map((tf) => (
-                <option key={tf} value={tf}>{tf}</option>
-              ))}
-            </select>
           </div>
           <div>
             <label className="block text-xs text-text-muted mb-1">Start Date</label>
