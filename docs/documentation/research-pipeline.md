@@ -58,6 +58,8 @@ Trading strategy research is labor-intensive. Traders spend hours watching YouTu
         |                        |
         |                   [4] Strategy Translator  -->  drafts DB
         |                        |
+        |                   [4.5] TODO Auto-Resolution <-> Instruments API
+        |                        |
         |                   [5] Cleanup & History    -->  research_history DB
         |                        |
         v                   [6] DB Manager           -->  strategies + drafts DB
@@ -84,6 +86,7 @@ Trading strategy research is labor-intensive. Traders spend hours watching YouTu
 | notebooklm-analyst | `.claude/skills/notebooklm-analyst/SKILL.md` | Strategy extraction via AI |
 | strategy-variants | `.claude/skills/strategy-variants/SKILL.md` | Purification and variant generation |
 | strategy-translator | `.claude/skills/strategy-translator/SKILL.md` | JSON draft translation |
+| todo-review | `.claude/skills/todo-review/SKILL.md` | Auto-fill _TODO fields in drafts |
 | db-manager | `.claude/skills/db-manager/SKILL.md` | Database persistence |
 | FastAPI Backend | `api/` | REST API + WebSocket for frontend |
 | React Frontend | `frontend/` | Dashboard for viewing results |
@@ -100,7 +103,7 @@ The pipeline supports three entry points, each skipping different steps dependin
 
 Runs the full pipeline. The topic slug must exist in the channel database (`data/channels/channels.yaml` or the `topics` table in PostgreSQL).
 
-**Steps executed**: 0, 1, 1.5, 2, 3, 4, 5, 6, 7
+**Steps executed**: 0, 1, 1.5, 2, 3, 4, 4.5, 5, 6, 7
 
 **Session label**: Uses `topic_slug` directly (e.g., `topic_id` is resolved from the slug).
 
@@ -110,7 +113,7 @@ Runs the full pipeline. The topic slug must exist in the channel database (`data
 
 Skips YouTube scraping and video classification. Goes directly to NotebookLM analysis with the single video URL.
 
-**Steps executed**: 0, 2, 3, 4, 5, 6, 7 (Steps 1 and 1.5 skipped)
+**Steps executed**: 0, 2, 3, 4, 4.5, 5, 6, 7 (Steps 1 and 1.5 skipped)
 
 **Metadata extraction**: Uses `yt-dlp --print title --print channel --print channel_url <url>` to get video title and channel info.
 
@@ -124,7 +127,7 @@ Skips YouTube scraping and video classification. Goes directly to NotebookLM ana
 
 Skips YouTube scraping, video classification, AND NotebookLM analysis. The idea text is formatted as a strategy YAML and passed directly to the strategy-variants step.
 
-**Steps executed**: 0, 3, 4, 6, 7 (Steps 1, 1.5, 2, and 5 skipped)
+**Steps executed**: 0, 3, 4, 4.5, 6, 7 (Steps 1, 1.5, 2, and 5 skipped)
 
 **Session label**: `"Idea: <idea_text[:100]>"`
 
@@ -148,6 +151,7 @@ The agent determines the entry point by examining the input string:
 | 2 - NotebookLM Analyst | Yes | Yes | **Skip** |
 | 3 - Strategy Variants | Yes | Yes | Yes |
 | 4 - Strategy Translator | Yes | Yes | Yes |
+| 4.5 - TODO Auto-Resolution | Yes | Yes | Yes |
 | 5 - Cleanup & History | Yes | Yes (topic_id=None) | **Skip** |
 | 6 - DB Manager | Yes | Yes | Yes |
 | 7 - Summary | Yes | Yes | Yes |
@@ -517,6 +521,75 @@ total_drafts: 2
 
 ---
 
+### Step 4.5: TODO Auto-Resolution (todo-review)
+
+**What it does**: Automatically resolves `_TODO` fields in the JSON drafts produced by Step 4. Uses the Instruments database for symbol-based lookups and applies sensible defaults for common fields. This reduces the number of TODOs that require manual human input via todo-fill.
+
+**Skill**: `.claude/skills/todo-review/SKILL.md`
+
+**Tools used**:
+```bash
+curl -H "X-API-Key: $DASHBOARD_API_KEY" http://localhost:8000/api/instruments/{symbol}
+curl -X PATCH -H "X-API-Key: $DASHBOARD_API_KEY" -H "Content-Type: application/json" \
+  -d '{"path": "<field_path>", "value": <value>}' \
+  http://localhost:8000/api/strategies/drafts/{strat_code}/fill-todo
+```
+
+**Input**: List of `strat_code` integers from Step 4 (all newly translated drafts).
+
+**Output**: A report per draft showing resolved fields, remaining TODOs, and before/after counts.
+
+**Process**:
+1. Fetch each draft by `strat_code` from the API
+2. Recursively scan the `data` JSON for fields with value `"_TODO"`
+3. Extract the `symbol` field and query the Instruments API
+4. **Tier 1 -- Instrument Lookup**: Replace `_TODO` values for `exchange`, `multiplier`, `minTick`, `currency`, and `secType` using the Instruments API response
+5. **Tier 2 -- Sensible Defaults**: Apply defaults for `rolling_days` (5), `currency` ("USD"), `secType` ("FUT" if futures context), `trading_hours` (null)
+6. **Tier 3 -- Never Auto-Fill**: Leave indicator parameters, condition thresholds, `max_timePeriod`, `max_shift`, and `control_params` as `_TODO` -- these require human judgment or optimization
+7. PATCH each resolved field individually via the API
+8. Re-fetch to verify updated `todo_count`
+
+**Skip conditions**: NONE -- this step always runs for all entry points (TOPIC, VIDEO, IDEA). Even if a draft has zero resolvable TODOs, the step still runs and reports "nothing to resolve".
+
+**Error handling**:
+| Condition | Action |
+|-----------|--------|
+| API not accessible | Report error, terminate step |
+| `.env` missing `DASHBOARD_API_KEY` | Report error, terminate step |
+| Symbol not found in Instruments DB (404) | Leave instrument fields as `_TODO`, note in report, continue |
+| PATCH fails (4xx/5xx) | Report affected field/draft, continue with remaining |
+| Symbol is `_TODO` | Skip instrument lookup, apply only Tier 2 defaults |
+
+**Example output**:
+```yaml
+status: "complete"
+drafts_processed: 3
+todos_resolved: 9
+todos_remaining: 15
+per_draft:
+  - strat_code: 9001
+    strat_name: "RSI_Exhaustion_Long_SAR_4h_GF"
+    filled:
+      - field: "exchange"
+        value: "CME"
+        source: "instruments"
+      - field: "multiplier"
+        value: 500
+        source: "instruments"
+      - field: "rolling_days"
+        value: 5
+        source: "default"
+    remaining:
+      - field: "ind_list.4 hours[0].params.timePeriod_1"
+        reason: "indicator parameter - needs optimization"
+      - field: "control_params.start_date"
+        reason: "backtest-specific"
+    todo_count_before: 12
+    todo_count_after: 7
+```
+
+---
+
 ### Step 5: Cleanup and History Recording
 
 **What it does**: Cleans up the NotebookLM notebook and records which videos were processed in the research history.
@@ -641,7 +714,10 @@ Raw Strategy YAML (entry_rules, exit_rules, markets, timeframes)
 Strategy Variants YAML (single direction, single market, single timeframe)
     |
     v  [Step 4 translates to engine format]
-IBKR JSON Drafts (ind_list, long_conds/short_conds, exit_conds)
+IBKR JSON Drafts (ind_list, long_conds/short_conds, exit_conds) -- with _TODO fields
+    |
+    v  [Step 4.5 resolves _TODOs via Instruments API + defaults]
+IBKR JSON Drafts (fewer _TODO fields -- only ambiguous ones remain)
     |
     v  [Step 6 persists to database]
 PostgreSQL: strategies + drafts tables

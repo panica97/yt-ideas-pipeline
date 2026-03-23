@@ -6,7 +6,7 @@ description: Research agent - executes the full trading strategy research pipeli
 # Research Agent
 
 Agent dedicado a investigar estrategias de trading. Ejecuta el pipeline completo:
-yt-scraper -> notebooklm-analyst -> strategy-variants -> strategy-translator -> db-manager.
+yt-scraper -> notebooklm-analyst -> strategy-variants -> strategy-translator -> todo-review -> db-manager.
 
 ## Input
 
@@ -171,6 +171,23 @@ Invocar skill: `/strategy-translator`
 Input: la lista de variantes del Step 3.
 
 El translator traduce CADA variante a un JSON draft IBKR (1 variante = 1 JSON). Es una traduccion literal, sin decisiones creativas. Guarda los drafts en la BD con `upsert_draft()`.
+
+### Step 4.5: TODO Auto-Resolution
+
+After strategy-translator produces JSON drafts (Step 4), auto-fill resolvable `_TODO` fields before persisting to the database (Step 5/6).
+
+Invocar skill: `/todo-review`
+
+Input: the `strat_code` list from Step 4 (all newly translated drafts).
+
+The skill resolves `_TODO` fields in three tiers:
+1. **Instrument lookup**: exchange, multiplier, minTick, currency, secType from the Instruments DB
+2. **Sensible defaults**: rolling_days, currency, secType, trading_hours
+3. **Never auto-fill**: indicator params, condition thresholds, control_params (left for human review)
+
+This reduces manual TODO work -- only genuinely ambiguous TODOs reach the user via todo-fill.
+
+**Skip conditions**: NONE -- always run this step for all entry points (TOPIC, VIDEO, IDEA).
 
 ### Step 5: Cleanup y registro de historial
 
