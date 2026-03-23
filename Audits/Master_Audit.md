@@ -1,6 +1,6 @@
 # Master Audit - IRT Project
 
-**Last updated**: 2026-03-22
+**Last updated**: 2026-03-23
 
 ---
 
@@ -10,6 +10,7 @@
 |-------|------|-------|----------|------|--------|-----|----------|
 | [audit_01](audit_01.md) | 2026-03-22 | Full codebase | 30 | 0 | 0 | 1 | 29 |
 | [audit_02](audit_02.md) | 2026-03-22 | Phase 10 Backtesting | 18 | 3 | 9 | 6 | 3 |
+| [audit_03_quick](audit_03_quick.md) | 2026-03-23 | Phase 10.3 Frontend Backtest (quick) | 6 | 0 | 3 | 3 | 0 |
 
 ---
 
@@ -19,7 +20,7 @@
 
 _No open HIGH findings._
 
-### MEDIUM (9 open)
+### MEDIUM (12 open)
 
 | # | Finding | Source |
 |---|---------|--------|
@@ -32,8 +33,11 @@ _No open HIGH findings._
 | 10 | No pagination on backtest list | audit_02 |
 | 11 | Delete mutation has no error handling | audit_02 |
 | 12 | No stale job recovery mechanism | audit_02 |
+| 19 | Return/DD ratio misleading with signed values | audit_03 |
+| 20 | Unsafe type assertion for optional metrics fields | audit_03 |
+| 21 | Equity curve date sorting relies on string parsing | audit_03 |
 
-### LOW (7 open)
+### LOW (10 open)
 
 | # | Finding | Source |
 |---|---------|--------|
@@ -44,6 +48,9 @@ _No open HIGH findings._
 | 16 | Dates stored as strings instead of Date type | audit_02 |
 | 17 | Fragile Python executable resolution | audit_02 |
 | 18 | Subprocess security not documented | audit_02 |
+| 22 | XAxis date labels overlap on dense data | audit_03 |
+| 23 | Index signature weakens BacktestMetrics type safety | audit_03 |
+| 24 | Tooltip formatter untyped (Recharts limitation) | audit_03 |
 
 ---
 
@@ -63,6 +70,9 @@ _No open HIGH findings._
 | 10 | audit_02 M-10 | MEDIUM | Add pagination to backtest list | quick fix | Open |
 | 11 | audit_02 M-11 | MEDIUM | Add `onError` to delete mutation | quick fix | Open |
 | 12 | audit_02 M-12 | MEDIUM | Design stale job recovery | /sdd-new | Open |
+| 13 | audit_03 M-01 | MEDIUM | Normalize Return/DD ratio with `Math.abs()` | quick fix | Open |
+| 14 | audit_03 M-02 | MEDIUM | Add `typeof === 'number'` runtime checks for metrics | quick fix | Open |
+| 15 | audit_03 M-03 | MEDIUM | Add NaN guard on equity curve date parsing | quick fix | Open |
 
 ---
 
@@ -108,8 +118,8 @@ _No open HIGH findings._
 
 | Metric | Value |
 |---|---|
-| Total audits | 2 |
-| Total findings (all time) | 48 |
-| Open findings | 16 |
+| Total audits | 3 |
+| Total findings (all time) | 54 |
+| Open findings | 22 |
 | Resolved findings | 32 |
-| Resolution rate | 67% |
+| Resolution rate | 59% |

@@ -66,7 +66,9 @@ Integrate the existing backtest engine from ops-worker-v0.1.0 (packages/backtest
 
 ## Phase 10.1 — Fix Backtest Condition Format
 
-**Status:** Planned
+**Status:** Done
+**Completed:** 2026-03-23
+**Commit:** a67a819
 **Priority:** HIGH — blocks all backtesting
 **Parent Phase:** Phase 10.1 from Master Plan
 
@@ -80,9 +82,9 @@ Fix the backtest condition format mismatch that causes the engine to produce 0 t
 
 | # | Task | Route | SDD Status | Status |
 |---|------|-------|------------|--------|
-| 1 | Fix strategy-translator skill: remove shift notation from cond string instructions in SKILL.md, translation-rules.md, and schema.json. Cond must use bare indicator names; shifts only in shift_1/shift_2. | quick fix | — | Planned |
-| 2 | Fix frontend condition display: update ConditionBlock in ConditionsSection.tsx to render shift notation visually when shift_1/shift_2 are present, even though stored cond uses bare names. | quick fix | — | Planned |
-| 3 | Fix existing drafts in DB: create Alembic migration or script to strip `(N)` suffixes from cond strings in data->'long_conds', data->'short_conds', and data->'exit_conds' JSONB arrays. | quick fix | — | Planned |
+| 1 | Fix strategy-translator skill: remove shift notation from cond string instructions in SKILL.md, translation-rules.md, and schema.json. Cond must use bare indicator names; shifts only in shift_1/shift_2. | quick fix | — | Done |
+| 2 | Fix frontend condition display: update ConditionBlock in ConditionsSection.tsx to render shift notation visually when shift_1/shift_2 are present, even though stored cond uses bare names. | quick fix | — | Done |
+| 3 | Fix existing drafts in DB: create Alembic migration or script to strip `(N)` suffixes from cond strings in data->'long_conds', data->'short_conds', and data->'exit_conds' JSONB arrays. | quick fix | — | Done |
 
 ### Notes
 
@@ -94,7 +96,9 @@ Fix the backtest condition format mismatch that causes the engine to produce 0 t
 
 ## Phase 10.2 — Research Pipeline Flexibility
 
-**Status:** Planned
+**Status:** Done
+**Completed:** 2026-03-23
+**Commits:** fd5481d, 0d1788c
 **Priority:** HIGH — frontend is unusable without this for non-standard pipeline entry points
 **Parent Phase:** Phase 10.2 from Master Plan
 **Depends on:** Phase 10.1
@@ -109,9 +113,9 @@ Currently, session tracking, history linking, and parent strategy creation only 
 
 | # | Task | Route | SDD Status | Status |
 |---|------|-------|------------|--------|
-| 1 | Session tracking for all entry points: the research agent must call `create_session()` at pipeline start and `complete_session()` at pipeline end, regardless of which steps are skipped. Update `.claude/agents/research/AGENT.md` to make session tracking mandatory and independent of pipeline steps. `tools/db/research_repo.py` already has the functions — they just need to be called consistently. | SDD | — | Planned |
-| 2 | research_history linking for all entry points: when a video URL is provided directly (no yt-scraper), the pipeline must still resolve or create the topic and channel references. For a direct video URL: extract channel info from video metadata (yt-dlp provides this), find or create the channel record, and link it. For a topic: use the existing topic record. For a raw idea (no video): create a history entry with a synthetic source. Ensure `topic_id` and `channel_id` are never NULL in `research_history`. | SDD | — | Planned |
-| 3 | Parent strategy creation from drafts: the db-manager must create parent `strategy` records when saving drafts. Each unique "parent strategy" (from strategy-variants) should map to one strategy record. Drafts link to their parent strategy via foreign key. This makes the Strategies page show strategies with their draft variants underneath. Update `.claude/skills/db-manager/SKILL.md` to include this step. | SDD | — | Planned |
+| 1 | Session tracking for all entry points: the research agent must call `create_session()` at pipeline start and `complete_session()` at pipeline end, regardless of which steps are skipped. Update `.claude/agents/research/AGENT.md` to make session tracking mandatory and independent of pipeline steps. `tools/db/research_repo.py` already has the functions — they just need to be called consistently. | SDD | — | Done |
+| 2 | research_history linking for all entry points: when a video URL is provided directly (no yt-scraper), the pipeline must still resolve or create the topic and channel references. For a direct video URL: extract channel info from video metadata (yt-dlp provides this), find or create the channel record, and link it. For a topic: use the existing topic record. For a raw idea (no video): create a history entry with a synthetic source. Ensure `topic_id` and `channel_id` are never NULL in `research_history`. | SDD | — | Done |
+| 3 | Parent strategy creation from drafts: the db-manager must create parent `strategy` records when saving drafts. Each unique "parent strategy" (from strategy-variants) should map to one strategy record. Drafts link to their parent strategy via foreign key. This makes the Strategies page show strategies with their draft variants underneath. Update `.claude/skills/db-manager/SKILL.md` to include this step. | SDD | — | Done |
 
 ### Notes
 
@@ -124,7 +128,9 @@ Currently, session tracking, history linking, and parent strategy creation only 
 
 ## Phase 10.3 — Backtest Result View
 
-**Status:** Planned
+**Status:** Done
+**Completed:** 2026-03-23
+**Commit:** e21534e
 **Priority:** MEDIUM — improves backtest usability
 **Parent Phase:** Phase 10.3 from Master Plan
 **Depends on:** Phase 10
@@ -137,9 +143,9 @@ Improve the backtest results display in the frontend. Replace less useful metric
 
 | # | Task | Route | SDD Status | Status |
 |---|------|-------|------------|--------|
-| 1 | Replace Net PnL metric card with Return/Drawdown ratio (return % divided by max drawdown %). Compute on the frontend from existing metrics (total_pnl, initial_equity, max_drawdown). | quick fix | — | Planned |
-| 2 | Replace Max Drawdown (absolute) card with Max Drawdown % (percentage of account). Compute as max_drawdown / initial_equity * 100. | quick fix | — | Planned |
-| 3 | Add PnL equity curve chart (line chart of cumulative PnL over time). Hidden by default with a toggle button to show/hide. May require the engine to return equity curve data points in the metrics JSONB, or compute from trades list on the frontend. | quick fix | — | Planned |
+| 1 | Replace Net PnL metric card with Return/Drawdown ratio (return % divided by max drawdown %). Compute on the frontend from existing metrics (total_pnl, initial_equity, max_drawdown). | quick fix | — | Done |
+| 2 | Replace Max Drawdown (absolute) card with Max Drawdown % (percentage of account). Compute as max_drawdown / initial_equity * 100. | quick fix | — | Done |
+| 3 | Add PnL equity curve chart (line chart of cumulative PnL over time). Hidden by default with a toggle button to show/hide. May require the engine to return equity curve data points in the metrics JSONB, or compute from trades list on the frontend. | quick fix | — | Done |
 
 ### Files to Modify
 
@@ -153,3 +159,9 @@ Improve the backtest results display in the frontend. Replace less useful metric
 - Equity curve data may need to come from the engine (array of cumulative PnL at each trade close) or be computed from the trades list if individual trades are available
 - If engine changes are needed, the worker and bridge may also need updates to pass through equity curve data
 - Chart library TBD — consider lightweight option (e.g., recharts, already common in React projects)
+
+---
+
+## Interim Bugfix — TODO Counter (2da3ded)
+
+Between Phase 10.2 and 10.3, a bugfix was committed to detect `_TODO` values nested inside arrays in the todo counter. This was not a planned sub-phase but fixes a bug where nested TODO markers were not counted, causing strategies to appear ready for backtesting when they still had incomplete fields.
