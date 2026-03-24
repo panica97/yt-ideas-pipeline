@@ -25,6 +25,7 @@ class Config:
         self.job_timeout: int = int(os.environ.get("WORKER_JOB_TIMEOUT", "300"))
         self.hist_data_path: str = os.environ.get("HIST_DATA_PATH", "")
         self.engine_path: str = os.environ.get("ENGINE_PATH", "")
+        self.worker_debug: bool = os.environ.get("WORKER_DEBUG", "").lower() in ("1", "true", "yes")
 
         # Shared HTTP session with API key header pre-configured
         self.session: requests.Session = requests.Session()

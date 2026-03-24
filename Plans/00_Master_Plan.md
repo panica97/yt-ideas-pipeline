@@ -2,8 +2,8 @@
 
 **Project:** IRT (Ideas Research Team)
 **Created:** 2026-03-22
-**Last Updated:** 2026-03-23
-**Current Phase:** Phase 11 — Synthetic Data (Monte Carlo) (Planned)
+**Last Updated:** 2026-03-24
+**Current Phase:** Phase 11 — Multi-Timeframe Complete Backtest (Planned)
 **Status:** In Progress
 
 ---
@@ -26,8 +26,9 @@
 | 10.2 | Research Pipeline Flexibility | Make pipeline produce complete frontend-visible output regardless of entry point (topic, video URL, or raw idea) | HIGH | Phase 10.1 | SDD | Done |
 | 10.3 | Backtest Result View | Improve backtest results display — Return/Drawdown ratio, Max DD %, toggleable equity curve chart | MEDIUM | Phase 10 | quick fix | Done |
 | 10.4 | Backtest UI Cleanup | Remove timeframe selector (determined by strategy JSON), add Simple/Complete backtest mode buttons | MEDIUM | Phase 10 | quick fix | Done |
-| 11 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 10.2 | /sdd-ff | Planned |
-| 12 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 11 | /sdd-ff | Planned |
+| 11 | Multi-Timeframe Complete Backtest | Complete backtest mode with trade capture, timeframe remapping, debug save, and full-screen report drawer | HIGH | Phase 10.4 | /sdd-new | Planned |
+| 12 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 11 | /sdd-ff | Planned |
+| 13 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 12 | /sdd-ff | Planned |
 
 ---
 
@@ -35,10 +36,10 @@
 
 | Metric | Count |
 |--------|-------|
-| Total phases | 16 |
+| Total phases | 17 |
 | Completed | 14 |
 | In Progress | 0 |
-| Planned | 2 |
+| Planned | 3 |
 
 ---
 
@@ -62,3 +63,6 @@
 | 2026-03-23 | Phase 10.2 | Completed | Research pipeline flexibility + documentation + todo-review skill (fd5481d, 0d1788c) |
 | 2026-03-23 | — | Bugfix | Fix TODO counter: detect _TODO values nested inside arrays (2da3ded) |
 | 2026-03-23 | Phase 10.3 | Completed | Backtest Result View: Return/DD ratio, Max DD %, equity curve chart (e21534e) |
+| 2026-03-23 | Phase 10.4 | Completed | Backtest UI Cleanup: remove timeframe selector, add Simple/Complete mode buttons (a3643c8) |
+| 2026-03-24 | Phase 11 | Created | Multi-Timeframe Complete Backtest: 6 sub-phases from approved design doc |
+| 2026-03-24 | Phase 12-13 | Renumbered | Synthetic Data (Monte Carlo) 11→12, Metrics & Analysis 12→13 |

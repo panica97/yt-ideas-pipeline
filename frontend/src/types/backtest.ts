@@ -1,3 +1,17 @@
+export type BacktestMode = 'simple' | 'complete';
+
+export interface BacktestTradeComplete {
+  entry_date: string;
+  exit_date: string;
+  side: 'long' | 'short';
+  entry_fill_price: number;
+  exit_fill_price: number;
+  pnl: number;
+  exit_reason: string;
+  bars_held: number;
+  cumulative_pnl: number;
+}
+
 export interface BacktestMetrics {
   // Engine returns total_pnl, not net_pnl
   total_pnl: number;
@@ -40,6 +54,7 @@ export interface BacktestJob {
   start_date: string;
   end_date: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
+  mode: BacktestMode;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -55,6 +70,7 @@ export interface BacktestJobSummary {
   start_date: string;
   end_date: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
+  mode: BacktestMode;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -72,4 +88,6 @@ export interface CreateBacktestParams {
   timeframe?: string;
   start_date: string;
   end_date: string;
+  mode?: BacktestMode;
+  debug?: boolean;
 }

@@ -57,7 +57,9 @@ def _sanitize_for_json(obj: Any) -> Any:
     return obj
 
 
-def run_engine(job: dict, strategies_path: str, config: Config) -> dict:
+def run_engine(
+    job: dict, strategies_path: str, config: Config, *, save: bool = False
+) -> dict:
     """Run the backtest engine subprocess and return parsed metrics.
 
     Parameters
@@ -68,11 +70,15 @@ def run_engine(job: dict, strategies_path: str, config: Config) -> dict:
         Path to directory containing the strategy JSON file.
     config : Config
         Worker configuration (engine_path, hist_data_path, job_timeout).
+    save : bool
+        When True, adds ``--save`` flag to the engine command.
+        The engine writes trades to ``{output_folder}/{strategy}/{YYYYMMDD_XXX}/trades.parquet``.
 
     Returns
     -------
     dict
         Parsed metrics dict from engine output.
+        When ``save=True``, includes ``_parquet_path`` key with path to trades.parquet.
 
     Raises
     ------
@@ -93,6 +99,9 @@ def run_engine(job: dict, strategies_path: str, config: Config) -> dict:
         "--hist-data-path", config.hist_data_path,
         "--strategies-path", strategies_path,
     ]
+
+    if save:
+        cmd.append("--save")
 
     logger.info("Running engine: %s", " ".join(cmd))
 
@@ -143,9 +152,43 @@ def run_engine(job: dict, strategies_path: str, config: Config) -> dict:
     # Sanitize NaN/Inf values
     metrics = _sanitize_for_json(metrics)
 
+    # If --save was used, locate the trades.parquet file
+    if save:
+        parquet_path = _find_parquet(strategies_path, strat_code)
+        if parquet_path:
+            metrics["_parquet_path"] = parquet_path
+            logger.info("Found trades parquet at %s", parquet_path)
+        else:
+            logger.warning("--save was used but trades.parquet not found")
+
     logger.info(
         "Engine completed for strat_code=%d — %d keys in metrics",
         strat_code,
         len(metrics) if isinstance(metrics, dict) else 0,
     )
     return metrics
+
+
+def _find_parquet(strategies_path: str, strat_code: int) -> str | None:
+    """Search for trades.parquet in the engine output directory.
+
+    The engine writes trades to ``{output_folder}/{strategy}/{YYYYMMDD_XXX}/trades.parquet``.
+    The output folder is typically near the strategies_path or in a known location.
+    We search recursively for the most recently created trades.parquet.
+    """
+    search_root = Path(strategies_path)
+
+    # Search within the strategies path tree first
+    parquet_files = list(search_root.rglob("trades.parquet"))
+
+    if not parquet_files:
+        # Also check parent directory and siblings
+        parent = search_root.parent
+        parquet_files = list(parent.rglob("trades.parquet"))
+
+    if not parquet_files:
+        return None
+
+    # Return the most recently modified one
+    parquet_files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return str(parquet_files[0])

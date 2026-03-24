@@ -205,6 +205,10 @@ class BacktestJob(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(
         String(20), default="pending", server_default="pending"
     )
+    mode: Mapped[str] = mapped_column(
+        String(20), default="simple", server_default="simple"
+    )
+    debug: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True

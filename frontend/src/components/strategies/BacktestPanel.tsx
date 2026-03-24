@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp } from 'lucide-react';
+import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { createBacktest, getBacktestsByDraft, getBacktest, deleteBacktest } from '../../services/backtests';
-import type { BacktestJobSummary, BacktestMetrics, BacktestTrade } from '../../types/backtest';
+import type { BacktestJobSummary, BacktestMetrics, BacktestTrade, BacktestMode } from '../../types/backtest';
+import BacktestReportDrawer from './BacktestReportDrawer';
 
 interface BacktestPanelProps {
   stratCode: number;
@@ -262,8 +263,9 @@ function JobResultsView({ jobId }: { jobId: number }) {
   );
 }
 
-function JobItem({ job, onDelete }: { job: BacktestJobSummary; onDelete: (id: number) => void }) {
+function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onDelete: (id: number) => void; onViewReport: (id: number) => void }) {
   const [expanded, setExpanded] = useState(false);
+  const isCompleteMode = job.mode === 'complete';
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
@@ -272,10 +274,28 @@ function JobItem({ job, onDelete }: { job: BacktestJobSummary; onDelete: (id: nu
         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-1/30 transition-colors"
       >
         <StatusBadge status={job.status} />
+        {isCompleteMode && (
+          <span className="text-[10px] bg-accent/10 text-accent border border-accent/20 rounded px-1 py-0.5 font-medium">
+            Complete
+          </span>
+        )}
         <span className="text-xs text-text-secondary flex-1">
           {job.symbol} &middot; {job.timeframe} &middot; {job.start_date} &rarr; {job.end_date}
         </span>
         <span className="text-xs text-text-muted">{formatRelativeTime(job.created_at)}</span>
+        {job.status === 'completed' && isCompleteMode && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewReport(job.id);
+            }}
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-accent hover:text-accent/80 transition-colors"
+            title="View Report"
+          >
+            <FileText size={12} />
+            Report
+          </button>
+        )}
         {job.status === 'pending' && (
           <button
             onClick={(e) => {
@@ -317,12 +337,25 @@ function JobItem({ job, onDelete }: { job: BacktestJobSummary; onDelete: (id: nu
   );
 }
 
+const TIMEFRAME_OPTIONS = [
+  { value: '1m', label: '1 min' },
+  { value: '5m', label: '5 min' },
+  { value: '15m', label: '15 min' },
+  { value: '30m', label: '30 min' },
+  { value: '1H', label: '1 hour' },
+  { value: '4H', label: '4 hours' },
+  { value: '8H', label: '8 hours' },
+  { value: '1D', label: '1 day' },
+] as const;
+
 export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, primaryTimeframe }: BacktestPanelProps) {
   const [symbol, setSymbol] = useState(defaultSymbol ?? '');
   const [startDate, setStartDate] = useState('');
-  const [backtestMode, setBacktestMode] = useState<'simple' | 'complete'>('simple');
+  const [backtestMode, setBacktestMode] = useState<BacktestMode>('simple');
+  const [selectedTimeframe, setSelectedTimeframe] = useState(primaryTimeframe ?? '1D');
   const [endDate, setEndDate] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedReportJobId, setSelectedReportJobId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   const { data: backtestList } = useQuery({
@@ -378,9 +411,10 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
     createMutation.mutate({
       draft_strat_code: stratCode,
       symbol: symbol.trim(),
-      timeframe: primaryTimeframe ?? '1h',
+      timeframe: backtestMode === 'complete' ? selectedTimeframe : (primaryTimeframe ?? '1h'),
       start_date: startDate,
       end_date: endDate,
+      mode: backtestMode,
     });
   };
 
@@ -416,11 +450,14 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             Simple Backtest
           </button>
           <button
-            disabled
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium bg-surface-2 text-text-muted cursor-not-allowed opacity-60"
+            onClick={() => setBacktestMode('complete')}
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors ${
+              backtestMode === 'complete'
+                ? 'bg-accent text-surface-0'
+                : 'bg-surface-2 text-text-muted'
+            }`}
           >
             Complete Backtest
-            <span className="text-[10px] bg-surface-3 text-text-muted rounded px-1.5 py-0.5 ml-1">Coming Soon</span>
           </button>
         </div>
 
@@ -454,6 +491,23 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             />
           </div>
         </div>
+
+        {backtestMode === 'complete' && (
+          <div>
+            <label className="block text-xs text-text-muted mb-1">Timeframe</label>
+            <select
+              value={selectedTimeframe}
+              onChange={(e) => setSelectedTimeframe(e.target.value)}
+              className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              {TIMEFRAME_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} ({opt.value})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <button
@@ -493,11 +547,24 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
         ) : (
           <div className="space-y-1.5">
             {jobs.map((job) => (
-              <JobItem key={job.id} job={job} onDelete={(id) => deleteMutation.mutate(id)} />
+              <JobItem
+                key={job.id}
+                job={job}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                onViewReport={(id) => setSelectedReportJobId(id)}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {selectedReportJobId !== null && (
+        <BacktestReportDrawer
+          jobId={selectedReportJobId}
+          open={selectedReportJobId !== null}
+          onClose={() => setSelectedReportJobId(null)}
+        />
+      )}
     </div>
   );
 }

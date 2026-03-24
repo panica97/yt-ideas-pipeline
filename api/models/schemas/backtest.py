@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
+
+BacktestMode = Literal["simple", "complete"]
 
 
 class BacktestCreateRequest(BaseModel):
@@ -14,6 +16,8 @@ class BacktestCreateRequest(BaseModel):
     timeframe: str = "1h"
     start_date: str
     end_date: str
+    mode: BacktestMode = "simple"
+    debug: bool = False
 
 
 class BacktestResultResponse(BaseModel):
@@ -33,6 +37,7 @@ class BacktestJobResponse(BaseModel):
     start_date: str
     end_date: str
     status: str
+    mode: str = "simple"
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None
@@ -50,6 +55,7 @@ class BacktestJobSummary(BaseModel):
     start_date: str
     end_date: str
     status: str
+    mode: str = "simple"
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None

@@ -63,6 +63,8 @@ async def create_job(
         start_date=body.start_date,
         end_date=body.end_date,
         status="pending",
+        mode=getattr(body, "mode", "simple"),
+        debug=getattr(body, "debug", False),
     )
     db.add(job)
     await db.flush()
