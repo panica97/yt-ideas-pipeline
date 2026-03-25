@@ -1,0 +1,20 @@
+[project]
+name = "backtest-engine"
+version = "0.1.0"
+description = "Backtesting engine for IBKR strategies"
+requires-python = ">=3.10"
+dependencies = [
+    "ibkr-core",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["engine", "tests"]

@@ -1,0 +1,831 @@
+{
+  "calendar": {
+    "name": "CME Futures Trading Calendar 2025-2027",
+    "timezone": "Europe/Madrid",
+    "source": "CME Group",
+    "notes": "All times converted from CST/CDT (Chicago) to CET/CEST (Madrid) accounting for DST transitions in both regions.",
+    "last_updated": "2026-01-16",
+    "exchanges_covered": ["CME", "COMEX", "NYMEX", "CBOT"]
+  },
+  "dst_transitions": {
+    "2025": {
+      "us_spring_forward": "2025-03-09",
+      "spain_spring_forward": "2025-03-30",
+      "spain_fall_back": "2025-10-26",
+      "us_fall_back": "2025-11-02",
+      "gap_periods": [
+        {
+          "start": "2025-03-09",
+          "end": "2025-03-29",
+          "type": "spring",
+          "difference_hours": 6,
+          "note": "US in CDT, Spain still in CET"
+        },
+        {
+          "start": "2025-10-26",
+          "end": "2025-11-01",
+          "type": "fall",
+          "difference_hours": 6,
+          "note": "Spain in CET, US still in CDT"
+        }
+      ]
+    },
+    "2026": {
+      "us_spring_forward": "2026-03-08",
+      "spain_spring_forward": "2026-03-29",
+      "spain_fall_back": "2026-10-25",
+      "us_fall_back": "2026-11-01",
+      "gap_periods": [
+        {
+          "start": "2026-03-08",
+          "end": "2026-03-28",
+          "type": "spring",
+          "difference_hours": 6,
+          "note": "US in CDT, Spain still in CET"
+        },
+        {
+          "start": "2026-10-25",
+          "end": "2026-10-31",
+          "type": "fall",
+          "difference_hours": 6,
+          "note": "Spain in CET, US still in CDT"
+        }
+      ]
+    },
+    "2027": {
+      "us_spring_forward": "2027-03-14",
+      "spain_spring_forward": "2027-03-28",
+      "spain_fall_back": "2027-10-31",
+      "us_fall_back": "2027-11-07",
+      "gap_periods": [
+        {
+          "start": "2027-03-14",
+          "end": "2027-03-27",
+          "type": "spring",
+          "difference_hours": 6,
+          "note": "US in CDT, Spain still in CET"
+        },
+        {
+          "start": "2027-10-31",
+          "end": "2027-11-06",
+          "type": "fall",
+          "difference_hours": 6,
+          "note": "Spain in CET, US still in CDT"
+        }
+      ]
+    }
+  },
+  "regular_trading_hours": {
+    "description": "Standard trading hours for NON-EVENT days (no holidays or early closings)",
+    "equity_index_futures": {
+      "products": ["ES", "NQ", "RTY", "YM", "MES", "MNQ", "M2K", "MYM"],
+      "description": "CME Globex Equity Index Futures",
+      "standard_schedule_madrid": {
+        "winter": {
+          "period": "Nov - Mar (both US and Spain in standard time)",
+          "timezone_diff_hours": 7,
+          "weekly_open": {
+            "day": "Monday",
+            "time": "00:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "23:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            },
+            "friday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            }
+          }
+        },
+        "summer": {
+          "period": "Apr - Oct (both US and Spain in daylight time)",
+          "timezone_diff_hours": 7,
+          "weekly_open": {
+            "day": "Monday",
+            "time": "00:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "23:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            },
+            "friday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            }
+          }
+        },
+        "dst_gap_spring": {
+          "period": "~2 weeks in March (US in CDT, Spain in CET)",
+          "timezone_diff_hours": 6,
+          "weekly_open": {
+            "day": "Sunday",
+            "time": "23:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "22:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "23:00 (previous day)",
+              "session_close": "22:00"
+            },
+            "friday": {
+              "session_open": "23:00 (Thursday)",
+              "session_close": "22:00"
+            }
+          },
+          "note": "Markets open/close 1 hour EARLIER in Madrid during this period"
+        },
+        "dst_gap_fall": {
+          "period": "~1 week Oct/Nov (Spain in CET, US in CDT)",
+          "timezone_diff_hours": 6,
+          "weekly_open": {
+            "day": "Sunday",
+            "time": "23:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "22:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "23:00 (previous day)",
+              "session_close": "22:00"
+            },
+            "friday": {
+              "session_open": "23:00 (Thursday)",
+              "session_close": "22:00"
+            }
+          },
+          "note": "Markets open/close 1 hour EARLIER in Madrid during this period (same as spring gap)"
+        }
+      }
+    },
+    "interest_rate_futures": {
+      "products": ["ZB", "ZN", "ZF", "ZT", "GE"],
+      "description": "Interest Rate Futures (Bonds, Notes, Eurodollars)",
+      "standard_schedule_madrid": {
+        "winter": {
+          "timezone_diff_hours": 7,
+          "session_open": "01:00",
+          "session_close": "00:00 (next day)",
+          "pit_session": "15:20 - 21:00"
+        },
+        "summer": {
+          "timezone_diff_hours": 7,
+          "session_open": "01:00",
+          "session_close": "00:00 (next day)",
+          "pit_session": "15:20 - 21:00"
+        }
+      }
+    },
+    "energy_futures": {
+      "products": ["CL", "NG", "RB", "HO", "MCL"],
+      "description": "Crude Oil, Natural Gas, RBOB Gasoline, Heating Oil",
+      "standard_schedule_madrid": {
+        "winter": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        },
+        "summer": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        }
+      }
+    },
+    "metals_futures": {
+      "products": ["GC", "SI", "HG", "PL", "MGC", "SIL"],
+      "exchange": "COMEX",
+      "description": "COMEX Metals: Gold, Micro Gold, Silver, Micro Silver, Copper, Platinum",
+      "cme_native_hours": {
+        "globex": "Sunday - Friday 6:00 p.m. - 5:00 p.m. ET (5:00 p.m. - 4:00 p.m. CT)",
+        "daily_break": "60-minute maintenance break at 5:00 p.m. ET (4:00 p.m. CT)",
+        "note": "Same schedule as equity index futures"
+      },
+      "standard_schedule_madrid": {
+        "winter": {
+          "period": "Nov - Mar (both US and Spain in standard time)",
+          "timezone_diff_hours": 7,
+          "weekly_open": {
+            "day": "Monday",
+            "time": "00:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "23:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            },
+            "friday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            }
+          }
+        },
+        "summer": {
+          "period": "Apr - Oct (both US and Spain in daylight time)",
+          "timezone_diff_hours": 7,
+          "weekly_open": {
+            "day": "Monday",
+            "time": "00:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "23:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            },
+            "friday": {
+              "session_open": "00:00",
+              "session_close": "23:00"
+            }
+          }
+        },
+        "dst_gap_spring": {
+          "period": "~2 weeks in March (US in CDT, Spain in CET)",
+          "timezone_diff_hours": 6,
+          "weekly_open": {
+            "day": "Sunday",
+            "time": "23:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "22:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "23:00 (previous day)",
+              "session_close": "22:00"
+            },
+            "friday": {
+              "session_open": "23:00 (Thursday)",
+              "session_close": "22:00"
+            }
+          },
+          "note": "Markets open/close 1 hour EARLIER in Madrid during this period"
+        },
+        "dst_gap_fall": {
+          "period": "~1 week Oct/Nov (Spain in CET, US in CDT)",
+          "timezone_diff_hours": 6,
+          "weekly_open": {
+            "day": "Sunday",
+            "time": "23:00"
+          },
+          "weekly_close": {
+            "day": "Friday",
+            "time": "22:00"
+          },
+          "daily_sessions": {
+            "monday_to_thursday": {
+              "session_open": "23:00 (previous day)",
+              "session_close": "22:00"
+            },
+            "friday": {
+              "session_open": "23:00 (Thursday)",
+              "session_close": "22:00"
+            }
+          },
+          "note": "Markets open/close 1 hour EARLIER in Madrid during this period (same as spring gap)"
+        }
+      }
+    },
+    "agricultural_futures": {
+      "products": ["ZC", "ZS", "ZW", "ZM", "ZL", "LE", "HE", "GF"],
+      "description": "Corn, Soybeans, Wheat, Soybean Meal/Oil, Live Cattle, Lean Hogs, Feeder Cattle",
+      "standard_schedule_madrid": {
+        "winter": {
+          "timezone_diff_hours": 7,
+          "session_open": "02:00",
+          "session_close": "20:20",
+          "pit_session": "16:30 - 20:15"
+        },
+        "summer": {
+          "timezone_diff_hours": 7,
+          "session_open": "02:00",
+          "session_close": "20:20",
+          "pit_session": "16:30 - 20:15"
+        }
+      }
+    },
+    "forex_futures": {
+      "products": ["6E", "6J", "6B", "6A", "6C", "6S"],
+      "description": "Euro, Yen, British Pound, Australian Dollar, Canadian Dollar, Swiss Franc",
+      "standard_schedule_madrid": {
+        "winter": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        },
+        "summer": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        }
+      }
+    },
+    "crypto_futures": {
+      "products": ["BTC", "MBT", "ETH"],
+      "description": "Bitcoin, Micro Bitcoin, Ether",
+      "standard_schedule_madrid": {
+        "winter": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        },
+        "summer": {
+          "timezone_diff_hours": 7,
+          "session_open": "00:00",
+          "session_close": "23:00"
+        }
+      }
+    }
+  },
+  "years": {
+    "2025": {
+      "events": [
+        {
+          "date": "2025-01-01",
+          "name": "New Year's Day",
+          "type": "full_closure",
+          "description": "Markets closed.  Trading resumes January 2.",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2025-01-20",
+          "name": "Martin Luther King Jr. Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-02-17",
+          "name": "Presidents' Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-04-18",
+          "name": "Good Friday",
+          "type": "full_closure",
+          "description": "Markets closed",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2025-05-26",
+          "name": "Memorial Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-06-19",
+          "name": "Juneteenth",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-07-03",
+          "name": "Independence Day Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-07-04",
+          "name": "Independence Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-09-01",
+          "name": "Labor Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-11-27",
+          "name": "Thanksgiving Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-11-28",
+          "name": "Day After Thanksgiving",
+          "type": "early_close",
+          "original_close_time": "12:15 CST",
+          "close_time_madrid": "19:15",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:15 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-12-24",
+          "name": "Christmas Eve",
+          "type": "early_close",
+          "original_close_time": "12:15 CST",
+          "close_time_madrid": "19:15",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:15 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2025-12-25",
+          "name": "Christmas Day",
+          "type": "full_closure",
+          "description": "Markets closed",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2025-12-31",
+          "name": "New Year's Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        }
+      ]
+    },
+    "2026": {
+      "events": [
+        {
+          "date": "2026-01-01",
+          "name": "New Year's Day",
+          "type": "full_closure",
+          "description": "Markets closed. Trading resumes January 2.",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2026-01-19",
+          "name": "Martin Luther King Jr. Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-02-16",
+          "name": "Presidents' Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-04-02",
+          "name": "Good Friday Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-04-03",
+          "name": "Good Friday",
+          "type": "full_closure",
+          "description": "Markets closed",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2026-05-22",
+          "name": "Memorial Day Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-05-25",
+          "name": "Memorial Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-06-19",
+          "name": "Juneteenth",
+          "type": "full_closure",
+          "description": "Markets closed (Friday)",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2026-07-03",
+          "name": "Independence Day (Observed)",
+          "type": "full_closure",
+          "description": "Markets closed (July 4th falls on Saturday, observed on Friday)",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2026-09-07",
+          "name": "Labor Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-11-26",
+          "name": "Thanksgiving Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-11-27",
+          "name": "Day After Thanksgiving",
+          "type": "early_close",
+          "original_close_time": "12:15 CST",
+          "close_time_madrid": "19:15",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:15 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-12-24",
+          "name": "Christmas Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2026-12-25",
+          "name": "Christmas Day",
+          "type": "full_closure",
+          "description": "Markets closed",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2026-12-31",
+          "name": "New Year's Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        }
+      ]
+    },
+    "2027": {
+      "events": [
+        {
+          "date": "2027-01-01",
+          "name": "New Year's Day",
+          "type": "full_closure",
+          "description": "Markets closed. Trading resumes January 4 (Jan 2-3 weekend).",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2027-01-18",
+          "name": "Martin Luther King Jr. Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-02-15",
+          "name": "Presidents' Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-03-25",
+          "name": "Good Friday Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "18:00",
+          "timezone_diff_hours": 6,
+          "regular_open_time_madrid": "23:00 (previous day)",
+          "dst_note": "DST gap period - US in CDT, Spain still in CET",
+          "description": "Opens 23:00 (Mar 24), early close at 18:00 Madrid time - DST gap",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-03-26",
+          "name": "Good Friday",
+          "type": "full_closure",
+          "description": "Markets closed",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2027-05-31",
+          "name": "Memorial Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-06-18",
+          "name": "Juneteenth (Observed)",
+          "type": "full_closure",
+          "description": "Markets closed (June 19 falls on Saturday, observed on Friday)",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2027-07-05",
+          "name": "Independence Day (Observed)",
+          "type": "full_closure",
+          "description": "Markets closed (July 4 falls on Sunday, observed on Monday)",
+          "trading_status": "CLOSED"
+        },
+        {
+          "date": "2027-09-06",
+          "name": "Labor Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CDT",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-11-25",
+          "name": "Thanksgiving Day",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-11-26",
+          "name": "Day After Thanksgiving",
+          "type": "early_close",
+          "original_close_time": "12:15 CST",
+          "close_time_madrid": "19:15",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:15 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-12-24",
+          "name": "Christmas Eve (Observed)",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        },
+        {
+          "date": "2027-12-31",
+          "name": "New Year's Eve",
+          "type": "early_close",
+          "original_close_time": "12:00 CST",
+          "close_time_madrid": "19:00",
+          "timezone_diff_hours": 7,
+          "regular_open_time_madrid": "00:00",
+          "description": "Opens 00:00, early close at 19:00 Madrid time",
+          "trading_status": "EARLY_CLOSE"
+        }
+      ]
+    }
+  },
+  "timezone_conversion_reference": {
+    "standard_difference": {
+      "hours": 7,
+      "chicago_to_madrid": "+7 hours",
+      "applies": "Most of the year when both regions are in same DST phase"
+    },
+    "spring_gap": {
+      "hours": 6,
+      "period": "~2 weeks in March",
+      "reason": "US springs forward before Spain",
+      "chicago_to_madrid": "+6 hours"
+    },
+    "fall_gap": {
+      "hours": 8,
+      "period": "~1 week in late Oct/early Nov",
+      "reason": "Spain falls back before US",
+      "chicago_to_madrid": "+8 hours"
+    }
+  },
+  "trading_status_legend": {
+    "CLOSED": "Markets fully closed - no trading",
+    "EARLY_CLOSE": "Markets close earlier than normal",
+    "NORMAL": "Regular trading hours apply"
+  },
+  "important_notes": [
+    "Session ends at 23:00, next session starts at 00:00 (1 hour break for maintenance)",
+    "COMEX metals (GC, MGC, SI, HG, PL) follow same schedule as equity index futures",
+    "DST gap periods cause 1-hour shifts in Madrid trading times",
+    "2027 Good Friday Eve (Mar 25) falls during DST gap - opens 23:00 (Mar 24), closes at 18:00",
+    "Product-specific schedules may vary (grains, livestock close earlier)",
+    "COMEX and NYMEX products have 4:00-5:00 p.m. CT daily break (same as equity index)",
+    "Always verify exact times on CME Group official website: https://www.cmegroup.com/trading-hours.html"
+  ],
+  "sources": [
+    "https://www.cmegroup.com/trading-hours.html",
+    "https://crosstrade.io/blog/cme-trading-hours-for-2025/",
+    "https://crosstrade.io/blog/cme-trading-hours-2026/",
+    "https://support.tradovate.com/s/article/2025-Holiday-Trading-Hours"
+  ]
+}

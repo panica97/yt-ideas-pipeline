@@ -1,0 +1,68 @@
+{
+  "version": "2026-01",
+  "source": "IBKR Futures & FOPs Margin Requirements",
+  "note": "Overnight initial and maintenance margins as of 2026-01. Initial margin required to OPEN, maintenance margin required to HOLD.",
+  "contracts": {
+    "MES": {
+      "name": "Micro E-Mini S&P 500",
+      "multiplier": 5.0,
+      "min_tick": 0.25,
+      "initial_margin": 2613.95,
+      "maintenance_margin": 2273.00
+    },
+    "MNQ": {
+      "name": "Micro E-Mini NASDAQ-100",
+      "multiplier": 2.0,
+      "min_tick": 0.25,
+      "initial_margin": 4024.28,
+      "maintenance_margin": 3499.37
+    },
+    "M2K": {
+      "name": "Micro E-Mini Russell 2000",
+      "multiplier": 5.0,
+      "min_tick": 0.10,
+      "initial_margin": 1089.29,
+      "maintenance_margin": 947.21
+    },
+    "ES": {
+      "name": "E-Mini S&P 500",
+      "multiplier": 50.0,
+      "min_tick": 0.25,
+      "initial_margin": 26139.50,
+      "maintenance_margin": 22730.00
+    },
+    "NQ": {
+      "name": "E-Mini NASDAQ-100",
+      "multiplier": 20.0,
+      "min_tick": 0.25,
+      "initial_margin": 40242.74,
+      "maintenance_margin": 34993.69
+    },
+    "YM": {
+      "name": "E-Mini Dow Jones",
+      "multiplier": 5.0,
+      "min_tick": 1.0,
+      "initial_margin": 16369.16,
+      "maintenance_margin": 14234.05
+    },
+    "GC": {
+      "name": "Gold",
+      "multiplier": 100.0,
+      "min_tick": 0.10,
+      "initial_margin": 46392.98,
+      "maintenance_margin": 40341.71
+    },
+    "MGC": {
+      "name": "Micro Gold",
+      "multiplier": 10.0,
+      "min_tick": 0.10,
+      "initial_margin": 4639.30,
+      "maintenance_margin": 4034.17
+    }
+  },
+  "fallback": {
+    "initial_margin_rate": 0.115,
+    "maintenance_margin_rate": 0.10,
+    "note": "Used when symbol not found; percentage of notional value"
+  }
+}

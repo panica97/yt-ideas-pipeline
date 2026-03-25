@@ -31,18 +31,18 @@ METRICS_END = "###METRICS_JSON_END###"
 def _resolve_python() -> str:
     """Resolve the Python executable to use for the engine subprocess.
 
-    Prefers the venv Python from the ops-worker installation so that
-    ibkr_core and other engine dependencies are available.
+    Uses the .venv at the IRT project root (parent of worker/ directory)
+    so that ibkr_core and other engine dependencies are available.
+    Falls back to sys.executable if .venv is not found.
     """
-    engine_path = os.environ.get("ENGINE_PATH", "")
-    if engine_path:
-        # Look for a venv relative to the engine's parent (ops-worker root)
-        ops_root = Path(engine_path).resolve().parent.parent.parent
-        venv_python = ops_root / ".venv" / (
-            "Scripts" if os.name == "nt" else "bin"
-        ) / ("python.exe" if os.name == "nt" else "python")
-        if venv_python.is_file():
-            return str(venv_python)
+    irt_root = Path(__file__).resolve().parent.parent
+    venv_python = irt_root / ".venv" / (
+        "Scripts" if os.name == "nt" else "bin"
+    ) / ("python.exe" if os.name == "nt" else "python")
+    if venv_python.is_file():
+        logger.info("Resolved venv Python: %s", venv_python)
+        return str(venv_python)
+    logger.info("No .venv found at %s, falling back to sys.executable: %s", irt_root, sys.executable)
     return sys.executable
 
 

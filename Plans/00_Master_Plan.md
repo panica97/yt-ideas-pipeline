@@ -2,8 +2,8 @@
 
 **Project:** IRT (Ideas Research Team)
 **Created:** 2026-03-22
-**Last Updated:** 2026-03-24
-**Current Phase:** Phase 11 — Multi-Timeframe Complete Backtest (Planned)
+**Last Updated:** 2026-03-25
+**Current Phase:** Phase 12.2 — Synthetic Data (Monte Carlo)
 **Status:** In Progress
 
 ---
@@ -26,10 +26,10 @@
 | 10.2 | Research Pipeline Flexibility | Make pipeline produce complete frontend-visible output regardless of entry point (topic, video URL, or raw idea) | HIGH | Phase 10.1 | SDD | Done |
 | 10.3 | Backtest Result View | Improve backtest results display — Return/Drawdown ratio, Max DD %, toggleable equity curve chart | MEDIUM | Phase 10 | quick fix | Done |
 | 10.4 | Backtest UI Cleanup | Remove timeframe selector (determined by strategy JSON), add Simple/Complete backtest mode buttons | MEDIUM | Phase 10 | quick fix | Done |
-| 11 | Multi-Timeframe Complete Backtest | Complete backtest mode with trade capture, timeframe remapping, debug save, and full-screen report drawer | HIGH | Phase 10.4 | /sdd-new | Planned |
-| 12 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 11 | /sdd-ff | Planned |
-| 12.1 | Worker Unification | Port IRT worker features (timeframe remap, parquet extraction, debug mode, simple/complete modes) into Ops Platform worker; adapt IRT API to unified worker | HIGH | Phase 12 | /sdd-new | Planned |
-| 13 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 12 | /sdd-ff | Planned |
+| 11 | Multi-Timeframe Complete Backtest | Complete backtest mode with trade capture, timeframe remapping, debug save, and full-screen report drawer | HIGH | Phase 10.4 | /sdd-new | Done |
+| 12.2 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 12.1 | /sdd-ff | Planned |
+| 12.1 | Worker Unification | Copy backtest-engine + ibkr-core from Ops Platform into IRT/packages/, create project venv, update worker to use local engine. Make IRT fully self-contained with zero Ops Platform dependency | HIGH | Phase 11 | /sdd-new | Done |
+| 13 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 12.2 | /sdd-ff | Planned |
 | 14 | Worker Dockerization | Containerize the backtest worker for VPS deployment. Dockerfile with Python 3.12, pandas, pyarrow. Mount historical data and engine as volumes. Add worker service to docker-compose. | MEDIUM | Phase 11 | /sdd-new | Planned |
 
 ---
@@ -39,9 +39,9 @@
 | Metric | Count |
 |--------|-------|
 | Total phases | 18 |
-| Completed | 14 |
+| Completed | 16 |
 | In Progress | 0 |
-| Planned | 4 |
+| Planned | 2 |
 
 ---
 
@@ -68,3 +68,7 @@
 | 2026-03-23 | Phase 10.4 | Completed | Backtest UI Cleanup: remove timeframe selector, add Simple/Complete mode buttons (a3643c8) |
 | 2026-03-24 | Phase 11 | Created | Multi-Timeframe Complete Backtest: 6 sub-phases from approved design doc |
 | 2026-03-24 | Phase 12-13 | Renumbered | Synthetic Data (Monte Carlo) 11→12, Metrics & Analysis 12→13 |
+| 2026-03-25 | Phase 11 | Completed | Multi-Timeframe Complete Backtest validated |
+| 2026-03-25 | Phase 12.1 | Redesigned | Scope expanded: internalize engine + ibkr-core into IRT (was: port parallel orchestrator only). Parallel orchestrator already implemented. |
+| 2026-03-25 | Phase 12.1 | Started | Copy engine packages, create venv, update worker config |
+| 2026-03-25 | Phase 12.1 | Completed | Engine + ibkr-core internalized, parallel orchestrator, venv setup, SL/TP None fixes in 6 engine files |
