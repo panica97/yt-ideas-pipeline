@@ -321,8 +321,11 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
 
       {expanded && (
         <div className="px-3 pb-3 bg-surface-1/20">
-          {job.status === 'completed' && (
+          {job.status === 'completed' && job.mode !== 'montecarlo' && (
             <JobResultsView jobId={job.id} />
+          )}
+          {job.status === 'completed' && job.mode === 'montecarlo' && (
+            <p className="mt-2 text-xs text-text-muted italic">Click "Report" to view Monte Carlo results.</p>
           )}
           {job.status === 'failed' && job.error_message && (
             <div className="mt-2 flex items-start gap-2 bg-danger/10 border border-danger/20 rounded p-2">

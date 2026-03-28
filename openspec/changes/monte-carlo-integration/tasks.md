@@ -118,6 +118,40 @@ Source: `C:/Users/Pablo Nieto/codigos/ops-worker-v0.1.0/packages/montecarlo/`
 
 ---
 
+## Phase 5b: Comprehensive MC Visualization Upgrade
+
+### 5b.1 Strategy Scorecard table
+- [x] Replace basic percentile table with scorecard: Actual, Rank, P5-P95 columns
+- [x] Color-coded rank column (green/amber/red based on percentile position)
+- [x] Rows: PnL, Max DD%, Sharpe, Win Rate, Profit Factor, Avg Trade PnL
+
+### 5b.2 Distribution histograms (2x2 grid)
+- [x] PnL Distribution (green), Max DD (red), Sharpe (indigo), Avg PnL/Trade (teal)
+- [x] Each with median reference line
+- [x] Responsive 2-col on large screens, 1-col on small
+
+### 5b.3 Win Rate vs Profit Factor scatter plot
+- [x] ScatterChart with each MC path as a dot
+- [x] Reference lines at win_rate=50% and profit_factor=1.0
+
+### 5b.4 Enhanced equity fan chart with sampled paths
+- [x] Up to 20 sampled paths as very low opacity background lines
+- [x] Keep existing P5-P95 percentile bands
+
+### 5b.5 Drawdown cone
+- [x] Fan chart for drawdown_curve_percentiles (P5/P25/P50/P75/P95)
+- [x] Red/coral color scheme, inverted Y-axis
+
+### 5b.6 Price paths chart
+- [x] Historical close as bold red line
+- [x] Up to 30 sampled_close_paths as semi-transparent blue lines
+
+### 5b.7 Confidence intervals table
+- [x] Show return_95_ci, sharpe_95_ci, drawdown_95_ci
+- [x] Simple 2-column layout
+
+---
+
 ## Phase 6: Verification
 
 ### 6.1 Build check
