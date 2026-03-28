@@ -4,10 +4,12 @@ This module ties together the bridge (draft export), engine (subprocess run),
 and result reporting (HTTP calls back to the IRT API). It handles cleanup
 and error reporting so the main poll loop stays clean.
 
-Supports two modes:
+Supports three modes:
 - **simple**: Engine runs with --metrics-json only (unchanged).
 - **complete**: Bridge remaps timeframe, engine runs with --save --metrics-json,
   worker reads trades.parquet and posts trades alongside metrics.
+- **montecarlo**: Bridge remaps timeframe (if needed), MC runner simulates
+  N paths and returns summary metrics. No trades parquet produced.
 """
 
 import json
@@ -20,6 +22,7 @@ from pathlib import Path
 from worker.bridge import export_draft_to_file, remap_timeframe, validate_remapped_json
 from worker.config import Config
 from worker.engine import run_engine
+from worker.mc_engine import run_montecarlo
 
 logger = logging.getLogger("irt-worker.executor")
 
@@ -185,6 +188,7 @@ def execute_backtest_job(job: dict, config: Config) -> None:
     strat_code = job["draft_strat_code"]
     mode = job.get("mode", "simple")
     is_complete = mode == "complete"
+    is_montecarlo = mode == "montecarlo"
     start_time = time.time()
 
     strategies_path: str | None = None
@@ -194,11 +198,11 @@ def execute_backtest_job(job: dict, config: Config) -> None:
         # 1. Export draft to temp file
         strategies_path = export_draft_to_file(job, config)
 
-        # 2. Complete mode: remap timeframe, validate, debug save
-        if is_complete:
+        # 2. Timeframe remapping (complete and montecarlo modes)
+        if is_complete or is_montecarlo:
             target_tf = job.get("timeframe", "")
             if not target_tf:
-                raise ValueError("Complete mode requires a timeframe in the job")
+                raise ValueError(f"{mode} mode requires a timeframe in the job")
 
             # Read the exported JSON to get draft data for remapping
             strat_file = Path(strategies_path) / f"{strat_code}.json"
@@ -224,26 +228,30 @@ def execute_backtest_job(job: dict, config: Config) -> None:
             )
             logger.info("Wrote remapped JSON to %s", strat_file)
 
-        # 3. Run engine
-        metrics = run_engine(
-            job, strategies_path, config, save=is_complete
-        )
-
-        # 4. Extract trades
-        trades: list[dict] = []
-
-        if is_complete:
-            # Read trades from parquet file
-            parquet_path = metrics.pop("_parquet_path", None) if isinstance(metrics, dict) else None
-            if parquet_path and Path(parquet_path).exists():
-                trades = _read_parquet_trades(parquet_path)
-                logger.info("Read %d trades from parquet", len(trades))
-            else:
-                logger.warning("trades.parquet not found; returning empty trades list")
+        # 3. Run engine (backtest or MC)
+        if is_montecarlo:
+            metrics = run_montecarlo(job, strategies_path, config)
+            trades: list[dict] = []  # MC doesn't produce trades
         else:
-            # Simple mode: extract trades from metrics if present (legacy behavior)
-            if isinstance(metrics, dict) and "trades" in metrics:
-                trades = metrics.pop("trades", [])
+            metrics = run_engine(
+                job, strategies_path, config, save=is_complete
+            )
+
+            # 4. Extract trades
+            trades = []
+
+            if is_complete:
+                # Read trades from parquet file
+                parquet_path = metrics.pop("_parquet_path", None) if isinstance(metrics, dict) else None
+                if parquet_path and Path(parquet_path).exists():
+                    trades = _read_parquet_trades(parquet_path)
+                    logger.info("Read %d trades from parquet", len(trades))
+                else:
+                    logger.warning("trades.parquet not found; returning empty trades list")
+            else:
+                # Simple mode: extract trades from metrics if present (legacy behavior)
+                if isinstance(metrics, dict) and "trades" in metrics:
+                    trades = metrics.pop("trades", [])
 
         # 5. Report success
         _report_success(config, job_id, metrics, trades)

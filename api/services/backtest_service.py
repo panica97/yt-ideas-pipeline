@@ -64,6 +64,8 @@ async def create_job(
         end_date=body.end_date,
         status="pending",
         mode=getattr(body, "mode", "simple"),
+        n_paths=getattr(body, "n_paths", None),
+        fit_years=getattr(body, "fit_years", None),
         debug=getattr(body, "debug", False),
     )
     db.add(job)

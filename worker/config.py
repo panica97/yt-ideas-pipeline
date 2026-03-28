@@ -26,6 +26,9 @@ class Config:
         self.num_slots: int = int(os.environ.get("WORKER_NUM_SLOTS", "3"))
         self.hist_data_path: str = os.environ.get("HIST_DATA_PATH", "")
         self.engine_path: str = os.environ.get("ENGINE_PATH", "")
+        self.mc_runner_path: str = os.environ.get(
+            "MC_RUNNER_PATH", "packages/montecarlo/runner/main_mc.py"
+        )
         self.worker_debug: bool = os.environ.get("WORKER_DEBUG", "").lower() in ("1", "true", "yes")
 
         # Shared HTTP session with API key header pre-configured
@@ -42,5 +45,6 @@ class Config:
             f"job_timeout={self.job_timeout}s, "
             f"num_slots={self.num_slots}, "
             f"hist_data_path={self.hist_data_path}, "
-            f"engine_path={self.engine_path}"
+            f"engine_path={self.engine_path}, "
+            f"mc_runner_path={self.mc_runner_path}"
         )

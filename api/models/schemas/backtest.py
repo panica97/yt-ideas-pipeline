@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-BacktestMode = Literal["simple", "complete"]
+BacktestMode = Literal["simple", "complete", "montecarlo"]
 
 
 class BacktestCreateRequest(BaseModel):
@@ -17,6 +17,8 @@ class BacktestCreateRequest(BaseModel):
     start_date: str
     end_date: str
     mode: BacktestMode = "simple"
+    n_paths: Optional[int] = None
+    fit_years: Optional[int] = None
     debug: bool = False
 
 
@@ -38,6 +40,8 @@ class BacktestJobResponse(BaseModel):
     end_date: str
     status: str
     mode: str = "simple"
+    n_paths: int | None = None
+    fit_years: int | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None
@@ -56,6 +60,8 @@ class BacktestJobSummary(BaseModel):
     end_date: str
     status: str
     mode: str = "simple"
+    n_paths: int | None = None
+    fit_years: int | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText } from 'lucide-react';
+import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText, Shuffle } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { createBacktest, getBacktestsByDraft, getBacktest, deleteBacktest } from '../../services/backtests';
 import type { BacktestJobSummary, BacktestMetrics, BacktestTrade, BacktestMode } from '../../types/backtest';
@@ -266,6 +266,7 @@ function JobResultsView({ jobId }: { jobId: number }) {
 function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onDelete: (id: number) => void; onViewReport: (id: number) => void }) {
   const [expanded, setExpanded] = useState(false);
   const isCompleteMode = job.mode === 'complete';
+  const isMCMode = job.mode === 'montecarlo';
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
@@ -279,11 +280,16 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
             Complete
           </span>
         )}
+        {isMCMode && (
+          <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded px-1 py-0.5 font-medium">
+            Monte Carlo
+          </span>
+        )}
         <span className="text-xs text-text-secondary flex-1">
           {job.symbol} &middot; {job.timeframe} &middot; {job.start_date} &rarr; {job.end_date}
         </span>
         <span className="text-xs text-text-muted">{formatRelativeTime(job.created_at)}</span>
-        {job.status === 'completed' && isCompleteMode && (
+        {job.status === 'completed' && (isCompleteMode || isMCMode) && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -359,6 +365,8 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
   const [backtestMode, setBacktestMode] = useState<BacktestMode>('simple');
   const [selectedTimeframe, setSelectedTimeframe] = useState(primaryTimeframe ?? '1D');
   const [endDate, setEndDate] = useState('');
+  const [nPaths, setNPaths] = useState(1000);
+  const [fitYears, setFitYears] = useState(10);
   const [formError, setFormError] = useState<string | null>(null);
   const [selectedReportJobId, setSelectedReportJobId] = useState<number | null>(null);
   const queryClient = useQueryClient();
@@ -416,10 +424,11 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
     createMutation.mutate({
       draft_strat_code: stratCode,
       symbol: symbol.trim(),
-      timeframe: backtestMode === 'complete' ? selectedTimeframe : (primaryTimeframe ?? '1h'),
+      timeframe: (backtestMode === 'complete' || backtestMode === 'montecarlo') ? selectedTimeframe : (primaryTimeframe ?? '1h'),
       start_date: startDate,
       end_date: endDate,
       mode: backtestMode,
+      ...(backtestMode === 'montecarlo' && { n_paths: nPaths, fit_years: fitYears }),
     });
   };
 
@@ -464,6 +473,17 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           >
             Complete Backtest
           </button>
+          <button
+            onClick={() => setBacktestMode('montecarlo')}
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors ${
+              backtestMode === 'montecarlo'
+                ? 'bg-purple-600 text-white'
+                : 'bg-surface-2 text-text-muted'
+            }`}
+          >
+            <Shuffle size={12} />
+            Monte Carlo
+          </button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -497,7 +517,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </div>
         </div>
 
-        {backtestMode === 'complete' && (
+        {(backtestMode === 'complete' || backtestMode === 'montecarlo') && (
           <div>
             <label className="block text-xs text-text-muted mb-1">Timeframe</label>
             <select
@@ -511,6 +531,33 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {backtestMode === 'montecarlo' && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-text-muted mb-1">Number of Paths</label>
+              <input
+                type="number"
+                value={nPaths}
+                onChange={(e) => setNPaths(Math.max(1, parseInt(e.target.value) || 1))}
+                min={1}
+                max={10000}
+                className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-text-muted mb-1">Fit Years</label>
+              <input
+                type="number"
+                value={fitYears}
+                onChange={(e) => setFitYears(Math.max(1, parseInt(e.target.value) || 1))}
+                min={1}
+                max={50}
+                className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            </div>
           </div>
         )}
 
@@ -528,7 +575,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             ) : (
               <>
                 <Play size={12} />
-                Run Backtest
+                {backtestMode === 'montecarlo' ? 'Run Monte Carlo' : 'Run Backtest'}
               </>
             )}
           </button>

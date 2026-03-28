@@ -148,7 +148,9 @@ class Orchestrator:
     def _decompose_job(self, job: Dict[str, Any]) -> List[WorkUnit]:
         """Create WorkUnits from a claimed job.
 
-        Both 'simple' and 'complete' modes produce exactly 1 WorkUnit.
+        All modes ('simple', 'complete', 'montecarlo') produce exactly 1 WorkUnit.
+        MC jobs use a longer timeout (600s vs default) since the MC runner
+        handles its own internal parallelism.
         """
         job_id = job["id"]
         mode = job.get("mode", "simple")

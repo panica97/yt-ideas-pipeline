@@ -208,6 +208,8 @@ class BacktestJob(Base, TimestampMixin):
     mode: Mapped[str] = mapped_column(
         String(20), default="simple", server_default="simple"
     )
+    n_paths: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    fit_years: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     debug: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(
