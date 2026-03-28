@@ -43,6 +43,8 @@ export interface MCDistribution {
   min?: number;
   max?: number;
   median?: number;
+  mean?: number;
+  std?: number;
 }
 
 export interface MCRiskMetrics {
@@ -102,6 +104,7 @@ export interface MonteCarloMetrics {
   total_trades?: MCDistribution;
   avg_trade_pnl?: MCDistribution;
   sortino_ratio?: MCDistribution;
+  return_drawdown_ratio?: MCDistribution;
 
   // Risk
   risk_metrics?: MCRiskMetrics;

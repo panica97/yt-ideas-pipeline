@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { X, ArrowUpDown, Shuffle, TrendingDown, DollarSign, Percent, ShieldAlert, BarChart3, Table, Activity, Target } from 'lucide-react';
+import { X, ArrowUpDown, Shuffle, TrendingDown, TrendingUp, Percent, ShieldAlert, BarChart3, Table } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  AreaChart, Area, BarChart, Bar, Cell, ReferenceLine,
-  ScatterChart, Scatter,
+  BarChart, Bar, Cell, ReferenceLine,
 } from 'recharts';
 import { getBacktest } from '../../services/backtests';
 import type { BacktestTradeComplete, BacktestMetrics, MonteCarloMetrics, MCDistribution } from '../../types/backtest';
@@ -300,16 +299,6 @@ const mcTooltipStyle = {
   fontSize: '0.75rem',
 };
 
-interface FanChartPoint {
-  step: number;
-  p5: number;
-  p25: number;
-  p50: number;
-  p75: number;
-  p95: number;
-  [key: string]: number;
-}
-
 /** Compute histogram bins from a raw array of numbers */
 interface HistogramBin {
   binStart: number;
@@ -350,7 +339,8 @@ function percentileRank(values: number[] | undefined, actual: number): number | 
 // ── 1. Key Stats Cards ──────────────────────────────────────────────
 
 function MCSummaryCards({ mc }: { mc: MonteCarloMetrics }) {
-  const medianPnl = Number(mc.total_pnl?.median ?? mc.total_pnl?.p50 ?? 0);
+  const { dist: retDDDist } = computeReturnDDFromRaw(mc);
+  const medianRetDD = Number(retDDDist?.median ?? retDDDist?.p50 ?? 0);
   const medianDD = Number(mc.max_drawdown_pct?.median ?? mc.max_drawdown_pct?.p50 ?? 0);
   const probLoss = Number(mc.risk_metrics?.prob_negative_return ?? 0);
   const var95 = Number(mc.risk_metrics?.var_95 ?? 0);
@@ -359,11 +349,11 @@ function MCSummaryCards({ mc }: { mc: MonteCarloMetrics }) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div className="bg-surface-1/50 border border-border rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
-          <DollarSign size={14} className="text-text-muted" />
-          <p className="text-xs text-text-muted">Median PnL</p>
+          <TrendingUp size={14} className="text-text-muted" />
+          <p className="text-xs text-text-muted">Median Ret/DD</p>
         </div>
-        <p className={`text-lg font-bold ${medianPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {medianPnl >= 0 ? '+' : ''}${medianPnl.toFixed(2)}
+        <p className={`text-lg font-bold ${medianRetDD >= 1 ? 'text-green-400' : 'text-red-400'}`}>
+          {medianRetDD.toFixed(2)}
         </p>
       </div>
       <div className="bg-surface-1/50 border border-border rounded-lg p-4">
@@ -431,44 +421,100 @@ function MCSimulationSummary({ mc }: { mc: MonteCarloMetrics }) {
 
 // ── 2. Strategy Scorecard Table ─────────────────────────────────────
 
+/** Get Return/DD ratio distribution — prefer backend-aggregated data (dollar/dollar),
+ *  fall back to computing from raw arrays (also dollar/dollar via return_drawdown_ratio). */
+function computeReturnDDFromRaw(mc: MonteCarloMetrics): { dist: MCDistribution | undefined; rawArr: number[] | undefined } {
+  // 1. Prefer aggregated distribution + raw array from backend
+  const aggDist = mc.return_drawdown_ratio as MCDistribution | undefined;
+  const rawRetDD = mc.raw_metrics?.return_drawdown_ratio;
+
+  if (aggDist) {
+    return { dist: aggDist, rawArr: rawRetDD };
+  }
+
+  // 2. Fallback: use raw return_drawdown_ratio array if available (build dist client-side)
+  if (rawRetDD && rawRetDD.length > 0) {
+    const sorted = [...rawRetDD].sort((a, b) => a - b);
+    const pct = (p: number) => {
+      const idx = Math.max(0, Math.ceil((p / 100) * sorted.length) - 1);
+      return sorted[idx];
+    };
+    const mean = rawRetDD.reduce((s, v) => s + v, 0) / rawRetDD.length;
+    const std = Math.sqrt(rawRetDD.reduce((s, v) => s + (v - mean) ** 2, 0) / rawRetDD.length);
+    return {
+      dist: { p5: pct(5), p25: pct(25), p50: pct(50), p75: pct(75), p95: pct(95), mean, std, median: pct(50), min: sorted[0], max: sorted[sorted.length - 1] },
+      rawArr: rawRetDD,
+    };
+  }
+
+  // 3. No data available — don't compute from mismatched units
+  return { dist: undefined, rawArr: undefined };
+}
+
 function MCScorecard({ mc }: { mc: MonteCarloMetrics }) {
+  const { retDDDist, retDDRaw } = useMemo(() => {
+    const { dist, rawArr } = computeReturnDDFromRaw(mc);
+    return { retDDDist: dist, retDDRaw: rawArr };
+  }, [mc]);
+
   const rows = useMemo(() => {
     const defs: {
       label: string;
-      distKey: keyof MonteCarloMetrics;
-      rawKey: string;
+      dist: MCDistribution | undefined;
+      rawArr: number[] | undefined;
       fmt: (v: number) => string;
       higherIsBetter: boolean;
     }[] = [
-      { label: 'Total PnL', distKey: 'total_pnl', rawKey: 'total_pnl', fmt: (v) => `$${Number(v).toFixed(2)}`, higherIsBetter: true },
-      { label: 'Max DD %', distKey: 'max_drawdown_pct', rawKey: 'max_drawdown_pct', fmt: (v) => `${Number(v).toFixed(1)}%`, higherIsBetter: false },
-      { label: 'Sharpe', distKey: 'sharpe_ratio', rawKey: 'sharpe_ratio', fmt: (v) => Number(v).toFixed(2), higherIsBetter: true },
-      { label: 'Win Rate', distKey: 'win_rate', rawKey: 'win_rate', fmt: (v) => `${Number(v).toFixed(1)}%`, higherIsBetter: true },
-      { label: 'Profit Factor', distKey: 'profit_factor', rawKey: 'profit_factor', fmt: (v) => Number(v).toFixed(2), higherIsBetter: true },
-      { label: 'Avg Trade PnL', distKey: 'avg_trade_pnl', rawKey: 'avg_trade_pnl', fmt: (v) => `$${Number(v).toFixed(2)}`, higherIsBetter: true },
+      {
+        label: 'Return / DD',
+        dist: retDDDist,
+        rawArr: retDDRaw,
+        fmt: (v) => Number(v).toFixed(2),
+        higherIsBetter: true,
+      },
+      {
+        label: 'Max DD %',
+        dist: mc.max_drawdown_pct as MCDistribution | undefined,
+        rawArr: mc.raw_metrics?.max_drawdown_pct,
+        fmt: (v) => `${Number(v).toFixed(1)}%`,
+        higherIsBetter: false,
+      },
+      {
+        label: 'Sharpe',
+        dist: mc.sharpe_ratio as MCDistribution | undefined,
+        rawArr: mc.raw_metrics?.sharpe_ratio,
+        fmt: (v) => Number(v).toFixed(2),
+        higherIsBetter: true,
+      },
     ];
 
     return defs.map((d) => {
-      const dist = mc[d.distKey] as MCDistribution | undefined;
-      const rawArr = mc.raw_metrics?.[d.rawKey];
       // Use median as "actual" if no separate baseline
-      const actual = dist?.median ?? dist?.p50;
-      const rank = rawArr && actual != null ? percentileRank(rawArr, actual) : null;
+      const actual = d.dist?.median ?? d.dist?.p50;
+      const rank = d.rawArr && actual != null ? percentileRank(d.rawArr, actual) : null;
+
+      // Z-Score = (actual - mean) / std
+      const mean = d.dist?.mean;
+      const std = d.dist?.std;
+      let zScore: number | null = null;
+      if (actual != null && mean != null && std != null && std > 0) {
+        zScore = (actual - mean) / std;
+      }
 
       return {
         label: d.label,
-        dist,
+        dist: d.dist,
         actual: actual != null ? d.fmt(actual) : 'N/A',
         rank,
+        zScore,
         higherIsBetter: d.higherIsBetter,
         fmt: d.fmt,
       };
     });
-  }, [mc]);
+  }, [mc, retDDDist, retDDRaw]);
 
   function rankColor(rank: number | null, higherIsBetter: boolean): string {
     if (rank == null) return 'text-text-secondary';
-    // For higher-is-better, high rank is good. For lower-is-better, low rank is good.
     const effective = higherIsBetter ? rank : 100 - rank;
     if (effective >= 60) return 'text-green-400';
     if (effective >= 40) return 'text-amber-400';
@@ -487,6 +533,7 @@ function MCScorecard({ mc }: { mc: MonteCarloMetrics }) {
             <tr>
               <th className="text-left px-3 py-2 text-text-muted font-medium">Metric</th>
               <th className="text-right px-3 py-2 text-text-muted font-medium">Actual</th>
+              <th className="text-right px-3 py-2 text-text-muted font-medium">Z-Score</th>
               <th className="text-right px-3 py-2 text-text-muted font-medium">Rank</th>
               <th className="text-right px-3 py-2 text-text-muted font-medium">P5</th>
               <th className="text-right px-3 py-2 text-text-muted font-medium">P25</th>
@@ -498,11 +545,17 @@ function MCScorecard({ mc }: { mc: MonteCarloMetrics }) {
           <tbody>
             {rows.map((row) => {
               if (!row.dist) return null;
+              const zColor = row.zScore != null
+                ? (Math.abs(row.zScore) > 1 ? 'text-red-400' : 'text-green-400')
+                : 'text-text-muted';
               return (
                 <tr key={row.label} className="border-t border-border/50">
                   <td className="px-3 py-2 text-text-secondary font-medium">{row.label}</td>
                   <td className={`px-3 py-2 text-right font-semibold ${rankColor(row.rank, row.higherIsBetter)}`}>
                     {row.actual}
+                  </td>
+                  <td className={`px-3 py-2 text-right font-semibold ${zColor}`}>
+                    {row.zScore != null ? Math.abs(row.zScore).toFixed(2) : '—'}
                   </td>
                   <td className={`px-3 py-2 text-right font-semibold ${rankColor(row.rank, row.higherIsBetter)}`}>
                     {row.rank != null ? `P${Number(row.rank).toFixed(0)}` : '—'}
@@ -529,15 +582,25 @@ function MCDistributionHistogram({
   values,
   color,
   labelPrefix,
-  medianValue,
+  dist,
+  actualValue,
 }: {
   title: string;
   values: number[] | undefined;
   color: string;
   labelPrefix?: string;
-  medianValue?: number;
+  dist?: MCDistribution;
+  actualValue?: number;
 }) {
   const bins = useMemo(() => buildHistogramBins(values ?? [], 20, labelPrefix ?? ''), [values, labelPrefix]);
+
+  // Helper: find the closest bin label for a given numeric value
+  const closestBinLabel = useCallback((val: number) => {
+    if (bins.length === 0) return undefined;
+    return bins.reduce((closest, b) =>
+      Math.abs(b.binStart - val) < Math.abs(closest.binStart - val) ? b : closest
+    , bins[0]).label;
+  }, [bins]);
 
   if (bins.length === 0) {
     return (
@@ -547,11 +610,15 @@ function MCDistributionHistogram({
     );
   }
 
+  const p5Val = dist?.p5;
+  const p50Val = dist?.p50 ?? dist?.median;
+  const p95Val = dist?.p95;
+
   return (
     <div className="border border-border rounded-lg p-4 bg-surface-1/30">
       <h3 className="text-sm font-semibold text-text-primary mb-3">{title}</h3>
       <ResponsiveContainer width="100%" height={250}>
-        <BarChart data={bins} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+        <BarChart data={bins} margin={{ top: 15, right: 10, left: 10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="label"
@@ -573,407 +640,98 @@ function MCDistributionHistogram({
               <Cell key={i} fill={color} fillOpacity={0.7} />
             ))}
           </Bar>
-          {medianValue != null && (
+          {/* P5 line - red dashed */}
+          {p5Val != null && closestBinLabel(p5Val) && (
             <ReferenceLine
-              x={bins.reduce((closest, b) =>
-                Math.abs(b.binStart - medianValue) < Math.abs(closest.binStart - medianValue) ? b : closest
-              , bins[0]).label}
-              stroke="#f59e0b"
-              strokeWidth={2}
+              x={closestBinLabel(p5Val)}
+              stroke="#ef4444"
+              strokeWidth={1.5}
               strokeDasharray="5 3"
-              label={{ value: 'Median', position: 'top', fill: '#f59e0b', fontSize: 10 }}
+              label={{ value: 'P5', position: 'top', fill: '#ef4444', fontSize: 9 }}
+            />
+          )}
+          {/* P50 line - amber dashed */}
+          {p50Val != null && closestBinLabel(p50Val) && (
+            <ReferenceLine
+              x={closestBinLabel(p50Val)}
+              stroke="#f59e0b"
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
+              label={{ value: 'P50', position: 'top', fill: '#f59e0b', fontSize: 9 }}
+            />
+          )}
+          {/* P95 line - green dashed */}
+          {p95Val != null && closestBinLabel(p95Val) && (
+            <ReferenceLine
+              x={closestBinLabel(p95Val)}
+              stroke="#10b981"
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
+              label={{ value: 'P95', position: 'top', fill: '#10b981', fontSize: 9 }}
+            />
+          )}
+          {/* Actual line - solid blue */}
+          {actualValue != null && closestBinLabel(actualValue) && (
+            <ReferenceLine
+              x={closestBinLabel(actualValue)}
+              stroke="#3b82f6"
+              strokeWidth={2}
+              label={{ value: 'Actual', position: 'top', fill: '#3b82f6', fontSize: 9 }}
             />
           )}
         </BarChart>
       </ResponsiveContainer>
+      {/* Legend */}
+      <div className="flex items-center gap-3 mt-2 text-xs text-text-muted justify-center flex-wrap">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: '#ef4444', borderTop: '1px dashed #ef4444' }} /> P5
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: '#f59e0b', borderTop: '1px dashed #f59e0b' }} /> P50
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: '#10b981', borderTop: '1px dashed #10b981' }} /> P95
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: '#3b82f6' }} /> Actual
+        </span>
+      </div>
     </div>
   );
 }
 
 function MCDistributionsGrid({ mc }: { mc: MonteCarloMetrics }) {
-  const medianPnl = Number(mc.total_pnl?.median ?? mc.total_pnl?.p50 ?? undefined);
-  const medianDD = Number(mc.max_drawdown_pct?.median ?? mc.max_drawdown_pct?.p50 ?? undefined);
-  const medianSharpe = Number(mc.sharpe_ratio?.median ?? mc.sharpe_ratio?.p50 ?? undefined);
-  const medianAvgPnl = Number(mc.avg_trade_pnl?.median ?? mc.avg_trade_pnl?.p50 ?? undefined);
+  // Compute Return/DD ratio raw array for histogram
+  const { retDDRaw, retDDDist } = useMemo(() => {
+    const { dist, rawArr } = computeReturnDDFromRaw(mc);
+    return { retDDRaw: rawArr, retDDDist: dist };
+  }, [mc]);
+
+  const retDDActual = retDDDist?.median ?? retDDDist?.p50;
+  const ddDist = mc.max_drawdown_pct as MCDistribution | undefined;
+  const ddActual = ddDist?.median ?? ddDist?.p50;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <MCDistributionHistogram
-        title="PnL Distribution"
-        values={mc.raw_metrics?.total_pnl}
+        title="Return / DD Distribution"
+        values={retDDRaw}
         color="#10b981"
-        labelPrefix="$"
-        medianValue={isNaN(medianPnl) ? undefined : medianPnl}
+        dist={retDDDist}
+        actualValue={retDDActual != null ? Number(retDDActual) : undefined}
       />
       <MCDistributionHistogram
         title="Max Drawdown Distribution"
         values={mc.raw_metrics?.max_drawdown_pct}
         color="#ef4444"
-        medianValue={isNaN(medianDD) ? undefined : medianDD}
-      />
-      <MCDistributionHistogram
-        title="Sharpe Ratio Distribution"
-        values={mc.raw_metrics?.sharpe_ratio}
-        color="#6366f1"
-        medianValue={isNaN(medianSharpe) ? undefined : medianSharpe}
-      />
-      <MCDistributionHistogram
-        title="Avg PnL/Trade Distribution"
-        values={mc.raw_metrics?.avg_trade_pnl}
-        color="#14b8a6"
-        labelPrefix="$"
-        medianValue={isNaN(medianAvgPnl) ? undefined : medianAvgPnl}
+        dist={ddDist}
+        actualValue={ddActual != null ? Number(ddActual) : undefined}
       />
     </div>
   );
 }
 
-// ── 4. Win Rate vs Profit Factor Scatter ────────────────────────────
-
-function MCScatterWinRateVsPF({ mc }: { mc: MonteCarloMetrics }) {
-  const data = useMemo(() => {
-    const wr = mc.raw_metrics?.win_rate;
-    const pf = mc.raw_metrics?.profit_factor;
-    if (!wr || !pf) return [];
-    const len = Math.min(wr.length, pf.length);
-    return Array.from({ length: len }, (_, i) => ({
-      winRate: Number(wr[i]),
-      profitFactor: Number(pf[i]),
-    }));
-  }, [mc.raw_metrics]);
-
-  if (data.length === 0) {
-    return (
-      <div className="border border-border rounded-lg p-6 bg-surface-1/30 text-center">
-        <p className="text-sm text-text-muted">No scatter data available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="border border-border rounded-lg p-4 bg-surface-1/30">
-      <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-        <Target size={14} />
-        Win Rate vs Profit Factor
-      </h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <ScatterChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-          <XAxis
-            type="number"
-            dataKey="winRate"
-            name="Win Rate"
-            unit="%"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            label={{ value: 'Win Rate %', position: 'insideBottom', offset: -5, fontSize: 10, fill: '#9ca3af' }}
-          />
-          <YAxis
-            type="number"
-            dataKey="profitFactor"
-            name="Profit Factor"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            label={{ value: 'Profit Factor', angle: -90, position: 'insideLeft', fontSize: 10, fill: '#9ca3af' }}
-          />
-          <Tooltip
-            contentStyle={mcTooltipStyle}
-            formatter={(value, name) => {
-              if (name === 'Win Rate') return [`${Number(value).toFixed(1)}%`, name];
-              return [Number(value).toFixed(2), String(name)];
-            }}
-          />
-          <ReferenceLine x={50} stroke="#f59e0b" strokeDasharray="5 3" strokeOpacity={0.6} />
-          <ReferenceLine y={1} stroke="#f59e0b" strokeDasharray="5 3" strokeOpacity={0.6} />
-          <Scatter data={data} fill="#3b82f6" fillOpacity={0.5} r={3} />
-        </ScatterChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// ── 5. Equity Fan Chart (enhanced with sampled paths) ───────────────
-
-function MCFanChart({ mc }: { mc: MonteCarloMetrics }) {
-  const { fanData, sampledPaths } = useMemo(() => {
-    const ecp = mc.equity_curve_percentiles;
-    if (!ecp?.p50 || ecp.p50.length === 0) return { fanData: [] as FanChartPoint[], sampledPaths: [] as number[][] };
-
-    const len = ecp.p50.length;
-    const fd: FanChartPoint[] = Array.from({ length: len }, (_, i) => ({
-      step: i,
-      p5: Number(ecp.p5?.[i] ?? ecp.p50![i]),
-      p25: Number(ecp.p25?.[i] ?? ecp.p50![i]),
-      p50: Number(ecp.p50![i]),
-      p75: Number(ecp.p75?.[i] ?? ecp.p50![i]),
-      p95: Number(ecp.p95?.[i] ?? ecp.p50![i]),
-    }));
-
-    // Add sampled paths (max 20) as columns on each data point
-    const sp = mc.sampled_paths ?? [];
-    const limitedPaths = sp.slice(0, 20);
-    limitedPaths.forEach((path, pi) => {
-      fd.forEach((point, si) => {
-        point[`s${pi}`] = Number(path?.[si] ?? 0);
-      });
-    });
-
-    return { fanData: fd, sampledPaths: limitedPaths };
-  }, [mc.equity_curve_percentiles, mc.sampled_paths]);
-
-  if (fanData.length === 0) {
-    return (
-      <div className="border border-border rounded-lg p-6 bg-surface-1/30 text-center">
-        <p className="text-sm text-text-muted">No equity curve data available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="border border-border rounded-lg p-4 bg-surface-1/30">
-      <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-        <TrendingDown size={14} />
-        Equity Curve Fan Chart
-      </h3>
-      <ResponsiveContainer width="100%" height={350}>
-        <AreaChart data={fanData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-          <XAxis
-            dataKey="step"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            label={{ value: 'Step', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#9ca3af' }}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            tickFormatter={(v: number) => `$${Number(v ?? 0).toFixed(0)}`}
-          />
-          <Tooltip
-            contentStyle={mcTooltipStyle}
-            labelStyle={{ color: '#9ca3af' }}
-            formatter={(value, name) => {
-              const labels: Record<string, string> = {
-                p5: 'P5', p25: 'P25', p50: 'P50 (Median)', p75: 'P75', p95: 'P95',
-              };
-              if (String(name).startsWith('s')) return null;
-              return [`$${Number(value).toFixed(2)}`, labels[String(name)] ?? String(name)];
-            }}
-          />
-          {/* Sampled paths as very light background lines */}
-          {sampledPaths.map((_, pi) => (
-            <Line
-              key={`s${pi}`}
-              type="monotone"
-              dataKey={`s${pi}`}
-              stroke="#3b82f6"
-              strokeWidth={0.5}
-              strokeOpacity={0.12}
-              dot={false}
-              activeDot={false}
-              legendType="none"
-            />
-          ))}
-          {/* P5-P95 band */}
-          <Area type="monotone" dataKey="p95" stackId="band" stroke="none" fill="#3b82f6" fillOpacity={0.08} />
-          <Area type="monotone" dataKey="p5" stackId="band2" stroke="none" fill="transparent" fillOpacity={0} />
-          {/* P25-P75 band */}
-          <Area type="monotone" dataKey="p75" stroke="none" fill="#3b82f6" fillOpacity={0.15} />
-          <Area type="monotone" dataKey="p25" stroke="none" fill="#3b82f6" fillOpacity={0.08} />
-          {/* P50 median line */}
-          <Line type="monotone" dataKey="p50" stroke="#3b82f6" strokeWidth={2} dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-      <div className="flex items-center gap-4 mt-2 text-xs text-text-muted justify-center">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: '#3b82f6', opacity: 0.08 }} /> P5-P95
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: '#3b82f6', opacity: 0.3 }} /> P25-P75
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-2 rounded" style={{ backgroundColor: '#3b82f6' }} /> Median
-        </span>
-        {sampledPaths.length > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 rounded" style={{ backgroundColor: '#3b82f6', opacity: 0.3 }} /> Sampled Paths
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── 6. Drawdown Cone ────────────────────────────────────────────────
-
-function MCDrawdownCone({ mc }: { mc: MonteCarloMetrics }) {
-  const data = useMemo(() => {
-    const dcp = mc.drawdown_curve_percentiles;
-    if (!dcp?.p50 || dcp.p50.length === 0) return [];
-    const len = dcp.p50.length;
-    return Array.from({ length: len }, (_, i) => ({
-      step: i,
-      p5: Number(dcp.p5?.[i] ?? dcp.p50![i]),
-      p25: Number(dcp.p25?.[i] ?? dcp.p50![i]),
-      p50: Number(dcp.p50![i]),
-      p75: Number(dcp.p75?.[i] ?? dcp.p50![i]),
-      p95: Number(dcp.p95?.[i] ?? dcp.p50![i]),
-    }));
-  }, [mc.drawdown_curve_percentiles]);
-
-  if (data.length === 0) return null;
-
-  return (
-    <div className="border border-border rounded-lg p-4 bg-surface-1/30">
-      <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-        <TrendingDown size={14} />
-        Drawdown Cone
-      </h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-          <XAxis
-            dataKey="step"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            label={{ value: 'Step', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#9ca3af' }}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            tickFormatter={(v: number) => `${Number(v ?? 0).toFixed(0)}%`}
-            reversed
-          />
-          <Tooltip
-            contentStyle={mcTooltipStyle}
-            labelStyle={{ color: '#9ca3af' }}
-            formatter={(value, name) => {
-              const labels: Record<string, string> = {
-                p5: 'P5', p25: 'P25', p50: 'P50 (Median)', p75: 'P75', p95: 'P95',
-              };
-              return [`${Number(value).toFixed(2)}%`, labels[String(name)] ?? String(name)];
-            }}
-          />
-          {/* P5-P95 band */}
-          <Area type="monotone" dataKey="p95" stackId="ddband" stroke="none" fill="#ef4444" fillOpacity={0.08} />
-          <Area type="monotone" dataKey="p5" stackId="ddband2" stroke="none" fill="transparent" fillOpacity={0} />
-          {/* P25-P75 band */}
-          <Area type="monotone" dataKey="p75" stroke="none" fill="#ef4444" fillOpacity={0.15} />
-          <Area type="monotone" dataKey="p25" stroke="none" fill="#ef4444" fillOpacity={0.08} />
-          {/* P50 median line */}
-          <Line type="monotone" dataKey="p50" stroke="#ef4444" strokeWidth={2} dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-      <div className="flex items-center gap-4 mt-2 text-xs text-text-muted justify-center">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: '#ef4444', opacity: 0.08 }} /> P5-P95
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: '#ef4444', opacity: 0.3 }} /> P25-P75
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-2 rounded" style={{ backgroundColor: '#ef4444' }} /> Median DD
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ── 7. Price Paths Chart ────────────────────────────────────────────
-
-function MCPricePaths({ mc }: { mc: MonteCarloMetrics }) {
-  const data = useMemo(() => {
-    const historical = mc.historical_close;
-    const sampledPaths = mc.sampled_close_paths;
-    if (!historical || historical.length === 0) return [];
-
-    const maxLen = Math.max(
-      historical.length,
-      ...(sampledPaths ?? []).map(p => p?.length ?? 0),
-    );
-
-    const limited = (sampledPaths ?? []).slice(0, 30);
-
-    return Array.from({ length: maxLen }, (_, i) => {
-      const point: Record<string, number | null> = { step: i };
-      point.historical = i < historical.length ? Number(historical[i]) : null;
-      limited.forEach((path, pi) => {
-        point[`p${pi}`] = path?.[i] != null ? Number(path[i]) : null;
-      });
-      return point;
-    });
-  }, [mc.historical_close, mc.sampled_close_paths]);
-
-  if (data.length === 0) return null;
-
-  const pathCount = Math.min((mc.sampled_close_paths ?? []).length, 30);
-
-  return (
-    <div className="border border-border rounded-lg p-4 bg-surface-1/30">
-      <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
-        <Activity size={14} />
-        Synthetic Price Paths
-      </h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-          <XAxis
-            dataKey="step"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
-            tickLine={false}
-            tickFormatter={(v: number) => `$${Number(v ?? 0).toFixed(0)}`}
-          />
-          <Tooltip
-            contentStyle={mcTooltipStyle}
-            labelStyle={{ color: '#9ca3af' }}
-            formatter={(value, name) => {
-              if (name === 'historical') return [`$${Number(value).toFixed(2)}`, 'Historical'];
-              return null;
-            }}
-          />
-          {/* Sampled price paths */}
-          {Array.from({ length: pathCount }, (_, pi) => (
-            <Line
-              key={`p${pi}`}
-              type="monotone"
-              dataKey={`p${pi}`}
-              stroke="#3b82f6"
-              strokeWidth={0.8}
-              strokeOpacity={0.25}
-              dot={false}
-              activeDot={false}
-              connectNulls={false}
-              legendType="none"
-            />
-          ))}
-          {/* Historical close (bold red) */}
-          <Line
-            type="monotone"
-            dataKey="historical"
-            stroke="#ef4444"
-            strokeWidth={2.5}
-            dot={false}
-            connectNulls={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-      <div className="flex items-center gap-4 mt-2 text-xs text-text-muted justify-center">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-4 h-0.5 rounded" style={{ backgroundColor: '#ef4444' }} /> Historical
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-4 h-0.5 rounded" style={{ backgroundColor: '#3b82f6', opacity: 0.4 }} /> Synthetic ({pathCount})
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ── 8. Risk Metrics Table (unchanged) ───────────────────────────────
+// ── 4. Risk Metrics Table ────────────────────────────────────────────
 
 function MCRiskTable({ mc }: { mc: MonteCarloMetrics }) {
   const rm = mc.risk_metrics;
@@ -1095,25 +853,13 @@ function MonteCarloReport({ mc }: { mc: MonteCarloMetrics }) {
       {/* 2. Strategy Scorecard */}
       <MCScorecard mc={mc} />
 
-      {/* 3. Distribution Histograms (2x2) */}
+      {/* 3. Distribution Histograms (Return/DD + Max DD) */}
       <MCDistributionsGrid mc={mc} />
 
-      {/* 4. Win Rate vs Profit Factor Scatter */}
-      <MCScatterWinRateVsPF mc={mc} />
-
-      {/* 5. Equity Fan Chart */}
-      <MCFanChart mc={mc} />
-
-      {/* 6. Drawdown Cone */}
-      <MCDrawdownCone mc={mc} />
-
-      {/* 7. Price Paths */}
-      <MCPricePaths mc={mc} />
-
-      {/* 8. Risk table */}
+      {/* 4. Risk table */}
       <MCRiskTable mc={mc} />
 
-      {/* 9. Confidence Intervals */}
+      {/* 5. Confidence Intervals */}
       <MCConfidenceIntervals mc={mc} />
     </div>
   );

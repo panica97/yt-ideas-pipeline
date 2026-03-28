@@ -78,7 +78,7 @@ class MonteCarloAggregator:
         metric_keys = [
             "total_pnl", "max_drawdown_pct", "sharpe_ratio", "win_rate",
             "profit_factor", "total_trades", "avg_trade_pnl", "sortino_ratio",
-            "expectancy",
+            "expectancy", "return_drawdown_ratio",
         ]
 
         arrays: dict[str, np.ndarray] = {}
@@ -89,7 +89,7 @@ class MonteCarloAggregator:
 
         # Raw per-path values for histogram and scatter visualizations
         raw = {}
-        for key in ["total_pnl", "max_drawdown_pct", "sharpe_ratio", "win_rate", "profit_factor", "total_trades", "avg_trade_pnl"]:
+        for key in ["total_pnl", "max_drawdown_pct", "sharpe_ratio", "win_rate", "profit_factor", "total_trades", "avg_trade_pnl", "return_drawdown_ratio"]:
             if key in arrays:
                 raw[key] = arrays[key].tolist()
 

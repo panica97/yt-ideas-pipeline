@@ -14,6 +14,7 @@ import json
 import logging
 import re
 import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,25 @@ def run_montecarlo(
     n_paths = job.get("n_paths") or 1000
     fit_years = job.get("fit_years") or 10
 
+    # Calculate sim_bars from the job's date range instead of defaulting to 252
+    sim_bars = 252  # fallback: 1 year
+    start_date_str = job.get("start_date")
+    end_date_str = job.get("end_date")
+    if start_date_str and end_date_str:
+        try:
+            sd = datetime.fromisoformat(start_date_str)
+            ed = datetime.fromisoformat(end_date_str)
+            calendar_days = (ed - sd).days
+            sim_bars = max(1, int(calendar_days * 252 / 365))
+            logger.info(
+                "Calculated sim_bars=%d from date range %s to %s (%d calendar days)",
+                sim_bars, start_date_str, end_date_str, calendar_days,
+            )
+        except (ValueError, TypeError) as exc:
+            logger.warning(
+                "Could not parse start/end dates for sim_bars, using default 252: %s", exc
+            )
+
     python_exe = _resolve_python()
     mc_runner_path = config.mc_runner_path
 
@@ -62,6 +82,7 @@ def run_montecarlo(
         mc_runner_path,
         "--mode", "path_based",
         "--strategy", str(strat_code),
+        "--sim-bars", str(sim_bars),
         "--n-paths", str(n_paths),
         "--fit-years", str(fit_years),
         "--metrics-json",
@@ -69,6 +90,9 @@ def run_montecarlo(
         "--hist-data-path", config.hist_data_path,
         "--strategies-path", strategies_path,
     ]
+
+    if start_date_str and end_date_str:
+        cmd.extend(["--start", start_date_str, "--end", end_date_str])
 
     logger.info("Running MC: %s", " ".join(cmd))
 

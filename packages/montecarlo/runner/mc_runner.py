@@ -143,6 +143,8 @@ class MonteCarloRunner:
         batch_size: Optional[int] = None,
         seed: Optional[int] = None,
         progress_callback: Optional[Callable[[int, int], None]] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> dict:
         """Run path-based Monte Carlo simulation.
 
@@ -212,10 +214,10 @@ class MonteCarloRunner:
 
         base_tf = generator.base_timeframe
 
-        # --- Derive baseline window (last sim_bars TRADING DAYS of data) ---
-        # sim_bars is in trading days; convert to base_tf bars.
-        # For daily base_tf, 1 bar = 1 day.  For intraday (e.g. 4h),
-        # there are multiple bars per day — derive the ratio from data.
+        # --- Derive baseline window ---
+        # If start_date/end_date are provided, filter to that exact date range
+        # (matching the original backtest period). Otherwise fall back to
+        # "last sim_bars trading days" of all data.
         base_df_all = hist_data_all[base_tf]
 
         # Count unique trading dates to derive bars-per-day
@@ -224,22 +226,48 @@ class MonteCarloRunner:
         n_trading_days = len(unique_days)
         bars_per_day = len(base_df_all) / max(n_trading_days, 1)
 
-        # Convert sim_bars (trading days) to base_tf bar count
-        n_periods = round(sim_bars * bars_per_day)
-        n_periods = min(n_periods, len(base_df_all))
-        if n_periods < round(sim_bars * bars_per_day):
-            actual_days = round(n_periods / bars_per_day)
-            print(f"  WARNING: Only {n_trading_days} trading days available, "
-                  f"using {actual_days} instead of requested {sim_bars}")
+        if start_date and end_date:
+            # Date-range mode: filter to the exact backtest period
+            bl_start_filter = datetime.strptime(start_date, "%Y-%m-%d")
+            bl_end_filter = datetime.strptime(end_date, "%Y-%m-%d").replace(
+                hour=23, minute=59, second=59
+            )
+            baseline_slice = base_df_all.filter(
+                (pl.col("date") >= bl_start_filter) &
+                (pl.col("date") <= bl_end_filter)
+            )
+            if len(baseline_slice) == 0:
+                raise ValueError(
+                    f"No data found for baseline date range {start_date} to {end_date}"
+                )
+            n_periods = len(baseline_slice)
+            baseline_start = start_date
+            baseline_end = end_date
+            # Override sim_bars to match the actual number of bars in the date range
+            actual_trading_days = len(baseline_slice["date"].dt.date().unique())
+            sim_bars = actual_trading_days
+            print(f"  Base timeframe: {base_tf} ({bars_per_day:.1f} bars/day)")
+            print(f"  Baseline window (date-filtered): {baseline_start} to {baseline_end}")
+            print(f"  Baseline: {n_periods} {base_tf} bars, "
+                  f"{actual_trading_days} trading days")
+        else:
+            # Fallback: last sim_bars trading days
+            # Convert sim_bars (trading days) to base_tf bar count
+            n_periods = round(sim_bars * bars_per_day)
+            n_periods = min(n_periods, len(base_df_all))
+            if n_periods < round(sim_bars * bars_per_day):
+                actual_days = round(n_periods / bars_per_day)
+                print(f"  WARNING: Only {n_trading_days} trading days available, "
+                      f"using {actual_days} instead of requested {sim_bars}")
 
-        baseline_slice = base_df_all.tail(n_periods)
-        baseline_start = str(baseline_slice[0, "date"].date())
-        baseline_end = str(baseline_slice[-1, "date"].date())
+            baseline_slice = base_df_all.tail(n_periods)
+            baseline_start = str(baseline_slice[0, "date"].date())
+            baseline_end = str(baseline_slice[-1, "date"].date())
 
-        print(f"  Base timeframe: {base_tf} ({bars_per_day:.1f} bars/day)")
-        print(f"  Simulation: {sim_bars} trading days = {n_periods} {base_tf} bars")
-        print(f"  Baseline window: {baseline_start} to {baseline_end} "
-              f"(last {n_periods} of {len(base_df_all)} bars)")
+            print(f"  Base timeframe: {base_tf} ({bars_per_day:.1f} bars/day)")
+            print(f"  Simulation: {sim_bars} trading days = {n_periods} {base_tf} bars")
+            print(f"  Baseline window: {baseline_start} to {baseline_end} "
+                  f"(last {n_periods} of {len(base_df_all)} bars)")
 
         # Create baseline data: filter all timeframes to baseline window
         baseline_data = {}

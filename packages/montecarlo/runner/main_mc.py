@@ -64,6 +64,10 @@ def main():
                         help='Path to custom indicator modules')
     parser.add_argument('--workers', type=int, default=None,
                         help='Max parallel worker processes (default: cpu_count - 1)')
+    parser.add_argument('--start', type=str, default=None,
+                        help='Start date (YYYY-MM-DD) for baseline window (overrides last-N-bars)')
+    parser.add_argument('--end', type=str, default=None,
+                        help='End date (YYYY-MM-DD) for baseline window (overrides last-N-bars)')
 
     args = parser.parse_args()
 
@@ -131,6 +135,8 @@ def _run_path_based(args):
         n_workers=args.workers,
         batch_size=args.batch_size,
         seed=args.seed,
+        start_date=args.start,
+        end_date=args.end,
     )
 
     _output_results(runner, results, args)
