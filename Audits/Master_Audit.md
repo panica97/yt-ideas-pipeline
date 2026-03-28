@@ -1,6 +1,6 @@
 # Master Audit - IRT Project
 
-**Last updated**: 2026-03-23
+**Last updated**: 2026-03-28
 
 ---
 
@@ -12,6 +12,7 @@
 | [audit_02](audit_02.md) | 2026-03-22 | Phase 10 Backtesting | 18 | 3 | 9 | 6 | 3 |
 | [audit_03_quick](audit_03_quick.md) | 2026-03-23 | Phase 10.3 Frontend Backtest (quick) | 6 | 0 | 3 | 3 | 0 |
 | [audit_04](audit_04.md) | 2026-03-23 | Phase 10.2 Research Pipeline Flexibility | 9 | 0 | 6 | 3 | 9 |
+| [audit_05_quick](audit_05_quick.md) | 2026-03-28 | Phase 12.2 Monte Carlo Frontend | 12 | 0 | 6 | 6 | 0 |
 
 ---
 
@@ -37,8 +38,14 @@ _No open HIGH findings._
 | 19 | Return/DD ratio misleading with signed values | audit_03 |
 | 20 | Unsafe type assertion for optional metrics fields | audit_03 |
 | 21 | Equity curve date sorting relies on string parsing | audit_03 |
+| 34 | `buildHistogramBins` quadratic O(n*bins) on large arrays | audit_05 |
+| 35 | `Math.min(...values)` stack overflow on >65K elements | audit_05 |
+| 36 | `percentileRank` repeated O(n) filter per scorecard row | audit_05 |
+| 37 | Unsafe double cast `as unknown as MonteCarloMetrics` | audit_05 |
+| 38 | `Number(undefined)` produces NaN silently in MCDistributionsGrid | audit_05 |
+| 39 | Fan chart Area stacking may not produce correct visual bands | audit_05 |
 
-### LOW (10 open)
+### LOW (16 open)
 
 | # | Finding | Source |
 |---|---------|--------|
@@ -52,6 +59,12 @@ _No open HIGH findings._
 | 22 | XAxis date labels overlap on dense data | audit_03 |
 | 23 | Index signature weakens BacktestMetrics type safety | audit_03 |
 | 24 | Tooltip formatter untyped (Recharts limitation) | audit_03 |
+| 40 | `deleteMutation` no `onError` handler (dup of audit_02 #11) | audit_05 |
+| 41 | Hardcoded `nPaths=1000`, `fitYears=10` defaults | audit_05 |
+| 42 | nPaths/fitYears max limits only enforced client-side | audit_05 |
+| 43 | Scatter chart renders all N points without sampling | audit_05 |
+| 44 | Price paths chart renders up to 30 Line components | audit_05 |
+| 45 | `MetricCard` component duplicated in both files | audit_05 |
 
 ---
 
@@ -80,6 +93,12 @@ _No open HIGH findings._
 | 19 | audit_04 M-04 | MEDIUM | Update research SKILL.md for all entry points | quick fix | Resolved (audit_04 batch fix) |
 | 20 | audit_04 M-05 | MEDIUM | Fix session-history correlation for non-topic sessions | quick fix | Resolved (audit_04 batch fix) |
 | 21 | audit_04 M-06 | MEDIUM | Add basic URL validation for VIDEO entry point | quick fix | Resolved (audit_04 batch fix) |
+| 22 | audit_05 M-01 | MEDIUM | Replace quadratic histogram binning with single-pass | quick fix | Open |
+| 23 | audit_05 M-02 | MEDIUM | Replace `Math.min/max(...spread)` with loop-based min/max | quick fix | Open |
+| 24 | audit_05 M-03 | MEDIUM | Optimize `percentileRank` calls in MCScorecard | quick fix | Open |
+| 25 | audit_05 M-04 | MEDIUM | Add runtime type guard for MonteCarloMetrics at API boundary | quick fix | Open |
+| 26 | audit_05 M-05 | MEDIUM | Fix `Number(undefined)` NaN pattern in MCDistributionsGrid | quick fix | Open |
+| 27 | audit_05 M-06 | MEDIUM | Verify/fix fan chart Area stacking for correct percentile bands | quick fix | Open |
 
 ---
 
@@ -134,8 +153,8 @@ _No open HIGH findings._
 
 | Metric | Value |
 |---|---|
-| Total audits | 4 |
-| Total findings (all time) | 63 |
-| Open findings | 22 |
+| Total audits | 5 |
+| Total findings (all time) | 75 |
+| Open findings | 34 |
 | Resolved findings | 41 |
-| Resolution rate | 65% |
+| Resolution rate | 55% |
