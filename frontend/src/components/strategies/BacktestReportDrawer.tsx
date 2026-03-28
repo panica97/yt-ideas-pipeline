@@ -17,15 +17,19 @@ interface BacktestReportDrawerProps {
 type SortField = 'entry_date' | 'exit_date' | 'side' | 'entry_fill_price' | 'exit_fill_price' | 'pnl' | 'cumulative_pnl' | 'exit_reason' | 'bars_held';
 type SortDir = 'asc' | 'desc';
 
-function formatCurrency(value: number | null | undefined): string {
+function formatCurrency(value: number | string | null | undefined): string {
   if (value == null) return 'N/A';
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}$${value.toFixed(2)}`;
+  const n = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(n)) return 'N/A';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}$${n.toFixed(2)}`;
 }
 
-function formatPercent(value: number | null | undefined): string {
+function formatPercent(value: number | string | null | undefined): string {
   if (value == null) return 'N/A';
-  return `${value.toFixed(1)}%`;
+  const n = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(n)) return 'N/A';
+  return `${n.toFixed(1)}%`;
 }
 
 function computeDerivedMetrics(trades: BacktestTradeComplete[]) {
@@ -113,13 +117,13 @@ function ExtendedMetricsGrid({ metrics, trades }: { metrics: BacktestMetrics; tr
       <MetricCard label="Return / DD" value={ratioValue} colorClass={ratioColor} />
       <MetricCard label="Win Rate" value={formatPercent(winRate)} colorClass={winRate >= 50 ? 'text-accent' : 'text-danger'} />
       <MetricCard label="Max DD %" value={ddPctValue} colorClass="text-danger" />
-      <MetricCard label="Sharpe" value={sharpe != null ? sharpe.toFixed(2) : 'N/A'} colorClass={sharpe != null && sharpe > 0 ? 'text-accent' : 'text-danger'} />
+      <MetricCard label="Sharpe" value={sharpe != null ? Number(sharpe).toFixed(2) : 'N/A'} colorClass={sharpe != null && Number(sharpe) > 0 ? 'text-accent' : 'text-danger'} />
       <MetricCard label="Total Trades" value={String(trades_count)} />
-      <MetricCard label="Profit Factor" value={profitFactor != null ? profitFactor.toFixed(2) : 'N/A'} colorClass={profitFactor != null && profitFactor > 1 ? 'text-accent' : 'text-danger'} />
-      <MetricCard label="Sortino" value={sortino != null ? sortino.toFixed(2) : 'N/A'} colorClass={sortino != null && sortino > 0 ? 'text-accent' : 'text-danger'} />
-      <MetricCard label="Avg Win / Loss" value={derived.avgWinLoss != null ? derived.avgWinLoss.toFixed(2) : 'N/A'} colorClass={derived.avgWinLoss != null && derived.avgWinLoss > 1 ? 'text-accent' : 'text-danger'} />
+      <MetricCard label="Profit Factor" value={profitFactor != null ? Number(profitFactor).toFixed(2) : 'N/A'} colorClass={profitFactor != null && Number(profitFactor) > 1 ? 'text-accent' : 'text-danger'} />
+      <MetricCard label="Sortino" value={sortino != null ? Number(sortino).toFixed(2) : 'N/A'} colorClass={sortino != null && Number(sortino) > 0 ? 'text-accent' : 'text-danger'} />
+      <MetricCard label="Avg Win / Loss" value={derived.avgWinLoss != null ? Number(derived.avgWinLoss).toFixed(2) : 'N/A'} colorClass={derived.avgWinLoss != null && Number(derived.avgWinLoss) > 1 ? 'text-accent' : 'text-danger'} />
       <MetricCard label="Max Consec. Losses" value={String(derived.maxConsecutiveLosses)} colorClass={derived.maxConsecutiveLosses > 5 ? 'text-danger' : 'text-text-primary'} />
-      <MetricCard label="Avg Duration" value={derived.avgTradeDuration != null ? `${derived.avgTradeDuration.toFixed(1)} bars` : 'N/A'} />
+      <MetricCard label="Avg Duration" value={derived.avgTradeDuration != null ? `${Number(derived.avgTradeDuration).toFixed(1)} bars` : 'N/A'} />
     </div>
   );
 }
@@ -549,11 +553,11 @@ function MCPnlHistogram({ mc, baselinePnl }: { mc: MonteCarloMetrics; baselinePn
 
 function MCPercentileTable({ mc }: { mc: MonteCarloMetrics }) {
   const rows = [
-    { label: 'Total PnL', key: 'total_pnl', fmt: (v: number | null | undefined) => v != null ? `$${v.toFixed(2)}` : 'N/A' },
-    { label: 'Max DD %', key: 'max_drawdown_pct', fmt: (v: number | null | undefined) => v != null ? `${v.toFixed(1)}%` : 'N/A' },
-    { label: 'Sharpe', key: 'sharpe_ratio', fmt: (v: number | null | undefined) => v != null ? v.toFixed(2) : 'N/A' },
-    { label: 'Win Rate', key: 'win_rate', fmt: (v: number | null | undefined) => v != null ? `${v.toFixed(1)}%` : 'N/A' },
-    { label: 'Profit Factor', key: 'profit_factor', fmt: (v: number | null | undefined) => v != null ? v.toFixed(2) : 'N/A' },
+    { label: 'Total PnL', key: 'total_pnl', fmt: (v: unknown) => { const n = Number(v); return isNaN(n) ? 'N/A' : `$${n.toFixed(2)}`; } },
+    { label: 'Max DD %', key: 'max_drawdown_pct', fmt: (v: unknown) => { const n = Number(v); return isNaN(n) ? 'N/A' : `${n.toFixed(1)}%`; } },
+    { label: 'Sharpe', key: 'sharpe_ratio', fmt: (v: unknown) => { const n = Number(v); return isNaN(n) ? 'N/A' : n.toFixed(2); } },
+    { label: 'Win Rate', key: 'win_rate', fmt: (v: unknown) => { const n = Number(v); return isNaN(n) ? 'N/A' : `${n.toFixed(1)}%`; } },
+    { label: 'Profit Factor', key: 'profit_factor', fmt: (v: unknown) => { const n = Number(v); return isNaN(n) ? 'N/A' : n.toFixed(2); } },
   ];
 
   return (
