@@ -1,6 +1,6 @@
 """Post-generation path validation.
 
-Validates the actual OHLC paths produced by the generator — a second line
+Validates the actual OHLC paths produced by the generator -- a second line
 of defence complementing the pre-generation model validation.
 
 Usage in the MC runner:
@@ -79,7 +79,7 @@ class PathValidationCollector:
             zero_range = int(np.sum(np.abs(h - lo) < 1e-12))
             self._zero_range_bars += zero_range
 
-            # --- Per-bar statistics (skip first bar — no return) ---
+            # --- Per-bar statistics (skip first bar -- no return) ---
             if n_bars > 1:
                 rets = np.diff(c) / (c[:-1] + 1e-10)
                 finite_mask = np.isfinite(rets)
@@ -139,7 +139,7 @@ class PathValidationCollector:
         hist_skew = float(_skew(hist_returns)) if len(hist_returns) > 10 else 0.0
         synth_skew = float(_skew(synth_returns)) if len(synth_returns) > 10 else 0.0
 
-        # Tail frequency (>3σ)
+        # Tail frequency (>3 sigma)
         hist_tail = _tail_freq(hist_returns, 3.0)
         synth_tail = _tail_freq(synth_returns, 3.0)
         tail_ratio = synth_tail / hist_tail if hist_tail > 0.001 else 1.0
@@ -247,7 +247,7 @@ class PathValidationCollector:
             score += 1
         else:
             diagnostics.append(
-                f"Path sanity: {degenerate} degenerate paths (price≤0), "
+                f"Path sanity: {degenerate} degenerate paths (price<=0), "
                 f"{extreme_dd} extreme drawdown paths (DD>99%) "
                 f"out of {self._n_paths}."
             )

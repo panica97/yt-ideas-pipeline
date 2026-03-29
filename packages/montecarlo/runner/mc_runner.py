@@ -1,5 +1,5 @@
 """
-MonteCarloRunner — orchestrates path-based and trade-shuffle Monte Carlo simulations.
+MonteCarloRunner -- orchestrates path-based and trade-shuffle Monte Carlo simulations.
 
 Path-based mode:
   1. Loads historical data via DataPreprocessor
@@ -226,7 +226,7 @@ class MonteCarloRunner:
             else:
                 baseline_hist_data = hist_data_all
         elif start_date and not fit_start_date:
-            # fit_years=0 (all data) — no truncation, reuse same data
+            # fit_years=0 (all data) -- no truncation, reuse same data
             baseline_hist_data = hist_data_all
         else:
             baseline_hist_data = hist_data_all

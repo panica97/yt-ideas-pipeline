@@ -163,7 +163,7 @@ def validate_model_fit(
     synth_mean_range = float(np.mean(synth_ranges_arr)) if len(synth_ranges_arr) > 0 else 0.0
     atr_ratio = synth_mean_range / hist_mean_range if hist_mean_range > 0 else 1.0
 
-    # Anderson-Darling test (diagnostic only — more tail-sensitive than KS)
+    # Anderson-Darling test (diagnostic only -- more tail-sensitive than KS)
     ad_test = _test_anderson_darling(hist_returns, synth_returns_arr)
 
     # Regime consistency test
