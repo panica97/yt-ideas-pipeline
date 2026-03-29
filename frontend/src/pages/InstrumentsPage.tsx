@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getInstruments,
   createInstrument,
   updateInstrument,
   deleteInstrument,
+  triggerScanData,
+  getScanJobStatus,
 } from '../services/instruments';
 import type { Instrument } from '../types/instrument';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { Plus, Pencil, Trash2, Package, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, X, DatabaseZap, Loader2 } from 'lucide-react';
 
 type FormData = {
   symbol: string;
@@ -46,6 +48,55 @@ export default function InstrumentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  const startScan = useCallback(async () => {
+    setScanError(null);
+    setScanning(true);
+    try {
+      const job = await triggerScanData();
+      // Poll until completed or failed
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await getScanJobStatus(job.id);
+          if (status.status === 'completed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            pollRef.current = null;
+            setScanning(false);
+            queryClient.invalidateQueries({ queryKey: ['instruments'] });
+          } else if (status.status === 'failed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            pollRef.current = null;
+            setScanning(false);
+            setScanError(status.error_message || 'Scan failed');
+          }
+        } catch {
+          // Poll errors are transient — keep polling
+        }
+      }, 2000);
+    } catch (err: unknown) {
+      setScanning(false);
+      if (
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { status?: number } }).response?.status === 409
+      ) {
+        setScanError('A scan is already in progress');
+      } else {
+        setScanError((err as Error).message || 'Failed to start scan');
+      }
+    }
+  }, [queryClient]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['instruments'],
@@ -55,7 +106,7 @@ export default function InstrumentsPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['instruments'] });
 
   const createMut = useMutation({
-    mutationFn: (payload: Omit<Instrument, 'id' | 'created_at' | 'updated_at'>) =>
+    mutationFn: (payload: Omit<Instrument, 'id' | 'created_at' | 'updated_at' | 'data_from' | 'data_to'>) =>
       createInstrument(payload),
     onSuccess: () => {
       invalidate();
@@ -147,14 +198,33 @@ export default function InstrumentsPage() {
             {instruments.length}
           </span>
         </div>
-        <button
-          onClick={startCreate}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-white rounded-lg transition-all hover:shadow-glow-accent"
-        >
-          <Plus size={14} />
-          New
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={startScan}
+            disabled={scanning}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border text-text-secondary hover:text-text-primary hover:bg-surface-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {scanning ? <Loader2 size={14} className="animate-spin" /> : <DatabaseZap size={14} />}
+            {scanning ? 'Scanning...' : 'Scan Data'}
+          </button>
+          <button
+            onClick={startCreate}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-accent hover:bg-accent-hover text-white rounded-lg transition-all hover:shadow-glow-accent"
+          >
+            <Plus size={14} />
+            New
+          </button>
+        </div>
       </div>
+
+      {scanError && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger animate-fade-in">
+          Scan error: {scanError}
+          <button onClick={() => setScanError(null)} className="ml-auto text-danger hover:text-danger/70 transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {(createMut.isError || updateMut.isError) && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger animate-fade-in">
@@ -292,6 +362,8 @@ export default function InstrumentsPage() {
                   <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Currency</th>
                   <th className="py-3 px-4 text-right text-[10px] font-semibold text-text-muted uppercase tracking-widest">Mult.</th>
                   <th className="py-3 px-4 text-right text-[10px] font-semibold text-text-muted uppercase tracking-widest">Tick</th>
+                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Data From</th>
+                  <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Data To</th>
                   <th className="py-3 px-4 text-left text-[10px] font-semibold text-text-muted uppercase tracking-widest">Description</th>
                   <th className="py-3 px-4 w-20"></th>
                 </tr>
@@ -314,6 +386,12 @@ export default function InstrumentsPage() {
                     <td className="py-2.5 px-4 text-text-muted text-xs">{inst.currency}</td>
                     <td className="py-2.5 px-4 text-text-secondary text-right font-mono">{inst.multiplier.toLocaleString()}</td>
                     <td className="py-2.5 px-4 text-text-secondary text-right font-mono">{inst.min_tick}</td>
+                    <td className="py-2.5 px-4 text-text-muted text-xs font-mono">
+                      {inst.data_from ? inst.data_from.slice(0, 10) : '\u2014'}
+                    </td>
+                    <td className="py-2.5 px-4 text-text-muted text-xs font-mono">
+                      {inst.data_to ? inst.data_to.slice(0, 10) : '\u2014'}
+                    </td>
                     <td className="py-2.5 px-4 text-text-muted text-xs">{inst.description ?? '-'}</td>
                     <td className="py-2.5 px-4">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

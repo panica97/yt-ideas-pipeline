@@ -121,6 +121,12 @@ class Instrument(Base, TimestampMixin):
     multiplier: Mapped[float] = mapped_column(Float, nullable=False)
     min_tick: Mapped[float] = mapped_column(Float, nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    data_from: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+    data_to: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
 
 
 class ResearchHistory(Base):
@@ -241,3 +247,23 @@ class BacktestResult(Base):
     )
 
     job: Mapped["BacktestJob"] = relationship(back_populates="result")
+
+
+class ScanJob(Base):
+    __tablename__ = "scan_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", server_default="pending", nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    results: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)

@@ -19,6 +19,7 @@ from typing import Any, Dict, List
 import requests
 
 from worker.config import Config
+from worker.data_info import execute_scan_job
 from worker.executor import execute_backtest_job
 
 logger = logging.getLogger("irt-worker.orchestrator")
@@ -34,6 +35,7 @@ class WorkUnit:
     unit_id: str
     job: dict
     label: str
+    job_type: str = "backtest"  # "backtest" or "scan"
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +89,21 @@ class Orchestrator:
                         logger.error(
                             "Failed to decompose job %d: %s",
                             job["id"], exc, exc_info=True)
+
+                # Poll for scan-data jobs (lower priority than backtests)
+                scan_jobs = self._claim_pending_scan_jobs()
+                for scan_job in scan_jobs:
+                    unit = WorkUnit(
+                        job_id=scan_job["id"],
+                        unit_id=f"scan_{scan_job['id']}",
+                        job=scan_job,
+                        label=f"scan:job-{scan_job['id']}",
+                        job_type="scan",
+                    )
+                    self._queue.put(unit)
+                    logger.info(
+                        "Scan job %d enqueued", scan_job["id"])
+
             except requests.ConnectionError:
                 logger.error(
                     "Cannot reach API at %s — retrying in %ds",
@@ -143,6 +160,45 @@ class Orchestrator:
 
         return claimed
 
+    def _claim_pending_scan_jobs(self) -> List[Dict[str, Any]]:
+        """Fetch pending scan-data jobs from the API and claim them.
+
+        Returns at most one scan job per poll cycle to keep things simple.
+        """
+        claimed: List[Dict[str, Any]] = []
+
+        try:
+            resp = self._config.session.get(
+                f"{self._config.api_url}/api/instruments/scan-data/pending",
+                timeout=10,
+            )
+            if resp.status_code == 204:
+                return claimed
+            resp.raise_for_status()
+            job = resp.json()
+
+            job_id = job["id"]
+            logger.info("Found pending scan job %d", job_id)
+
+            # Claim the job
+            claim_resp = self._config.session.patch(
+                f"{self._config.api_url}/api/instruments/scan-data/{job_id}/claim",
+                timeout=10,
+            )
+            claim_resp.raise_for_status()
+            job = claim_resp.json()
+            logger.info("Claimed scan job %d — status is now 'running'", job_id)
+            claimed.append(job)
+
+        except requests.HTTPError as exc:
+            logger.warning("Failed to claim scan job: %s", exc)
+        except requests.ConnectionError:
+            logger.debug("Cannot reach API for scan-data polling (already logged for backtests)")
+        except Exception as exc:
+            logger.error("Error polling scan jobs: %s", exc, exc_info=True)
+
+        return claimed
+
     # -- decomposition -----------------------------------------------------
 
     def _decompose_job(self, job: Dict[str, Any]) -> List[WorkUnit]:
@@ -195,7 +251,10 @@ class Orchestrator:
 
             try:
                 logger.info("[%s] Starting execution", unit.label)
-                execute_backtest_job(unit.job, self._config)
+                if unit.job_type == "scan":
+                    execute_scan_job(unit.job, self._config)
+                else:
+                    execute_backtest_job(unit.job, self._config)
                 logger.info("[%s] Completed", unit.label)
             except Exception as exc:
                 logger.error(
