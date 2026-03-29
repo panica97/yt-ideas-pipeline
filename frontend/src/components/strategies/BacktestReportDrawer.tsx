@@ -520,14 +520,6 @@ function MCScorecard({ mc }: { mc: MonteCarloMetrics }) {
     });
   }, [mc, baseline, retDDDist, retDDRaw]);
 
-  function rankColor(rank: number | null, higherIsBetter: boolean): string {
-    if (rank == null) return 'text-text-secondary';
-    const effective = higherIsBetter ? rank : 100 - rank;
-    if (effective >= 60) return 'text-green-400';
-    if (effective >= 40) return 'text-amber-400';
-    return 'text-red-400';
-  }
-
   return (
     <div className="border border-border rounded-lg bg-surface-1/30">
       <h3 className="text-sm font-semibold text-text-primary p-4 pb-2 flex items-center gap-2">
@@ -558,13 +550,13 @@ function MCScorecard({ mc }: { mc: MonteCarloMetrics }) {
               return (
                 <tr key={row.label} className="border-t border-border/50">
                   <td className="px-3 py-2 text-text-secondary font-medium">{row.label}</td>
-                  <td className={`px-3 py-2 text-right font-semibold ${rankColor(row.rank, row.higherIsBetter)}`}>
+                  <td className="px-3 py-2 text-right font-semibold text-text-primary">
                     {row.actual}
                   </td>
                   <td className={`px-3 py-2 text-right font-semibold ${zColor}`}>
                     {row.zScore != null ? Math.abs(row.zScore).toFixed(2) : '—'}
                   </td>
-                  <td className={`px-3 py-2 text-right font-semibold ${rankColor(row.rank, row.higherIsBetter)}`}>
+                  <td className="px-3 py-2 text-right font-semibold text-text-primary">
                     {row.rank != null ? `P${Number(row.rank).toFixed(0)}` : '—'}
                   </td>
                   <td className="px-3 py-2 text-right text-text-secondary">{row.fmt(Number(row.dist.p5))}</td>
