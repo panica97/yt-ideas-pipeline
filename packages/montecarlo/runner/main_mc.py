@@ -219,8 +219,22 @@ def _output_results(runner, results: dict, args):
     print(f"{'='*60}\n")
 
     if args.metrics_json:
+        # Build full summary: spread statistics at top level for backwards
+        # compatibility (frontend reads sharpe_ratio, total_pnl, etc. at root)
+        # and add baseline/comparison/model diagnostics alongside.
+        full_summary = {**summary}
+        full_summary['baseline_metrics'] = results.get('baseline_metrics')
+        full_summary['comparison'] = results.get('comparison')
+        full_summary['n_paths'] = results.get('n_paths')
+        full_summary['n_completed'] = results.get('n_completed')
+        full_summary['n_failed'] = results.get('n_failed')
+        full_summary['failure_rate'] = results.get('failure_rate')
+        full_summary['model_params'] = results.get('model_params')
+        full_summary['model_fit_quality'] = results.get('model_fit_quality')
+        full_summary['path_validation'] = results.get('path_validation')
+        full_summary['baseline_window'] = results.get('baseline_window')
         # Sanitize NaN/Inf values before JSON output
-        clean_summary = _sanitize_for_json(summary)
+        clean_summary = _sanitize_for_json(full_summary)
         print(f"###METRICS_JSON_START###{json.dumps(clean_summary, default=str)}###METRICS_JSON_END###")
 
     if args.save:
