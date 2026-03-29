@@ -74,4 +74,5 @@
 | 2026-03-25 | Phase 12.1 | Started | Copy engine packages, create venv, update worker config |
 | 2026-03-25 | Phase 12.1 | Completed | Engine + ibkr-core internalized, parallel orchestrator, venv setup, SL/TP None fixes in 6 engine files |
 | 2026-03-28 | Phase 12.2 | Completed | Synthetic Data (Monte Carlo): MC engine internalized, backend schema + migration, worker MC mode, frontend MC UI + report (fan chart, histograms, scorecard, risk table, scatter, drawdown cone, price paths, confidence intervals) |
-| 2026-03-28 | Phase 12.3 | Created | Data Info: scan worker historical data, display per-symbol date ranges in Instruments table |
+| 2026-03-29 | Phase 12.2 | Bugfixes | Fix UnicodeEncodeError on Windows cp1252, include baseline_metrics in MC JSON output, MC scorecard Actual reads real baseline instead of P50, remove color from Actual/Rank columns |
+| 2026-03-29 | Phase 12.3 | Created | Data Info: scan worker historical data, display per-symbol date ranges in Instruments table |
