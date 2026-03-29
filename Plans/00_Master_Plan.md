@@ -28,7 +28,7 @@
 | 10.4 | Backtest UI Cleanup | Remove timeframe selector (determined by strategy JSON), add Simple/Complete backtest mode buttons | MEDIUM | Phase 10 | quick fix | Done |
 | 11 | Multi-Timeframe Complete Backtest | Complete backtest mode with trade capture, timeframe remapping, debug save, and full-screen report drawer | HIGH | Phase 10.4 | /sdd-new | Done |
 | 12.2 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 12.1 | /sdd-ff | Done |
-| 12.3 | Data Info | Scan worker historical data, display per-symbol date ranges in Instruments table | HIGH | Phase 12.2 | /sdd-new | Planned |
+| 12.3 | Data Info | Scan worker historical data, display per-symbol date ranges in Instruments table | HIGH | Phase 12.2 | /sdd-new | Done |
 | 12.1 | Worker Unification | Copy backtest-engine + ibkr-core from Ops Platform into IRT/packages/, create project venv, update worker to use local engine. Make IRT fully self-contained with zero Ops Platform dependency | HIGH | Phase 11 | /sdd-new | Done |
 | 13 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 12.3 | /sdd-ff | Planned |
 | 14 | Worker Dockerization | Containerize the backtest worker for VPS deployment. Dockerfile with Python 3.12, pandas, pyarrow. Mount historical data and engine as volumes. Add worker service to docker-compose. | MEDIUM | Phase 11 | /sdd-new | Planned |
@@ -40,9 +40,9 @@
 | Metric | Count |
 |--------|-------|
 | Total phases | 19 |
-| Completed | 17 |
+| Completed | 18 |
 | In Progress | 0 |
-| Planned | 2 |
+| Planned | 1 |
 
 ---
 
@@ -76,3 +76,4 @@
 | 2026-03-28 | Phase 12.2 | Completed | Synthetic Data (Monte Carlo): MC engine internalized, backend schema + migration, worker MC mode, frontend MC UI + report (fan chart, histograms, scorecard, risk table, scatter, drawdown cone, price paths, confidence intervals) |
 | 2026-03-29 | Phase 12.2 | Bugfixes | Fix UnicodeEncodeError on Windows cp1252, include baseline_metrics in MC JSON output, MC scorecard Actual reads real baseline instead of P50, remove color from Actual/Rank columns |
 | 2026-03-29 | Phase 12.3 | Created | Data Info: scan worker historical data, display per-symbol date ranges in Instruments table |
+| 2026-03-29 | Phase 12.3 | Completed | ScanJob model + migration, API scan endpoints, worker data-info scanner, frontend Scan Data button + date columns, backtest date picker constrained to available data range |
