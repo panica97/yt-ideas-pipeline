@@ -80,3 +80,5 @@
 | 2026-03-29 | Phase 12.3 | Completed | ScanJob model + migration, API scan endpoints, worker data-info scanner, frontend Scan Data button + date columns, backtest date picker constrained to available data range |
 | 2026-03-29 | Phase 12.4 | Created | Monkey Test: random-entry statistical test from approved design doc |
 | 2026-03-30 | Phase 12.4 | Completed | Monkey Test: core package, worker/API integration, frontend UI + report (a6e7012) |
+| 2026-03-30 | Phase 12.4 | Bugfix | Fix monkey test report: read metrics flat instead of nested .monkey key (9f58262) |
+| 2026-03-30 | Phase 12.4 | Docs | Add Monkey Test to backtesting documentation — section 6 with 8 subsections (0768410) |
