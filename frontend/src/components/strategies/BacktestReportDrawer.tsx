@@ -911,7 +911,7 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
   const isMonkey = job?.mode === 'monkey';
   const metrics = job?.result?.metrics as BacktestMetrics | undefined;
   const mcMetrics = isMC ? (job?.result?.metrics as unknown as MonteCarloMetrics | undefined) : undefined;
-  const monkeyMetrics = isMonkey ? ((job?.result?.metrics as Record<string, unknown>)?.monkey as MonkeyTestMetrics | undefined) : undefined;
+  const monkeyMetrics = isMonkey ? (job?.result?.metrics as unknown as MonkeyTestMetrics | undefined) : undefined;
   const trades = (job?.result?.trades ?? []) as unknown as BacktestTradeComplete[];
 
 
