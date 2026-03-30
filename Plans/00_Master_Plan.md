@@ -2,7 +2,7 @@
 
 **Project:** IRT (Ideas Research Team)
 **Created:** 2026-03-22
-**Last Updated:** 2026-03-29
+**Last Updated:** 2026-03-30
 **Current Phase:** Phase 13 — Metrics & Analysis
 **Status:** Idle
 
@@ -30,7 +30,7 @@
 | 12.2 | Synthetic Data (Monte Carlo) | Generate synthetic price data to test strategy robustness | HIGH | Phase 12.1 | /sdd-ff | Done |
 | 12.3 | Data Info | Scan worker historical data, display per-symbol date ranges in Instruments table | HIGH | Phase 12.2 | /sdd-new | Done |
 | 12.1 | Worker Unification | Copy backtest-engine + ibkr-core from Ops Platform into IRT/packages/, create project venv, update worker to use local engine. Make IRT fully self-contained with zero Ops Platform dependency | HIGH | Phase 11 | /sdd-new | Done |
-| 12.4 | Monkey Test | Statistical robustness test: random entries on real OHLC to validate strategy edge via p-value | HIGH | Phase 12.3 | /sdd-new | design | Planned |
+| 12.4 | Monkey Test | Statistical robustness test: random entries on real OHLC to validate strategy edge via p-value | HIGH | Phase 12.3 | /sdd-new | design | Done |
 | 13 | Metrics & Analysis | Compute and compare metrics from real and synthetic backtests | HIGH | Phase 12.3 | /sdd-ff | Planned |
 | 14 | Worker Dockerization | Containerize the backtest worker for VPS deployment. Dockerfile with Python 3.12, pandas, pyarrow. Mount historical data and engine as volumes. Add worker service to docker-compose. | MEDIUM | Phase 11 | /sdd-new | Planned |
 
@@ -41,9 +41,9 @@
 | Metric | Count |
 |--------|-------|
 | Total phases | 20 |
-| Completed | 18 |
+| Completed | 19 |
 | In Progress | 0 |
-| Planned | 2 |
+| Planned | 1 |
 
 ---
 
@@ -79,3 +79,4 @@
 | 2026-03-29 | Phase 12.3 | Created | Data Info: scan worker historical data, display per-symbol date ranges in Instruments table |
 | 2026-03-29 | Phase 12.3 | Completed | ScanJob model + migration, API scan endpoints, worker data-info scanner, frontend Scan Data button + date columns, backtest date picker constrained to available data range |
 | 2026-03-29 | Phase 12.4 | Created | Monkey Test: random-entry statistical test from approved design doc |
+| 2026-03-30 | Phase 12.4 | Completed | Monkey Test: core package, worker/API integration, frontend UI + report (a6e7012) |
