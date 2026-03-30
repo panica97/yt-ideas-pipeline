@@ -1,6 +1,6 @@
 # Backtesting System Documentation
 
-Complete reference for the IRT backtesting system. This document covers the three test modes -- Simple Backtest, Complete Backtest, and Monte Carlo Simulation -- from API request through engine execution to frontend visualization.
+Complete reference for the IRT backtesting system. This document covers the four test modes -- Simple Backtest, Complete Backtest, Monte Carlo Simulation, and Monkey Test -- from API request through engine execution to frontend visualization.
 
 ---
 
@@ -11,9 +11,10 @@ Complete reference for the IRT backtesting system. This document covers the thre
 3. [Simple Backtest](#3-simple-backtest)
 4. [Complete Backtest](#4-complete-backtest)
 5. [Monte Carlo Simulation](#5-monte-carlo-simulation)
-6. [Data Flow Diagrams](#6-data-flow-diagrams)
-7. [API Endpoints](#7-api-endpoints)
-8. [Configuration](#8-configuration)
+6. [Monkey Test](#6-monkey-test)
+7. [Data Flow Diagrams](#7-data-flow-diagrams)
+8. [API Endpoints](#8-api-endpoints)
+9. [Configuration](#9-configuration)
 
 ---
 
@@ -21,13 +22,15 @@ Complete reference for the IRT backtesting system. This document covers the thre
 
 ### What is the Backtesting System
 
-The IRT backtesting system evaluates trading strategy drafts against historical market data. It takes a validated strategy draft (with zero pending TODOs), runs it through a high-performance bar-by-bar backtest engine, and produces detailed performance metrics. Three test modes provide increasing levels of statistical rigor:
+The IRT backtesting system evaluates trading strategy drafts against historical market data. It takes a validated strategy draft (with zero pending TODOs), runs it through a high-performance bar-by-bar backtest engine, and produces detailed performance metrics. Four test modes provide increasing levels of statistical rigor:
 
 - **Simple Backtest** -- Quick, single-timeframe performance check. Runs the strategy on one timeframe and returns metrics only (no trade-level data persisted). Best for rapid iteration during strategy development.
 
 - **Complete Backtest** -- Full production backtest with timeframe remapping, trade-level parquet output, and a sortable trade log. Best for final evaluation before live deployment.
 
 - **Monte Carlo Simulation** -- Statistical stress test. Fits a GJR-GARCH model on historical data, generates thousands of synthetic OHLC price paths, runs the strategy on each, and produces distributional statistics. Best for answering "would this strategy survive under different market conditions?"
+
+- **Monkey Test** -- Statistical edge validation. Generates thousands of random-entry simulations on the real OHLC data and compares the strategy's performance against the random distribution. Best for answering "does my strategy have a real edge, or could a monkey picking random entries do just as well?"
 
 ### Architecture
 
@@ -50,18 +53,18 @@ If either condition fails, the API returns HTTP 422.
 
 ## 2. Comparison Table
 
-| Aspect                  | Simple Backtest          | Complete Backtest         | Monte Carlo Simulation        |
-|-------------------------|--------------------------|---------------------------|-------------------------------|
-| **Mode identifier**     | `simple`                 | `complete`                | `montecarlo`                  |
-| **What it tests**       | Strategy on 1 timeframe  | Strategy on 1 timeframe   | Strategy on N synthetic paths |
-| **Timeframe remapping** | No                       | Yes                       | Yes                           |
-| **Engine flags**        | `--metrics-json`         | `--save --metrics-json`   | MC runner CLI                 |
-| **Trade-level output**  | No (metrics only)        | Yes (trades.parquet)      | No                            |
-| **Output format**       | Single metrics dict      | Metrics + trades list     | Distributional statistics     |
-| **Typical duration**    | 5-30 seconds             | 10-60 seconds             | 5-60 minutes                  |
-| **Subprocess timeout**  | 300s (job_timeout)       | 300s (job_timeout)        | 7200s (2 hours)               |
-| **Frontend view**       | Metrics grid + equity    | Metrics + equity + trades | Scorecard + histograms + risk |
-| **Use case**            | Quick iteration          | Final evaluation          | Statistical robustness check  |
+| Aspect                  | Simple Backtest          | Complete Backtest         | Monte Carlo Simulation        | Monkey Test                          |
+|-------------------------|--------------------------|---------------------------|-------------------------------|--------------------------------------|
+| **Mode identifier**     | `simple`                 | `complete`                | `montecarlo`                  | `monkey`                             |
+| **What it tests**       | Strategy on 1 timeframe  | Strategy on 1 timeframe   | Strategy on N synthetic paths | Strategy vs N random-entry simulations |
+| **Timeframe remapping** | No                       | Yes                       | Yes                           | Yes                                  |
+| **Engine flags**        | `--metrics-json`         | `--save --metrics-json`   | MC runner CLI                 | Monkey runner CLI                    |
+| **Trade-level output**  | No (metrics only)        | Yes (trades.parquet)      | No                            | No (distributions)                   |
+| **Output format**       | Single metrics dict      | Metrics + trades list     | Distributional statistics     | p-value + distribution + percentile  |
+| **Typical duration**    | 5-30 seconds             | 10-60 seconds             | 5-60 minutes                  | 30s-5 minutes                        |
+| **Subprocess timeout**  | 300s (job_timeout)       | 300s (job_timeout)        | 7200s (2 hours)               | 3600s (1 hour)                       |
+| **Frontend view**       | Metrics grid + equity    | Metrics + equity + trades | Scorecard + histograms + risk | p-value badge + histogram + comparison table |
+| **Use case**            | Quick iteration          | Final evaluation          | Statistical robustness check  | Edge validation                      |
 
 ---
 
@@ -781,9 +784,150 @@ The Z-score indicates how many standard deviations the baseline result is from t
 
 ---
 
-## 6. Data Flow Diagrams
+## 6. Monkey Test
 
-### 6.1 Simple Backtest
+### 6.1 What It Does
+
+The Monkey Test answers: **"Could a monkey generating random trades have achieved equal or better results than my strategy?"** It's based on Random Benchmark Testing (Woodriff / Hedge Fund Market Wizards) and distribution of metrics under the null hypothesis (Bailey, López de Prado 2014).
+
+Instead of testing on synthetic price paths (like Monte Carlo), the Monkey Test keeps real prices but randomizes entries. It generates N simulations of random trades that match the strategy's structural parameters (number of trades, holding periods, direction) but with random entry timing. If the strategy can't beat these random simulations, it has no demonstrable edge.
+
+### 6.2 Parameters
+
+| Parameter          | Type     | Default    | Description                                          |
+|--------------------|----------|------------|------------------------------------------------------|
+| `draft_strat_code` | `int`    | required   | The draft strategy code to backtest                  |
+| `symbol`           | `string` | required   | Trading instrument                                   |
+| `timeframe`        | `string` | `"1h"`     | Target timeframe for remapping                       |
+| `start_date`       | `string` | required   | Start date for the backtest window                   |
+| `end_date`         | `string` | required   | End date for the backtest window                     |
+| `mode`             | `string` | `"monkey"` | Must be `"monkey"`                                   |
+| `n_simulations`    | `int`    | `1000`     | Number of random simulations (1000/2500/5000)        |
+| `monkey_mode`      | `string` | `"A"`      | `"A"` (empirical distribution) or `"B"` (always max bars) |
+| `debug`            | `bool`   | `false`    | Save remapped JSON for debugging                     |
+
+### 6.3 The Monkey Definition
+
+The monkey is a synthetic strategy structurally identical to the real strategy in every way except signal logic.
+
+**Parameters inherited from real strategy:**
+
+| Parameter              | Description                            | Why preserved                        |
+|------------------------|----------------------------------------|--------------------------------------|
+| `n_trades`             | Total number of trades                 | Fair comparison -- same market exposure |
+| `direction`            | Long or Short                          | Same directional constraint          |
+| `max_bars`             | Maximum bars a trade can last          | Same temporal horizon                |
+| `holding_distribution` | Empirical distribution of trade durations | Preserves temporal signature      |
+| `period`               | Date range of original backtest        | Same market conditions               |
+
+**Holding period modes:**
+
+- **Mode A (Empirical Distribution)** -- For each monkey trade, duration is sampled with replacement from the real distribution of trade durations. This is the primary/fairest mode: it tests only whether entry timing adds value, keeping everything else equal.
+
+- **Mode B (Always Max Bars)** -- All monkey trades last exactly `max_bars` bars. This is the hardest benchmark: if the strategy beats this mode, the exit logic also adds value beyond simply holding to maximum. Useful for isolating exit signal contribution.
+
+### 6.4 Random Entry Generation
+
+```
+1. Load full OHLC bar universe for the period (at selected timeframe)
+2. Exclude last max_bars bars (so all trades can complete)
+3. For each simulation:
+   a. Shuffle entry candidates
+   b. Pick entries one by one, enforcing no overlap
+      (one open trade at a time, matching real strategy behavior)
+   c. Assign holding period per Mode A or B
+   d. If overlap prevents placing all n_trades,
+      place maximum feasible and emit warning
+4. Compute P&L per trade: (close[exit] - close[entry]) * direction
+5. Build equity curve, compute metrics
+```
+
+### 6.5 The Full Workflow Step-by-Step
+
+```
+Worker receives job -> export draft -> remap timeframe -> validate
+
+Monkey Runner starts:
+  1. Load strategy via ibkr_core StratOBJ
+  2. Run BT_Manager once ("complete" mode) to get real trades
+  3. Extract from trades: n_trades, holding_distribution, max_bars, direction
+  4. Load OHLC close prices from bt.full_data
+  5. For each simulation i = 1..N:
+     a. Generate random entries (section 6.4)
+     b. Compute per-trade P&L from close prices
+     c. Build equity curve
+     d. Calculate metrics: Net Profit, Max Drawdown, Return/DD, Win Rate, Profit Factor
+     e. Store result
+     f. Report progress every 100 simulations
+  6. Aggregate results:
+     - Distribution of each metric across N simulations
+     - Percentile of real strategy within distribution
+     - p-value = proportion of monkeys >= real strategy's Return/DD
+     - Histogram bins for visualization
+  7. Output JSON via ###METRICS_JSON_START### marker
+```
+
+### 6.6 Metrics and Output
+
+**Primary metric: Return/Drawdown** (Net Profit / Max Drawdown)
+
+**Per-simulation metrics:**
+
+| Metric        | Formula                                          |
+|---------------|--------------------------------------------------|
+| Net Profit    | Sum of all trade P&Ls                            |
+| Max Drawdown  | Maximum peak-to-trough of equity curve           |
+| Return/DD     | Net Profit / Max Drawdown                        |
+| Win Rate      | Count(PnL > 0) / Total trades                   |
+| Profit Factor | Sum(winning trades) / abs(Sum(losing trades))    |
+
+**Aggregated output:**
+
+| Field                | Description                                      |
+|----------------------|--------------------------------------------------|
+| `mode`               | "A" or "B"                                       |
+| `n_simulations`      | Number of simulations run                        |
+| `n_trades_requested` | Original trade count from strategy               |
+| `n_trades_actual`    | Actual trades placed (may be reduced)            |
+| `real_strategy`      | Real strategy metrics (5 values)                 |
+| `distribution`       | Array of N values per metric                     |
+| `percentile`         | % of random sims the strategy beats              |
+| `p_value`            | Proportion of sims with Return/DD >= real        |
+| `warnings`           | List of warning messages                         |
+
+### 6.7 Interpreting Results
+
+**p-value thresholds:**
+
+| p-value     | Interpretation                                                  |
+|-------------|-----------------------------------------------------------------|
+| < 0.01      | Very strong edge -- fewer than 1% of monkeys beat you           |
+| 0.01 -- 0.05 | Solid edge -- beats 95-99% of random simulations              |
+| 0.05 -- 0.10 | Weak edge -- grey zone, requires further analysis             |
+| > 0.10      | No evidence of edge -- strategy does not statistically beat random |
+
+**Caveats even if the test passes:**
+- Temporal overfitting: edge existed in that period but not others (complement with walk-forward)
+- Selection bias: if many strategies tested, some pass by luck (apply Bonferroni correction)
+- Market regime: random strategies also struggle in volatile environments
+
+**Practical rule:** A strategy should pass the Monkey Test in at least two distinct time periods before being considered a serious candidate.
+
+### 6.8 Frontend Visualization
+
+The Monkey Test report (`MonkeyTestReport.tsx`) renders inside `BacktestReportDrawer` when mode is `monkey`:
+
+- **P-value Badge** -- Large color-coded badge (green/emerald/amber/red per thresholds) with p-value number, interpretation label, and percentile text
+- **Return/DD Histogram** -- Recharts BarChart showing distribution of Return/DD across all simulations. Bars below real strategy value are gray; bars at/above are highlighted. Green ReferenceLine marks the real strategy's value.
+- **Summary Table** -- Side-by-side comparison: Real Strategy vs Monkey Median (P50) for all 5 metrics, with rank (percentile) per metric
+- **Simulation Info** -- Mode description, simulation count, trades requested/actual
+- **Warnings** -- Yellow alert box if n_trades was reduced due to overlap constraints
+
+---
+
+## 7. Data Flow Diagrams
+
+### 7.1 Simple Backtest
 
 ```
   User (Frontend)                  API                    Worker                  Engine
@@ -826,7 +970,7 @@ The Z-score indicates how many standard deviations the baseline result is from t
   Display metrics grid
 ```
 
-### 6.2 Complete Backtest
+### 7.2 Complete Backtest
 
 ```
   User (Frontend)                  API                    Worker                  Engine
@@ -882,7 +1026,7 @@ The Z-score indicates how many standard deviations the baseline result is from t
   + trades table
 ```
 
-### 6.3 Monte Carlo Simulation
+### 7.3 Monte Carlo Simulation
 
 ```
   User (Frontend)                  API                    Worker               MC Runner
@@ -937,13 +1081,59 @@ The Z-score indicates how many standard deviations the baseline result is from t
   - Confidence intervals
 ```
 
+### 7.4 Monkey Test
+
+```
+  User (Frontend)                  API                    Worker                  Monkey Runner
+  ===============                  ===                    ======                  =============
+
+  POST /api/backtests              Create job
+  { mode: "monkey",  ---------->  (status: pending)
+    strat_code, symbol,            Store in DB
+    timeframe, dates,                  |
+    n_simulations, monkey_mode }       |
+                              Worker polls /pending
+                                       |
+                                  Claim job  <------  GET /pending
+                                (status: running)     PATCH /{id}/claim
+                                       |
+                                       v
+                                  export_draft()
+                                  remap_timeframe()
+                                  validate_remapped_json()
+                                       |
+                                       v
+                                  subprocess.run()  -------->  1. Load strategy (StratOBJ)
+                                  monkey_engine.py             2. Run BT_Manager (complete)
+                                       |                       3. Extract trade params
+                                       |                       4. Load OHLC closes
+                                       |                       5. Run N simulations:
+                                       |                          - Random entries
+                                       |                          - P&L from closes
+                                       |                          - Compute metrics
+                                       |                       6. Aggregate results
+                                  Parse stdout  <-----------  ###METRICS_JSON###
+                                  markers                     { monkey results }
+                                       |
+                                       v
+                                  POST /{id}/results
+                                  { metrics: { monkey: {...} },
+                                    trades: [] }
+                                       |
+                                  (status: completed)
+                                       |
+  GET /api/backtests/{id}  <----  Return job + result
+  Display p-value badge
+  + histogram + summary
+```
+
 ---
 
-## 7. API Endpoints
+## 8. API Endpoints
 
 All endpoints are under the `/api/backtests` prefix and require API key authentication via the `X-API-Key` header.
 
-### 7.1 User-Facing Endpoints
+### 8.1 User-Facing Endpoints
 
 #### Create Backtest Job
 
@@ -963,6 +1153,8 @@ POST /api/backtests
   "mode": "simple",
   "n_paths": null,
   "fit_years": null,
+  "n_simulations": null,
+  "monkey_mode": null,
   "debug": false
 }
 ```
@@ -1005,7 +1197,7 @@ DELETE /api/backtests/{job_id}
 **Constraints:**
 - Cannot delete a `running` job (409 Conflict)
 
-### 7.2 Worker-Internal Endpoints
+### 8.2 Worker-Internal Endpoints
 
 These endpoints are used by the worker process to manage job lifecycle. They share the same API key authentication.
 
@@ -1060,7 +1252,7 @@ PATCH /api/backtests/{job_id}/fail
 
 Transitions a `running` job to `failed`, stores truncated error message (max 2000 chars).
 
-### 7.3 Response Schema
+### 8.3 Response Schema
 
 ```
 BacktestJobResponse:
@@ -1071,9 +1263,11 @@ BacktestJobResponse:
   start_date:        string
   end_date:          string
   status:            "pending" | "running" | "completed" | "failed"
-  mode:              "simple" | "complete" | "montecarlo"
+  mode:              "simple" | "complete" | "montecarlo" | "monkey"
   n_paths:           int | null
   fit_years:         int | null
+  n_simulations:     int | null
+  monkey_mode:       string | null
   error_message:     string | null
   created_at:        datetime
   started_at:        datetime | null
@@ -1083,15 +1277,15 @@ BacktestJobResponse:
 BacktestResultResponse:
   id:         int
   metrics:    dict    (structure depends on mode)
-  trades:     list    (empty for simple/montecarlo, populated for complete)
+  trades:     list    (empty for simple/montecarlo/monkey, populated for complete)
   created_at: datetime
 ```
 
 ---
 
-## 8. Configuration
+## 9. Configuration
 
-### 8.1 Worker Configuration
+### 9.1 Worker Configuration
 
 Worker configuration is loaded from environment variables (or `.env` file in the `worker/` directory):
 
@@ -1107,7 +1301,7 @@ Worker configuration is loaded from environment variables (or `.env` file in the
 | `MC_RUNNER_PATH`        | `packages/montecarlo/runner/main_mc.py`  | Path to Monte Carlo runner entry point   |
 | `WORKER_DEBUG`          | `false`                                  | Enable debug JSON saving globally        |
 
-### 8.2 Monte Carlo Configuration
+### 9.2 Monte Carlo Configuration
 
 Monte Carlo constants are centralized in `packages/montecarlo/config.py` (`MonteCarloConfig` class):
 
@@ -1167,7 +1361,17 @@ Monte Carlo constants are centralized in `packages/montecarlo/config.py` (`Monte
 | `MAX_FAILURE_RATE`           | 0.20    | Warn if > 20% of paths fail                  |
 | `MIN_SUCCESSFUL_PATHS_RATIO` | 0.50    | Minimum ratio of successful paths required   |
 
-### 8.3 Backtest Engine Constants
+### 9.3 Monkey Test Configuration
+
+| Constant                | Default | Description                              |
+|-------------------------|---------|------------------------------------------|
+| `DEFAULT_N_SIMULATIONS` | 1000    | Default simulation count                 |
+| `DEFAULT_MODE`          | `"A"`   | Default holding period mode              |
+| `MONKEY_TIMEOUT`        | 3600    | Subprocess timeout (seconds)             |
+| `PROGRESS_EVERY`        | 100     | Report progress every N simulations      |
+| `HISTOGRAM_BINS`        | 30      | Number of bins for distribution histogram|
+
+### 9.4 Backtest Engine Constants
 
 Exit reason constants defined in `_00_constants.py`:
 
@@ -1182,7 +1386,7 @@ Exit reason constants defined in `_00_constants.py`:
 | `ExitReason.BACKTEST_END`| `"backtest_end"` | Forced close at period end |
 | `ExitReason.MARGIN_CALL`| `"margin_call"` | Insufficient margin         |
 
-### 8.4 Position Sizing Modes
+### 9.5 Position Sizing Modes
 
 The backtest engine supports three position sizing modes, configured via the strategy draft:
 
@@ -1194,7 +1398,7 @@ The backtest engine supports three position sizing modes, configured via the str
 
 All modes respect the optional `max_volume` cap. Modes `rpo` and `half_kelly` require `initial_equity` to be set.
 
-### 8.5 Supported Timeframes
+### 9.6 Supported Timeframes
 
 The engine supports the following timeframes for resampling from 1-minute data:
 
