@@ -190,6 +190,24 @@ def run_monkey_test(
     from generator import generate_random_entries  # noqa: E402
     from simulator import simulate_one  # noqa: E402
 
+    # Early exit: check if ANY trades can be placed
+    available_bars = n_bars - max_bars - 1
+    if available_bars < 1:
+        print(f"[MonkeyTest] ERROR: Period too short — {n_bars} bars available, "
+              f"need at least {max_bars + 2} for one trade. Skipping simulations.",
+              flush=True)
+        return {
+            "error": f"Period too short: {n_bars} bars, need >= {max_bars + 2}",
+            "real_strategy": real_metrics,
+            "n_simulations": 0,
+            "sim_results": [],
+            "warnings": [f"Zero valid entry bars ({n_bars} bars, max_bars={max_bars})"],
+            "percentile": None,
+            "p_value": None,
+            "n_trades_requested": n_trades,
+            "n_trades_actual": 0,
+        }
+
     rng = np.random.default_rng(seed)
 
     sim_results: List[Dict[str, float]] = []

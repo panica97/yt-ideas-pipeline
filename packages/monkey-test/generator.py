@@ -48,9 +48,9 @@ def generate_random_entries(
     if last_valid < 0:
         return []
 
-    # Candidate bar indices for entry
-    candidates = np.arange(0, last_valid + 1)
-    rng.shuffle(candidates)
+    # Candidate bar indices for entry — sample a subset instead of shuffling all
+    sample_size = min(n_trades * 3, last_valid + 1)  # 3x buffer for overlap losses
+    candidates = rng.choice(np.arange(0, last_valid + 1), size=sample_size, replace=False)
 
     holding_arr = np.asarray(holding_distribution, dtype=np.int64)
 
