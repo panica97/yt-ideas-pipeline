@@ -1,4 +1,4 @@
-export type BacktestMode = 'simple' | 'complete' | 'montecarlo' | 'monkey';
+export type BacktestMode = 'simple' | 'complete' | 'montecarlo' | 'monkey' | 'stress';
 
 export interface BacktestTradeComplete {
   entry_date: string;
@@ -178,6 +178,10 @@ export interface BacktestJob {
   fit_years?: number;
   n_simulations?: number;
   monkey_mode?: string;
+  stress_test_name?: string;
+  stress_param_overrides?: Record<string, any>;
+  stress_single_overrides?: Record<string, any>;
+  stress_max_parallel?: number;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -198,6 +202,10 @@ export interface BacktestJobSummary {
   fit_years?: number;
   n_simulations?: number;
   monkey_mode?: string;
+  stress_test_name?: string;
+  stress_param_overrides?: Record<string, any>;
+  stress_single_overrides?: Record<string, any>;
+  stress_max_parallel?: number;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -220,6 +228,10 @@ export interface CreateBacktestParams {
   fit_years?: number;
   n_simulations?: number;
   monkey_mode?: string;
+  stress_test_name?: string;
+  stress_param_overrides?: Record<string, any>;
+  stress_single_overrides?: Record<string, any>;
+  stress_max_parallel?: number;
   debug?: boolean;
 }
 
@@ -246,4 +258,38 @@ export interface MonkeyTestMetrics {
   percentile: number;
   p_value: number;
   warnings: string[];
+}
+
+export interface StressTestVariation {
+  name: string;
+  params: Record<string, number>;
+  metrics: Record<string, number>;
+  status: 'completed' | 'failed';
+  test_type: 'multi' | 'single';
+  single_param?: string;
+}
+
+export interface StressTestRobustness {
+  profitable_pct: number;
+  positive_sharpe_pct: number;
+  low_drawdown_pct: number;
+  score: number;
+}
+
+export interface StressTestMetrics {
+  summary: {
+    total_variations: number;
+    completed: number;
+    failed: number;
+    duration_seconds: number;
+  };
+  robustness: StressTestRobustness;
+  variations: StressTestVariation[];
+  multi_variations: StressTestVariation[];
+  single_variations: Record<string, StressTestVariation[]>;
+  config?: {
+    strategy_id: number;
+    test_type: string;
+    param_ranges: Record<string, number[]>;
+  };
 }

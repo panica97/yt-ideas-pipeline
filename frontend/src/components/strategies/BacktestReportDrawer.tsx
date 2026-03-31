@@ -6,8 +6,9 @@ import {
   BarChart, Bar, Cell, ReferenceLine,
 } from 'recharts';
 import { getBacktest } from '../../services/backtests';
-import type { BacktestTradeComplete, BacktestMetrics, MonteCarloMetrics, MCDistribution, MCBaselineMetrics, MonkeyTestMetrics } from '../../types/backtest';
+import type { BacktestTradeComplete, BacktestMetrics, MonteCarloMetrics, MCDistribution, MCBaselineMetrics, MonkeyTestMetrics, StressTestMetrics } from '../../types/backtest';
 import MonkeyTestReport from './MonkeyTestReport';
+import StressTestReport from './StressTestReport';
 
 interface BacktestReportDrawerProps {
   jobId: number;
@@ -909,9 +910,11 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
 
   const isMC = job?.mode === 'montecarlo';
   const isMonkey = job?.mode === 'monkey';
+  const isStress = job?.mode === 'stress';
   const metrics = job?.result?.metrics as BacktestMetrics | undefined;
   const mcMetrics = isMC ? (job?.result?.metrics as unknown as MonteCarloMetrics | undefined) : undefined;
   const monkeyMetrics = isMonkey ? (job?.result?.metrics as unknown as MonkeyTestMetrics | undefined) : undefined;
+  const stressMetrics = isStress ? (job?.result?.metrics as unknown as StressTestMetrics | undefined) : undefined;
   const trades = (job?.result?.trades ?? []) as unknown as BacktestTradeComplete[];
 
 
@@ -929,7 +932,7 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
         <div className="sticky top-0 z-10 bg-surface-0 border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-text-primary">
-              {isMonkey ? 'Monkey Test Report' : isMC ? 'Monte Carlo Report' : 'Backtest Report'}
+              {isStress ? 'Stress Test Report' : isMonkey ? 'Monkey Test Report' : isMC ? 'Monte Carlo Report' : 'Backtest Report'}
               {job && (
                 <span className="ml-2 text-sm font-normal text-text-muted">
                   #{job.id}
@@ -944,6 +947,12 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
                 )}
                 {isMonkey && job.n_simulations && (
                   <span> &middot; {job.n_simulations} simulations &middot; Mode {job.monkey_mode ?? '?'}</span>
+                )}
+                {isStress && stressMetrics && (
+                  <span>
+                    {job.stress_test_name && <span> &middot; {job.stress_test_name}</span>}
+                    <span> &middot; {stressMetrics.summary.total_variations} variations</span>
+                  </span>
                 )}
               </p>
             )}
@@ -960,6 +969,8 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
         <div className="p-6 space-y-6">
           {!job?.result ? (
             <p className="text-sm text-text-muted italic">Loading report data...</p>
+          ) : isStress && stressMetrics ? (
+            <StressTestReport stress={stressMetrics} />
           ) : isMonkey && monkeyMetrics ? (
             <MonkeyTestReport monkey={monkeyMetrics} />
           ) : isMC && mcMetrics ? (

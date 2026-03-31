@@ -68,6 +68,10 @@ async def create_job(
         fit_years=getattr(body, "fit_years", None),
         n_simulations=getattr(body, "n_simulations", None),
         monkey_mode=getattr(body, "monkey_mode", None),
+        stress_test_name=getattr(body, "stress_test_name", None),
+        stress_param_overrides=getattr(body, "stress_param_overrides", None),
+        stress_single_overrides=getattr(body, "stress_single_overrides", None),
+        stress_max_parallel=getattr(body, "stress_max_parallel", None),
         debug=getattr(body, "debug", False),
     )
     db.add(job)

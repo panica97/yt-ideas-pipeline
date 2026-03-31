@@ -7,7 +7,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-BacktestMode = Literal["simple", "complete", "montecarlo", "monkey"]
+BacktestMode = Literal["simple", "complete", "montecarlo", "monkey", "stress"]
 
 
 class BacktestCreateRequest(BaseModel):
@@ -21,6 +21,10 @@ class BacktestCreateRequest(BaseModel):
     fit_years: Optional[int] = None
     n_simulations: Optional[int] = None    # for monkey mode
     monkey_mode: Optional[str] = None      # "A" or "B"
+    stress_test_name: Optional[str] = None
+    stress_param_overrides: Optional[dict] = None
+    stress_single_overrides: Optional[dict] = None
+    stress_max_parallel: Optional[int] = None
     debug: bool = False
 
 
@@ -46,6 +50,10 @@ class BacktestJobResponse(BaseModel):
     fit_years: int | None = None
     n_simulations: int | None = None
     monkey_mode: str | None = None
+    stress_test_name: str | None = None
+    stress_param_overrides: dict | None = None
+    stress_single_overrides: dict | None = None
+    stress_max_parallel: int | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None
@@ -68,6 +76,10 @@ class BacktestJobSummary(BaseModel):
     fit_years: int | None = None
     n_simulations: int | None = None
     monkey_mode: str | None = None
+    stress_test_name: str | None = None
+    stress_param_overrides: dict | None = None
+    stress_single_overrides: dict | None = None
+    stress_max_parallel: int | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None

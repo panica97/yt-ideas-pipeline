@@ -4,7 +4,7 @@ This module ties together the bridge (draft export), engine (subprocess run),
 and result reporting (HTTP calls back to the IRT API). It handles cleanup
 and error reporting so the main poll loop stays clean.
 
-Supports four modes:
+Supports five modes:
 - **simple**: Engine runs with --metrics-json only (unchanged).
 - **complete**: Bridge remaps timeframe, engine runs with --save --metrics-json,
   worker reads trades.parquet and posts trades alongside metrics.
@@ -12,6 +12,8 @@ Supports four modes:
   N paths and returns summary metrics. No trades parquet produced.
 - **monkey**: Bridge remaps timeframe, monkey-test runner generates N random-entry
   simulations and compares to the real strategy. No trades parquet produced.
+- **stress**: Bridge remaps timeframe, stress-test runner sweeps parameter
+  variations and returns robustness metrics. No trades parquet produced.
 """
 
 import json
@@ -26,6 +28,7 @@ from worker.config import Config
 from worker.engine import run_engine
 from worker.mc_engine import run_montecarlo
 from worker.monkey_engine import run_monkey_test
+from worker.stress_engine import run_stress_test
 
 logger = logging.getLogger("irt-worker.executor")
 
@@ -193,6 +196,7 @@ def execute_backtest_job(job: dict, config: Config) -> None:
     is_complete = mode == "complete"
     is_montecarlo = mode == "montecarlo"
     is_monkey = mode == "monkey"
+    is_stress = mode == "stress"
     start_time = time.time()
 
     strategies_path: str | None = None
@@ -203,7 +207,7 @@ def execute_backtest_job(job: dict, config: Config) -> None:
         strategies_path = export_draft_to_file(job, config)
 
         # 2. Timeframe remapping (complete, montecarlo, and monkey modes)
-        if is_complete or is_montecarlo or is_monkey:
+        if is_complete or is_montecarlo or is_monkey or is_stress:
             target_tf = job.get("timeframe", "")
             if not target_tf:
                 raise ValueError(f"{mode} mode requires a timeframe in the job")
@@ -239,6 +243,9 @@ def execute_backtest_job(job: dict, config: Config) -> None:
         elif is_monkey:
             metrics = run_monkey_test(job, strategies_path, config)
             trades = []  # Monkey test doesn't produce trades
+        elif is_stress:
+            metrics = run_stress_test(job, strategies_path, config)
+            trades = []  # Stress test doesn't produce individual trades
         else:
             metrics = run_engine(
                 job, strategies_path, config, save=is_complete

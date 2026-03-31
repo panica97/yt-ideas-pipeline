@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText, Shuffle, Bug } from 'lucide-react';
+import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText, Shuffle, Bug, SlidersHorizontal } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { createBacktest, getBacktestsByDraft, getBacktest, deleteBacktest } from '../../services/backtests';
 import type { BacktestJobSummary, BacktestMetrics, BacktestTrade, BacktestMode } from '../../types/backtest';
@@ -270,6 +270,7 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
   const isCompleteMode = job.mode === 'complete';
   const isMCMode = job.mode === 'montecarlo';
   const isMonkeyMode = job.mode === 'monkey';
+  const isStressMode = job.mode === 'stress';
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
@@ -293,11 +294,16 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
             Monkey Test
           </span>
         )}
+        {isStressMode && (
+          <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded px-1 py-0.5 font-medium">
+            Stress Test
+          </span>
+        )}
         <span className="text-xs text-text-secondary flex-1">
           {job.symbol} &middot; {job.timeframe} &middot; {job.start_date} &rarr; {job.end_date}
         </span>
         <span className="text-xs text-text-muted">{formatRelativeTime(job.created_at)}</span>
-        {job.status === 'completed' && (isCompleteMode || isMCMode || isMonkeyMode) && (
+        {job.status === 'completed' && (isCompleteMode || isMCMode || isMonkeyMode || isStressMode) && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -329,7 +335,7 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
 
       {expanded && (
         <div className="px-3 pb-3 bg-surface-1/20">
-          {job.status === 'completed' && job.mode !== 'montecarlo' && job.mode !== 'monkey' && (
+          {job.status === 'completed' && job.mode !== 'montecarlo' && job.mode !== 'monkey' && job.mode !== 'stress' && (
             <JobResultsView jobId={job.id} />
           )}
           {job.status === 'completed' && job.mode === 'montecarlo' && (
@@ -337,6 +343,9 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
           )}
           {job.status === 'completed' && job.mode === 'monkey' && (
             <p className="mt-2 text-xs text-text-muted italic">Click "Report" to view Monkey Test results.</p>
+          )}
+          {job.status === 'completed' && job.mode === 'stress' && (
+            <p className="mt-2 text-xs text-text-muted italic">Click "Report" to view Stress Test results.</p>
           )}
           {job.status === 'failed' && job.error_message && (
             <div className="mt-2 flex items-start gap-2 bg-danger/10 border border-danger/20 rounded p-2">
@@ -384,6 +393,10 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
   const [formError, setFormError] = useState<string | null>(null);
   const [monkeyMode, setMonkeyMode] = useState<string>('A');
   const [nSimulations, setNSimulations] = useState<number>(1000);
+  const [stressTestName, setStressTestName] = useState<string>('');
+  const [stressParamOverrides, setStressParamOverrides] = useState<string>('{}');
+  const [stressSingleOverrides, setStressSingleOverrides] = useState<string>('{}');
+  const [stressMaxParallel, setStressMaxParallel] = useState<number>(4);
   const [selectedReportJobId, setSelectedReportJobId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
@@ -465,15 +478,39 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
       return;
     }
 
+    // Validate stress JSON before submitting
+    let parsedParamOverrides: Record<string, any> | undefined;
+    let parsedSingleOverrides: Record<string, any> | undefined;
+    if (backtestMode === 'stress') {
+      try {
+        parsedParamOverrides = JSON.parse(stressParamOverrides);
+      } catch {
+        setFormError('Invalid JSON in Parameter Overrides');
+        return;
+      }
+      try {
+        parsedSingleOverrides = JSON.parse(stressSingleOverrides);
+      } catch {
+        setFormError('Invalid JSON in Single Overrides');
+        return;
+      }
+    }
+
     createMutation.mutate({
       draft_strat_code: stratCode,
       symbol: symbol.trim(),
-      timeframe: (backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey') ? selectedTimeframe : (primaryTimeframe ?? '1h'),
+      timeframe: (backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey' || backtestMode === 'stress') ? selectedTimeframe : (primaryTimeframe ?? '1h'),
       start_date: startDate,
       end_date: endDate,
       mode: backtestMode,
       ...(backtestMode === 'montecarlo' && { n_paths: nPaths, fit_years: fitYears }),
       ...(backtestMode === 'monkey' && { n_simulations: nSimulations, monkey_mode: monkeyMode }),
+      ...(backtestMode === 'stress' && {
+        stress_test_name: stressTestName || undefined,
+        stress_param_overrides: parsedParamOverrides,
+        stress_single_overrides: parsedSingleOverrides,
+        stress_max_parallel: stressMaxParallel,
+      }),
     });
   };
 
@@ -540,6 +577,17 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             <Bug size={12} />
             Monkey Test
           </button>
+          <button
+            onClick={() => setBacktestMode('stress')}
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors ${
+              backtestMode === 'stress'
+                ? 'bg-rose-600 text-white'
+                : 'bg-surface-2 text-text-muted'
+            }`}
+          >
+            <SlidersHorizontal size={12} />
+            Stress Test
+          </button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -577,7 +625,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </div>
         </div>
 
-        {(backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey') && (
+        {(backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey' || backtestMode === 'stress') && (
           <div>
             <label className="block text-xs text-text-muted mb-1">Timeframe</label>
             <select
@@ -649,6 +697,53 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </div>
         )}
 
+        {backtestMode === 'stress' && (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs text-text-muted mb-1">Test Name</label>
+                <input
+                  type="text"
+                  value={stressTestName}
+                  onChange={(e) => setStressTestName(e.target.value)}
+                  className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                  placeholder="e.g. rsi_period_sweep"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-text-muted mb-1">Max Parallel</label>
+                <select
+                  value={stressMaxParallel}
+                  onChange={(e) => setStressMaxParallel(parseInt(e.target.value))}
+                  className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value={1}>1</option>
+                  <option value={2}>2</option>
+                  <option value={4}>4</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-text-muted mb-1">Parameter Overrides (JSON)</label>
+              <textarea
+                value={stressParamOverrides}
+                onChange={(e) => setStressParamOverrides(e.target.value)}
+                className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent font-mono h-20 resize-y"
+                placeholder='{"ind_list.1 day.0.period": {"min": 5, "max": 30, "step": 5}}'
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-text-muted mb-1">Single Overrides (JSON)</label>
+              <textarea
+                value={stressSingleOverrides}
+                onChange={(e) => setStressSingleOverrides(e.target.value)}
+                className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent font-mono h-20 resize-y"
+                placeholder='{}'
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleSubmit}
@@ -663,7 +758,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             ) : (
               <>
                 <Play size={12} />
-                {backtestMode === 'montecarlo' ? 'Run Monte Carlo' : backtestMode === 'monkey' ? 'Run Monkey Test' : 'Run Backtest'}
+                {backtestMode === 'montecarlo' ? 'Run Monte Carlo' : backtestMode === 'monkey' ? 'Run Monkey Test' : backtestMode === 'stress' ? 'Run Stress Test' : 'Run Backtest'}
               </>
             )}
           </button>

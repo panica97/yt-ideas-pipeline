@@ -218,6 +218,10 @@ class BacktestJob(Base, TimestampMixin):
     fit_years: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     n_simulations: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     monkey_mode: Mapped[Optional[str]] = mapped_column(String(5), nullable=True)
+    stress_test_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    stress_param_overrides: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    stress_single_overrides: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    stress_max_parallel: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     debug: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(
