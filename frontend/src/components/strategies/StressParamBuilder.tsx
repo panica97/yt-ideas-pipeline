@@ -46,6 +46,9 @@ function extractParams(draftData: any): ParamConfig[] {
     for (const [timeframe, indicators] of Object.entries(indList)) {
       if (!Array.isArray(indicators)) continue;
       indicators.forEach((ind: any, idx: number) => {
+        // Skip PRICE-type indicators — their period is not a meaningful tunable parameter
+        const indType = (ind.indicator || '').toUpperCase();
+        if (indType === 'PRICE' || indType === 'DATA') return;
         // period can be at ind.period or ind.params.timePeriod_1
         const indCode = ind.params?.indCode || ind.indCode || `Indicator ${idx}`;
         const period = ind.period ?? ind.params?.timePeriod_1;
