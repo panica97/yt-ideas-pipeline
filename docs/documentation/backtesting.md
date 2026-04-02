@@ -966,7 +966,7 @@ Parameters are identified by dot-path notation into the strategy JSON. The visua
 
 | Category        | JSON Location                                   | Example Path                                  | What it controls               |
 |-----------------|-------------------------------------------------|-----------------------------------------------|--------------------------------|
-| Indicators      | `ind_list.{tf}.{idx}.params.timePeriod_1`       | `ind_list.1 day.0.params.timePeriod_1`        | Indicator period (e.g., RSI 14)|
+| Indicators      | `ind_list.{tf}.{idx}.params.timePeriod_1`       | `ind_list.1 day.0.params.timePeriod_1`        | Indicator period (e.g., RSI 14). PRICE and DATA type indicators are excluded -- their period is not a meaningful tunable parameter.|
 | Conditions      | `long_conds.{idx}.cond` (num_relation type)     | `long_conds.2.cond_value`                     | Entry threshold (e.g., RSI < 70)|
 | Exit            | `exit_conds.{idx}.cond` (num_bars type)         | `exit_conds.0.cond`                           | Time exit bars                 |
 | Risk Management | `stop_loss_init.{type}_params.{key}`            | `stop_loss_init.pips_params.pip_value`        | SL/TP, trailing, breakeven     |
