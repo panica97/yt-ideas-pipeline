@@ -5,13 +5,14 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, Cell, ReferenceLine,
 } from 'recharts';
-import { getBacktest } from '../../services/backtests';
-import type { BacktestTradeComplete, BacktestMetrics, MonteCarloMetrics, MCDistribution, MCBaselineMetrics, MonkeyTestMetrics, StressTestMetrics } from '../../types/backtest';
+import { getBacktest, getPipelineStatus } from '../../services/backtests';
+import type { BacktestTradeComplete, BacktestMetrics, MonteCarloMetrics, MCDistribution, MCBaselineMetrics, MonkeyTestMetrics, StressTestMetrics, StressTestRobustness, StressTestVariation, BacktestJob } from '../../types/backtest';
 import MonkeyTestReport from './MonkeyTestReport';
 import StressTestReport from './StressTestReport';
 
 interface BacktestReportDrawerProps {
   jobId: number;
+  pipelineGroupId?: string;
   open: boolean;
   onClose: () => void;
 }
@@ -902,13 +903,176 @@ function MonteCarloReport({ mc }: { mc: MonteCarloMetrics }) {
   );
 }
 
+// ─── Stress metrics normalizer ──────────────────────────────────────
+// The backend runner returns a flat structure (robustness, all_results,
+// multi_grid, single_sweeps, etc.) while StressTestReport expects
+// a StressTestMetrics shape (summary, variations, multi_variations,
+// single_variations, config).  This function bridges the two.
+
+function normalizeStressMetrics(raw: Record<string, unknown>): StressTestMetrics {
+  // Map variation status: backend uses "ok"/"error", frontend uses "completed"/"failed"
+  function mapVariation(v: Record<string, unknown>, testType: 'multi' | 'single', singleParam?: string): StressTestVariation {
+    return {
+      name: (v.name as string) ?? '',
+      params: (v.params as Record<string, number>) ?? {},
+      metrics: (v.metrics as Record<string, number>) ?? {},
+      status: v.status === 'ok' ? 'completed' : 'failed',
+      test_type: testType,
+      single_param: singleParam,
+    };
+  }
+
+  // all_results contains every variation (both multi-grid and single-sweep)
+  const allResults = (raw.all_results as Record<string, unknown>[]) ?? [];
+  const variations: StressTestVariation[] = allResults.map(v => {
+    const sweepParam = v._sweep_param as string | undefined;
+    return mapVariation(v, sweepParam ? 'single' : 'multi', sweepParam);
+  });
+
+  // multi_grid.results
+  const multiGrid = (raw.multi_grid as Record<string, unknown>) ?? {};
+  const multiResults = (multiGrid.results as Record<string, unknown>[]) ?? [];
+  const multi_variations: StressTestVariation[] = multiResults.map(v => mapVariation(v, 'multi'));
+
+  // single_sweeps: { param_name: { results: [...] } }
+  const singleSweeps = (raw.single_sweeps as Record<string, Record<string, unknown>>) ?? {};
+  const single_variations: Record<string, StressTestVariation[]> = {};
+  for (const [paramName, sweep] of Object.entries(singleSweeps)) {
+    const results = (sweep.results as Record<string, unknown>[]) ?? [];
+    single_variations[paramName] = results.map(v => mapVariation(v, 'single', paramName));
+  }
+
+  // Build summary from top-level fields
+  const summary = {
+    total_variations: (raw.total_variations as number) ?? 0,
+    completed: (raw.successful_variations as number) ?? 0,
+    failed: (raw.failed_variations as number) ?? 0,
+    duration_seconds: (raw.duration_seconds as number) ?? 0,
+  };
+
+  // Robustness (already matches the expected shape)
+  const robustness = (raw.robustness as StressTestRobustness) ?? {
+    profitable_pct: 0,
+    positive_sharpe_pct: 0,
+    low_drawdown_pct: 0,
+    score: 0,
+  };
+
+  // Config
+  const config = {
+    strategy_id: (raw.strategy_id as number) ?? 0,
+    test_type: (raw.test_type as string) ?? 'multi_param',
+    param_ranges: (raw.param_ranges as Record<string, number[]>) ?? {},
+    base_params: undefined as Record<string, number> | undefined,
+  };
+
+  return {
+    summary,
+    robustness,
+    variations,
+    multi_variations,
+    single_variations,
+    config,
+  };
+}
+
+// ─── Pipeline Section Component ─────────────────────────────────────
+
+function PipelineSectionReport({ job }: { job: BacktestJob }) {
+  const rawMetrics = job.result?.metrics as unknown;
+  const isObj = rawMetrics != null && typeof rawMetrics === 'object';
+  const metrics = rawMetrics as BacktestMetrics | undefined;
+  const trades = (job.result?.trades ?? []) as unknown as BacktestTradeComplete[];
+
+  if (job.status === 'failed') {
+    return (
+      <div className="flex items-start gap-2 bg-danger/10 border border-danger/20 rounded p-3">
+        <X size={14} className="text-danger mt-0.5 shrink-0" />
+        <p className="text-xs text-danger">{job.error_message ?? 'Job failed'}</p>
+      </div>
+    );
+  }
+
+  if (job.status !== 'completed' || !job.result) {
+    return (
+      <p className="text-xs text-text-muted italic">
+        {job.status === 'running' ? 'Running...' : 'Pending...'}
+      </p>
+    );
+  }
+
+  if (job.mode === 'montecarlo') {
+    const mcMetrics = (isObj && 'raw_metrics' in (rawMetrics as object))
+      ? (rawMetrics as unknown as MonteCarloMetrics) : undefined;
+    if (mcMetrics) return <MonteCarloReport mc={mcMetrics} />;
+  }
+
+  if (job.mode === 'monkey') {
+    const monkeyMetrics = (isObj && 'strategy_results' in (rawMetrics as object))
+      ? (rawMetrics as unknown as MonkeyTestMetrics) : undefined;
+    if (monkeyMetrics) return <MonkeyTestReport monkey={monkeyMetrics} />;
+  }
+
+  if (job.mode === 'stress') {
+    // Detect raw stress data: backend returns 'robustness' at top level (not 'summary')
+    const hasStressData = isObj && ('robustness' in (rawMetrics as object) || 'summary' in (rawMetrics as object));
+    if (hasStressData) {
+      // If already normalized (has 'summary'), use as-is; otherwise normalize from raw backend format
+      const stressMetrics = 'summary' in (rawMetrics as object)
+        ? (rawMetrics as unknown as StressTestMetrics)
+        : normalizeStressMetrics(rawMetrics as Record<string, unknown>);
+      return <StressTestReport stress={stressMetrics} />;
+    }
+  }
+
+  // Default: backtest (complete mode)
+  return (
+    <>
+      {metrics && <ExtendedMetricsGrid metrics={metrics} trades={trades} />}
+      <ReportEquityCurve trades={trades} />
+      <TradesTable trades={trades} />
+    </>
+  );
+}
+
 // ─── Main Drawer ─────────────────────────────────────────────────────
 
-export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestReportDrawerProps) {
+export default function BacktestReportDrawer({ jobId, pipelineGroupId, open, onClose }: BacktestReportDrawerProps) {
+  const isPipeline = !!pipelineGroupId;
+
   const { data: job } = useQuery({
     queryKey: ['backtest', jobId],
     queryFn: () => getBacktest(jobId),
-    enabled: open,
+    enabled: open && !isPipeline,
+  });
+
+  // Pipeline mode: fetch all pipeline jobs with full results
+  const { data: pipelineStatus } = useQuery({
+    queryKey: ['pipeline', pipelineGroupId],
+    queryFn: () => getPipelineStatus(pipelineGroupId!),
+    enabled: open && isPipeline,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'completed' || status === 'failed') return false;
+      return 3000;
+    },
+  });
+
+  // Fetch full job details for each pipeline job (to get results)
+  const pipelineJobIds = pipelineStatus?.jobs.map((j) => j.id) ?? [];
+  const pipelineJobQueries = useQuery({
+    queryKey: ['pipeline-jobs', pipelineGroupId, pipelineJobIds],
+    queryFn: async () => {
+      const results = await Promise.all(pipelineJobIds.map((id) => getBacktest(id)));
+      return results;
+    },
+    enabled: open && isPipeline && pipelineJobIds.length > 0,
+    refetchInterval: (query) => {
+      const jobs = query.state.data;
+      if (!jobs) return 3000;
+      const hasActive = jobs.some((j) => j.status === 'pending' || j.status === 'running');
+      return hasActive ? 3000 : false;
+    },
   });
 
   // Lock body scroll when open
@@ -940,12 +1104,75 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
 
   if (!open) return null;
 
+  // Pipeline mode rendering
+  if (isPipeline) {
+    const pipelineJobs = pipelineJobQueries.data ?? [];
+    const modeOrder = ['complete', 'montecarlo', 'monkey', 'stress'];
+    const modeLabels: Record<string, string> = { complete: 'Backtest', montecarlo: 'Monte Carlo', monkey: 'Monkey Test', stress: 'Stress Test' };
+    const modeBorderColors: Record<string, string> = { complete: 'border-accent', montecarlo: 'border-purple-500', monkey: 'border-orange-500', stress: 'border-rose-500' };
+    const sortedPipelineJobs = [...pipelineJobs].sort((a, b) => modeOrder.indexOf(a.mode) - modeOrder.indexOf(b.mode));
+    const firstJob = sortedPipelineJobs[0];
+
+    const overallStatus = pipelineStatus?.status ?? 'pending';
+    const statusColor = overallStatus === 'completed' ? 'text-green-400' : overallStatus === 'failed' ? 'text-red-400' : overallStatus === 'running' ? 'text-accent' : 'text-text-muted';
+
+    return (
+      <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="absolute inset-0 bg-black/50 transition-opacity" onClick={onClose} />
+        <div className="relative w-4/5 max-w-[1400px] h-full bg-surface-0 border-l border-border shadow-2xl overflow-y-auto animate-slide-in-right">
+          {/* Header */}
+          <div className="sticky top-0 z-10 bg-surface-0 border-b border-border px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-text-primary">
+                Pipeline Report
+                <span className={`ml-2 text-sm font-medium ${statusColor}`}>
+                  ({overallStatus})
+                </span>
+              </h2>
+              {firstJob && (
+                <p className="text-xs text-text-muted mt-1">
+                  {firstJob.symbol} &middot; {firstJob.timeframe} &middot; {firstJob.start_date} &rarr; {firstJob.end_date}
+                  &middot; {sortedPipelineJobs.length} steps
+                </p>
+              )}
+            </div>
+            <button onClick={onClose} className="p-2 text-text-muted hover:text-text-primary transition-colors rounded hover:bg-surface-2">
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 space-y-8">
+            {pipelineJobs.length === 0 ? (
+              <p className="text-sm text-text-muted italic">Loading pipeline data...</p>
+            ) : (
+              sortedPipelineJobs.map((pJob) => (
+                <div key={pJob.id} className={`border-l-4 ${modeBorderColors[pJob.mode] ?? 'border-border'} pl-4 space-y-4`}>
+                  <h3 className="text-sm font-bold text-text-primary">
+                    {modeLabels[pJob.mode] ?? pJob.mode}
+                    <span className={`ml-2 text-xs font-medium ${
+                      pJob.status === 'completed' ? 'text-green-400'
+                      : pJob.status === 'failed' ? 'text-red-400'
+                      : pJob.status === 'running' ? 'text-accent'
+                      : 'text-text-muted'
+                    }`}>
+                      ({pJob.status})
+                    </span>
+                  </h3>
+                  <PipelineSectionReport job={pJob} />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Single-job mode (existing behavior)
   const isMC = job?.mode === 'montecarlo';
   const isMonkey = job?.mode === 'monkey';
   const isStress = job?.mode === 'stress';
-  // The metrics JSONB column is typed as BacktestMetrics but the actual shape
-  // depends on mode (montecarlo, monkey, stress each return different structures).
-  // We cast to unknown first, then apply runtime type guards (M-04 audit_05 fix).
   const rawMetrics = job?.result?.metrics as unknown;
   const metrics = rawMetrics as BacktestMetrics | undefined;
 
@@ -954,10 +1181,12 @@ export default function BacktestReportDrawer({ jobId, open, onClose }: BacktestR
     ? (rawMetrics as unknown as MonteCarloMetrics) : undefined;
   const monkeyMetrics = (isMonkey && isObj && 'strategy_results' in (rawMetrics as object))
     ? (rawMetrics as unknown as MonkeyTestMetrics) : undefined;
-  const stressMetrics = (isStress && isObj && 'summary' in (rawMetrics as object))
-    ? (rawMetrics as unknown as StressTestMetrics) : undefined;
+  const stressMetrics = (isStress && isObj && ('robustness' in (rawMetrics as object) || 'summary' in (rawMetrics as object)))
+    ? ('summary' in (rawMetrics as object)
+        ? (rawMetrics as unknown as StressTestMetrics)
+        : normalizeStressMetrics(rawMetrics as Record<string, unknown>))
+    : undefined;
   const trades = (job?.result?.trades ?? []) as unknown as BacktestTradeComplete[];
-
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

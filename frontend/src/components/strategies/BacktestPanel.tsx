@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
-import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText, Shuffle, Bug, SlidersHorizontal } from 'lucide-react';
+import { Play, Trash2, ChevronDown, ChevronUp, AlertCircle, Loader2, Info, TrendingUp, FileText, Shuffle, Bug, SlidersHorizontal, Layers, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { createBacktest, getBacktestsByDraft, getBacktest, deleteBacktest } from '../../services/backtests';
-import type { BacktestJobSummary, BacktestMetrics, BacktestTrade, BacktestMode } from '../../types/backtest';
+import type { BacktestJobSummary, BacktestMetrics, BacktestTrade, BacktestMode, PipelineConfig } from '../../types/backtest';
 import type { Instrument } from '../../types/instrument';
 import BacktestReportDrawer from './BacktestReportDrawer';
 import StressParamBuilder from './StressParamBuilder';
@@ -373,6 +373,101 @@ function JobItem({ job, onDelete, onViewReport }: { job: BacktestJobSummary; onD
   );
 }
 
+const PIPELINE_STEP_LABELS: Record<string, string> = {
+  complete: 'BT',
+  montecarlo: 'MC',
+  monkey: 'Monkey',
+  stress: 'Stress',
+};
+
+function PipelineStepIcon({ status }: { status: string }) {
+  switch (status) {
+    case 'completed':
+      return <CheckCircle2 size={12} className="text-green-400" />;
+    case 'running':
+      return <Loader2 size={12} className="text-accent animate-spin" />;
+    case 'failed':
+      return <XCircle size={12} className="text-danger" />;
+    default:
+      return <Clock size={12} className="text-text-muted" />;
+  }
+}
+
+function PipelineStatusRow({
+  jobs,
+  onViewReport,
+  onDelete,
+}: {
+  jobs: BacktestJobSummary[];
+  onViewReport: (groupId: string) => void;
+  onDelete: (id: number) => void;
+}) {
+  const firstJob = jobs[0];
+  if (!firstJob) return null;
+
+  const statuses = jobs.map((j) => j.status);
+  const overallStatus = statuses.some((s) => s === 'failed')
+    ? 'failed'
+    : statuses.every((s) => s === 'completed')
+      ? 'completed'
+      : statuses.every((s) => s === 'pending')
+        ? 'pending'
+        : 'running';
+
+  const isCompleted = overallStatus === 'completed';
+  const pipelineGroup = firstJob.pipeline_group!;
+
+  // Sort by mode to get a consistent order: complete -> montecarlo -> monkey -> stress
+  const modeOrder = ['complete', 'montecarlo', 'monkey', 'stress'];
+  const sortedJobs = [...jobs].sort((a, b) => modeOrder.indexOf(a.mode) - modeOrder.indexOf(b.mode));
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <div className="group flex items-center gap-2 px-3 py-2 hover:bg-surface-1/30 transition-colors">
+        <StatusBadge status={overallStatus as keyof typeof STATUS_CONFIG} />
+        <span className="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded px-1 py-0.5 font-medium">
+          Pipeline
+        </span>
+        <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+          {sortedJobs.map((j) => (
+            <span key={j.id} className="inline-flex items-center gap-0.5">
+              <PipelineStepIcon status={j.status} />
+              <span className="text-[10px]">{PIPELINE_STEP_LABELS[j.mode] ?? j.mode}</span>
+            </span>
+          ))}
+        </span>
+        <span className="text-xs text-text-secondary flex-1">
+          {firstJob.symbol} &middot; {firstJob.timeframe} &middot; {firstJob.start_date} &rarr; {firstJob.end_date}
+        </span>
+        <span className="text-xs text-text-muted">{formatRelativeTime(firstJob.created_at)}</span>
+        {isCompleted && (
+          <button
+            onClick={() => onViewReport(pipelineGroup)}
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            title="View Pipeline Report"
+          >
+            <FileText size={12} />
+            Report
+          </button>
+        )}
+        {overallStatus !== 'running' && (
+          <button
+            onClick={() => {
+              if (window.confirm('Delete all pipeline jobs?')) {
+                jobs.forEach((j) => onDelete(j.id));
+              }
+            }}
+            className="p-1 text-text-muted hover:text-danger transition-colors opacity-0 group-hover:opacity-100"
+            title="Delete Pipeline"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const TIMEFRAME_OPTIONS = [
   { value: '1m', label: '1 min' },
   { value: '5m', label: '5 mins' },
@@ -403,6 +498,10 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
   const [stressSingleOverrides, setStressSingleOverrides] = useState<Record<string, any>>({});
   const [stressMaxParallel, setStressMaxParallel] = useState<number>(4);
   const [selectedReportJobId, setSelectedReportJobId] = useState<number | null>(null);
+  const [selectedPipelineGroupId, setSelectedPipelineGroupId] = useState<string | null>(null);
+  const [pipelineMCOpen, setPipelineMCOpen] = useState(true);
+  const [pipelineMonkeyOpen, setPipelineMonkeyOpen] = useState(true);
+  const [pipelineStressOpen, setPipelineStressOpen] = useState(true);
   const queryClient = useQueryClient();
 
   // Look up the matched instrument for data range constraints
@@ -488,6 +587,31 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
       return;
     }
 
+    if (backtestMode === 'pipeline') {
+      const pipelineGroup = crypto.randomUUID();
+      const pipelineConfig: PipelineConfig = {
+        montecarlo: { n_paths: nPaths, fit_years: fitYears },
+        monkey: { n_simulations: nSimulations, monkey_mode: monkeyMode },
+        stress: {
+          stress_test_name: stressTestName || undefined,
+          stress_param_overrides: Object.keys(stressParamOverrides).length > 0 ? stressParamOverrides : undefined,
+          stress_single_overrides: Object.keys(stressSingleOverrides).length > 0 ? stressSingleOverrides : undefined,
+          stress_max_parallel: stressMaxParallel,
+        },
+      };
+      createMutation.mutate({
+        draft_strat_code: stratCode,
+        symbol: symbol.trim(),
+        timeframe: selectedTimeframe,
+        start_date: startDate,
+        end_date: endDate,
+        mode: 'complete',
+        pipeline_group: pipelineGroup,
+        pipeline_config: pipelineConfig,
+      });
+      return;
+    }
+
     createMutation.mutate({
       draft_strat_code: stratCode,
       symbol: symbol.trim(),
@@ -507,6 +631,24 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
   };
 
   const jobs = backtestList?.jobs ?? [];
+
+  // Group pipeline jobs vs individual jobs
+  const { pipelineGroups, individualJobs } = useMemo(() => {
+    const groups = new Map<string, BacktestJobSummary[]>();
+    const singles: BacktestJobSummary[] = [];
+
+    for (const job of jobs) {
+      if (job.pipeline_group) {
+        const existing = groups.get(job.pipeline_group) ?? [];
+        existing.push(job);
+        groups.set(job.pipeline_group, existing);
+      } else {
+        singles.push(job);
+      }
+    }
+
+    return { pipelineGroups: groups, individualJobs: singles };
+  }, [jobs]);
 
   // Disabled state
   if (!backtestable) {
@@ -580,6 +722,17 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             <SlidersHorizontal size={12} />
             Stress Test
           </button>
+          <button
+            onClick={() => setBacktestMode('pipeline')}
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium transition-colors ${
+              backtestMode === 'pipeline'
+                ? 'bg-gradient-to-r from-cyan-600 to-teal-600 text-white'
+                : 'bg-surface-2 text-text-muted'
+            }`}
+          >
+            <Layers size={12} />
+            Pipeline
+          </button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -617,7 +770,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </div>
         </div>
 
-        {(backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey' || backtestMode === 'stress') && (
+        {(backtestMode === 'complete' || backtestMode === 'montecarlo' || backtestMode === 'monkey' || backtestMode === 'stress' || backtestMode === 'pipeline') && (
           <div>
             <label className="block text-xs text-text-muted mb-1">Timeframe</label>
             <select
@@ -723,6 +876,145 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </div>
         )}
 
+        {backtestMode === 'pipeline' && (
+          <div className="space-y-2">
+            {/* Monte Carlo section */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPipelineMCOpen(!pipelineMCOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-surface-2/50 hover:bg-surface-2 transition-colors"
+              >
+                <span className="text-xs font-semibold text-purple-400 flex items-center gap-1.5">
+                  <Shuffle size={12} />
+                  Monte Carlo
+                </span>
+                <ChevronDown size={14} className={`text-text-muted transition-transform ${pipelineMCOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {pipelineMCOpen && (
+                <div className="px-3 py-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Number of Paths</label>
+                      <input
+                        type="number"
+                        value={nPaths}
+                        onChange={(e) => setNPaths(Math.max(1, parseInt(e.target.value) || 1))}
+                        min={1}
+                        max={10000}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Fit Years</label>
+                      <input
+                        type="number"
+                        value={fitYears}
+                        onChange={(e) => setFitYears(Math.max(1, parseInt(e.target.value) || 1))}
+                        min={1}
+                        max={50}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Monkey Test section */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPipelineMonkeyOpen(!pipelineMonkeyOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-surface-2/50 hover:bg-surface-2 transition-colors"
+              >
+                <span className="text-xs font-semibold text-orange-400 flex items-center gap-1.5">
+                  <Bug size={12} />
+                  Monkey Test
+                </span>
+                <ChevronDown size={14} className={`text-text-muted transition-transform ${pipelineMonkeyOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {pipelineMonkeyOpen && (
+                <div className="px-3 py-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Monkey Mode</label>
+                      <select
+                        value={monkeyMode}
+                        onChange={(e) => setMonkeyMode(e.target.value)}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        <option value="A">A: Empirical Distribution</option>
+                        <option value="B">B: Always Max Bars</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Simulations</label>
+                      <select
+                        value={nSimulations}
+                        onChange={(e) => setNSimulations(parseInt(e.target.value))}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        <option value={1000}>1,000</option>
+                        <option value={2500}>2,500</option>
+                        <option value={5000}>5,000</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Stress Test section */}
+            <div className="border border-border rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPipelineStressOpen(!pipelineStressOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-surface-2/50 hover:bg-surface-2 transition-colors"
+              >
+                <span className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                  <SlidersHorizontal size={12} />
+                  Stress Test
+                </span>
+                <ChevronDown size={14} className={`text-text-muted transition-transform ${pipelineStressOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {pipelineStressOpen && (
+                <div className="px-3 py-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Test Name</label>
+                      <input
+                        type="text"
+                        value={stressTestName}
+                        onChange={(e) => setStressTestName(e.target.value)}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                        placeholder="e.g. rsi_period_sweep"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">Max Parallel</label>
+                      <select
+                        value={stressMaxParallel}
+                        onChange={(e) => setStressMaxParallel(parseInt(e.target.value))}
+                        className="w-full text-xs bg-surface-2 text-text-primary border border-border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={4}>4</option>
+                      </select>
+                    </div>
+                  </div>
+                  <StressParamBuilder
+                    draftData={draftData}
+                    onParamOverridesChange={setStressParamOverrides}
+                    onSingleOverridesChange={setStressSingleOverrides}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <button
             onClick={handleSubmit}
@@ -737,7 +1029,7 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
             ) : (
               <>
                 <Play size={12} />
-                {backtestMode === 'montecarlo' ? 'Run Monte Carlo' : backtestMode === 'monkey' ? 'Run Monkey Test' : backtestMode === 'stress' ? 'Run Stress Test' : 'Run Backtest'}
+                {backtestMode === 'pipeline' ? 'Run Pipeline' : backtestMode === 'montecarlo' ? 'Run Monte Carlo' : backtestMode === 'monkey' ? 'Run Monkey Test' : backtestMode === 'stress' ? 'Run Stress Test' : 'Run Backtest'}
               </>
             )}
           </button>
@@ -760,7 +1052,17 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           </p>
         ) : (
           <div className="space-y-1.5">
-            {jobs.map((job) => (
+            {/* Pipeline groups */}
+            {Array.from(pipelineGroups.entries()).map(([groupId, groupJobs]) => (
+              <PipelineStatusRow
+                key={groupId}
+                jobs={groupJobs}
+                onViewReport={(gId) => setSelectedPipelineGroupId(gId)}
+                onDelete={(id) => deleteMutation.mutate(id)}
+              />
+            ))}
+            {/* Individual (non-pipeline) jobs */}
+            {individualJobs.map((job) => (
               <JobItem
                 key={job.id}
                 job={job}
@@ -777,6 +1079,15 @@ export default function BacktestPanel({ stratCode, backtestable, defaultSymbol, 
           jobId={selectedReportJobId}
           open={selectedReportJobId !== null}
           onClose={() => setSelectedReportJobId(null)}
+        />
+      )}
+
+      {selectedPipelineGroupId !== null && (
+        <BacktestReportDrawer
+          jobId={0}
+          pipelineGroupId={selectedPipelineGroupId}
+          open={selectedPipelineGroupId !== null}
+          onClose={() => setSelectedPipelineGroupId(null)}
         />
       )}
     </div>

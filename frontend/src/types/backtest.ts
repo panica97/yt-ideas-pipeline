@@ -1,4 +1,4 @@
-export type BacktestMode = 'simple' | 'complete' | 'montecarlo' | 'monkey' | 'stress';
+export type BacktestMode = 'simple' | 'complete' | 'montecarlo' | 'monkey' | 'stress' | 'pipeline';
 
 export interface BacktestTradeComplete {
   entry_date: string;
@@ -158,6 +158,17 @@ export interface BacktestTrade {
   [key: string]: unknown;
 }
 
+export interface PipelineConfig {
+  montecarlo: { n_paths: number; fit_years: number };
+  monkey: { n_simulations: number; monkey_mode: string };
+  stress: {
+    stress_test_name?: string;
+    stress_param_overrides?: Record<string, any>;
+    stress_single_overrides?: Record<string, any>;
+    stress_max_parallel?: number;
+  };
+}
+
 export interface BacktestResult {
   id: number;
   metrics: BacktestMetrics;
@@ -182,6 +193,7 @@ export interface BacktestJob {
   stress_param_overrides?: Record<string, any>;
   stress_single_overrides?: Record<string, any>;
   stress_max_parallel?: number;
+  pipeline_group?: string;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -206,6 +218,7 @@ export interface BacktestJobSummary {
   stress_param_overrides?: Record<string, any>;
   stress_single_overrides?: Record<string, any>;
   stress_max_parallel?: number;
+  pipeline_group?: string;
   error_message: string | null;
   created_at: string;
   started_at: string | null;
@@ -232,6 +245,8 @@ export interface CreateBacktestParams {
   stress_param_overrides?: Record<string, any>;
   stress_single_overrides?: Record<string, any>;
   stress_max_parallel?: number;
+  pipeline_group?: string;
+  pipeline_config?: PipelineConfig;
   debug?: boolean;
 }
 
@@ -293,4 +308,12 @@ export interface StressTestMetrics {
     param_ranges: Record<string, number[]>;
     base_params?: Record<string, number>;
   };
+}
+
+export type PipelineOverallStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface PipelineStatusResponse {
+  pipeline_group: string;
+  status: PipelineOverallStatus;
+  jobs: BacktestJobSummary[];
 }

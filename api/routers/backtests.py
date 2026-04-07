@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid as _uuid
+
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +15,7 @@ from api.models.schemas.backtest import (
     BacktestJobResponse,
     BacktestListResponse,
     BacktestStatus,
+    PipelineStatusResponse,
 )
 from api.services import backtest_service
 
@@ -44,6 +47,14 @@ async def get_pending_job(
     if job is None:
         return Response(status_code=204)
     return BacktestJobResponse.model_validate(job, from_attributes=True)
+
+
+@router.get("/pipeline/{group_id}", response_model=PipelineStatusResponse)
+async def get_pipeline_status(
+    group_id: _uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    return await backtest_service.get_pipeline(db, group_id)
 
 
 @router.get("/{job_id}", response_model=BacktestJobResponse)

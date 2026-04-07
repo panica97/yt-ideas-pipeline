@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
 
@@ -14,7 +15,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import DateTime
 
@@ -222,6 +223,10 @@ class BacktestJob(Base, TimestampMixin):
     stress_param_overrides: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     stress_single_overrides: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     stress_max_parallel: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    pipeline_group: Mapped[Optional[_uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    pipeline_config: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     debug: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(

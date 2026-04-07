@@ -1,5 +1,5 @@
 import api from './api';
-import type { BacktestJob, BacktestListResponse, CreateBacktestParams } from '../types/backtest';
+import type { BacktestJob, BacktestListResponse, CreateBacktestParams, PipelineStatusResponse } from '../types/backtest';
 
 export async function createBacktest(params: CreateBacktestParams): Promise<BacktestJob> {
   const { data } = await api.post<BacktestJob>('/backtests', params);
@@ -18,4 +18,9 @@ export async function getBacktestsByDraft(stratCode: number): Promise<BacktestLi
 
 export async function deleteBacktest(jobId: number): Promise<void> {
   await api.delete(`/backtests/${jobId}`);
+}
+
+export async function getPipelineStatus(groupId: string): Promise<PipelineStatusResponse> {
+  const { data } = await api.get<PipelineStatusResponse>(`/backtests/pipeline/${groupId}`);
+  return data;
 }

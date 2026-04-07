@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid as _uuid
 from datetime import datetime
 from typing import Any, Literal, Optional
 
@@ -33,6 +34,8 @@ class BacktestCreateRequest(BaseModel):
     stress_param_overrides: Optional[dict] = None
     stress_single_overrides: Optional[dict] = None
     stress_max_parallel: Optional[int] = None
+    pipeline_group: Optional[_uuid.UUID] = None
+    pipeline_config: Optional[dict] = None
     debug: bool = False
 
     @field_validator("symbol")
@@ -83,6 +86,8 @@ class BacktestJobResponse(BaseModel):
     stress_param_overrides: dict | None = None
     stress_single_overrides: dict | None = None
     stress_max_parallel: int | None = None
+    pipeline_group: _uuid.UUID | None = None
+    pipeline_config: dict | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None
@@ -109,6 +114,7 @@ class BacktestJobSummary(BaseModel):
     stress_param_overrides: dict | None = None
     stress_single_overrides: dict | None = None
     stress_max_parallel: int | None = None
+    pipeline_group: _uuid.UUID | None = None
     error_message: str | None = None
     created_at: datetime
     started_at: datetime | None = None
@@ -120,6 +126,17 @@ class BacktestJobSummary(BaseModel):
 class BacktestListResponse(BaseModel):
     total: int
     jobs: list[BacktestJobSummary]
+
+
+PipelineStatus = Literal["pending", "running", "completed", "failed"]
+
+
+class PipelineStatusResponse(BaseModel):
+    pipeline_group: _uuid.UUID
+    status: PipelineStatus
+    jobs: list[BacktestJobSummary]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BacktestCompleteRequest(BaseModel):
