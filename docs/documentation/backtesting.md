@@ -1067,7 +1067,12 @@ Failed variations (engine errors, timeouts) are recorded with `status: "error"` 
 | Low Drawdown %   | `count(abs(dd) < 50%) / total * 100`| % of variations with drawdown under 50% |
 | **Score**        | `(profitable + pos_sharpe + low_dd) / 3` | Composite robustness score (0-100) |
 
-**Robustness verdict (6 criteria):**
+**Robustness verdict (6 criteria) -- DEPRECATED, pending migration to baseline-comparison mode:**
+
+> **Note:** The absolute-threshold verdict below measures *strategy quality*, not *robustness*.
+> A strategy can fail every threshold yet still be perfectly robust (consistent behavior
+> under parameter perturbation). It will be replaced by the baseline-comparison verdict
+> described after this table.
 
 | Criterion        | Threshold              | What it checks                               |
 |------------------|------------------------|----------------------------------------------|
@@ -1079,6 +1084,29 @@ Failed variations (engine errors, timeouts) are recorded with `status: "error"` 
 | PnL Stability    | stdev < 50% of mean    | Returns are consistent across parameter sets |
 
 Verdict scoring: >= 5 passed = green (robust), >= 3 = amber (moderate), < 3 = red (fragile).
+
+**Planned verdict: baseline-comparison mode**
+
+The verdict will switch from absolute thresholds to a baseline-comparison approach. The core idea: *robustness means "strategy behaves consistently under parameter perturbation"*, not "strategy meets quality thresholds".
+
+How it works:
+
+1. The variation that uses the strategy's original (unperturbed) parameters is designated the **baseline**.
+2. Each stress variation is compared against the baseline on two metrics: `return_drawdown_ratio` and `max_drawdown_pct`.
+3. A variation is **"stable"** if both metrics stay within **±50%** of the baseline value.
+4. The verdict is derived from the percentage of stable variations:
+
+| Verdict      | Condition           |
+|--------------|---------------------|
+| **Robust**   | >= 80% stable       |
+| **Moderate** | >= 50% stable       |
+| **Fragile**  | < 50% stable        |
+
+Rationale: A mediocre strategy that degrades consistently under perturbation is still robust. A high-Sharpe strategy that collapses when you shift a period by 1 tick is fragile. The old absolute thresholds conflated quality with robustness.
+
+> **Research note:** The ±50% tolerance band is a starting default. It may be tightened or
+> loosened after reviewing academic literature on parameter sensitivity analysis in
+> quantitative finance. This threshold is explicitly under research.
 
 **Weighted score breakdown (advanced):**
 
@@ -1098,25 +1126,27 @@ Each metric's median value is normalized to 0-100 within its range, multiplied b
 **What a good stress test result looks like:**
 
 - Robustness score >= 70
-- 5-6 verdict criteria passed
 - Heatmap shows consistent green (no cliff edges or isolated profitable islands)
 - Single-param sensitivity curves are smooth (no sharp spikes or drops)
 - The optimal parameter region is broad, not a narrow peak
+- *(Current verdict)* 5-6 absolute criteria passed
+- *(Planned verdict)* >= 80% of variations are stable vs baseline (Robust)
 
 **Red flags:**
 
-- Only 1-2 verdict criteria pass -- strategy is likely overfit to specific parameter values
 - Heatmap shows mostly red with small green islands -- performance depends critically on exact parameters
 - Sharp discontinuities in sensitivity curves -- strategy behavior is unstable
-- PnL stability fails (stdev > 50% of mean) -- results vary wildly across parameter sets
+- *(Current verdict)* Only 1-2 verdict criteria pass -- strategy is likely overfit to specific parameter values
+- *(Current verdict)* PnL stability fails (stdev > 50% of mean) -- results vary wildly across parameter sets
+- *(Planned verdict)* < 50% of variations stay within ±50% of baseline metrics -- strategy is fragile to perturbation
 
-**Practical rule:** A strategy should achieve a robustness score >= 60 and pass at least 4 of 6 verdict criteria before being considered for live deployment.
+**Practical rule:** A strategy should achieve a robustness score >= 60 and a "Robust" or "Moderate" verdict before being considered for live deployment.
 
 ### 7.8 Frontend Visualization
 
 The Stress Test report (`StressTestReport.tsx`) renders inside `BacktestReportDrawer` when mode is `stress`:
 
-- **Robustness Verdict** -- 6-criteria pass/fail checklist with check/X icons, actual values, and thresholds. Shows "X/6 criteria passed" with color coding (green >= 5, amber >= 3, red < 3).
+- **Robustness Verdict** -- Currently a 6-criteria pass/fail checklist with check/X icons, actual values, and thresholds. Shows "X/6 criteria passed" with color coding (green >= 5, amber >= 3, red < 3). Will be replaced by baseline-comparison verdict (Robust/Moderate/Fragile based on % of stable variations; see section 7.6).
 
 - **Robustness Score Badge** -- Large 0-100 score with color: green >= 80 ("Robust"), emerald 60-79 ("Moderate"), amber 40-59 ("Weak"), red < 40 ("Fragile"). Three sub-scores displayed inline: Profitable %, Positive Sharpe %, Low DD %.
 

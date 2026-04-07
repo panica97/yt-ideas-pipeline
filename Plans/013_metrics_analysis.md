@@ -86,3 +86,4 @@ _No SDD phases started yet._
 - Pipeline status is derived by querying all jobs with same pipeline_group
 - Existing fair-sharing in worker handles parallel execution of the 3 child jobs
 - Frontend groups pipeline jobs by pipeline_group UUID for display
+- **Pending verdict change (stress test):** The stress test robustness verdict will migrate from absolute-threshold mode (6 criteria checking strategy quality) to baseline-comparison mode (each variation compared against original parameters using `return_drawdown_ratio` and `max_drawdown_pct`, stable if within ±50% of baseline, verdict: Robust >=80% / Moderate >=50% / Fragile <50%). This is independent of the pipeline feature but will affect how the Pipeline Report displays stress test results. See `docs/documentation/backtesting.md` section 7.6 for full details.
