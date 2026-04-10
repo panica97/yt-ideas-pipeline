@@ -1200,7 +1200,7 @@ Esta es la **dependencia principal** del frontend: el dashboard lee datos de Pos
 
 1. **`tools/youtube/` scripts**: actualmente leen canales desde YAML (`data/channels/channels.yaml`). Deben leer de PostgreSQL (`SELECT` de la tabla `channels`).
 2. **`db-manager` skill** (`.claude/skills/db-manager/`): actualmente escribe estrategias a ficheros YAML en `data/strategies/`. Debe hacer `INSERT INTO strategies` e `INSERT INTO drafts` via SQLAlchemy.
-3. **Research orchestrator** (`.claude/skills/research/`): debe hacer INSERT/UPDATE a `research_sessions` en cada paso del pipeline y ejecutar `NOTIFY research_update` tras cada UPDATE.
+3. **Research orchestrator** (`.claude/agents/research-manager/`): debe hacer INSERT/UPDATE a `research_sessions` en cada paso del pipeline y ejecutar `NOTIFY research_update` tras cada UPDATE.
 4. **Strategy translator**: actualmente escribe JSON drafts a `data/strategies/drafts/`. Debe hacer `INSERT INTO drafts` con JSONB.
 5. **Nueva dependencia compartida**: modulo `tools/db/` con modelos SQLAlchemy y session factory, compartido entre los scripts del pipeline y la API FastAPI.
 

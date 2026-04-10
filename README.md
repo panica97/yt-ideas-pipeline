@@ -26,7 +26,7 @@ preflight -> yt-scraper -> video-classifier -> notebooklm-analyst -> strategy-va
 5. **strategy-translator** -- translate strategies to IBKR JSON format
 6. **db-manager** -- persist to PostgreSQL with deduplication
 
-Launch with `/research <topic>` from Claude Code.
+Launch by telling the CEO what you want to research from Claude Code (e.g., "research futures strategies").
 
 ## Project structure
 

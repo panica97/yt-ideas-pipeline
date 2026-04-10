@@ -273,3 +273,26 @@ class ScanJob(Base):
     )
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     results: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+
+
+class Job(Base):
+    """Generic job tracking for async agent operations."""
+
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
+    job_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", server_default="pending"
+    )
+    draft_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    config: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    result: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )

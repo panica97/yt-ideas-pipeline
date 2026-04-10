@@ -13,8 +13,10 @@ IRT/
       strategy-translator/SKILL.md     skill: traduce estrategias a formato DB
       db-manager/SKILL.md              skill: guardar en PostgreSQL con dedup
     agents/
+      research-manager/
+        AGENT.md                       Research Manager agent (new architecture)
       research/
-        AGENT.md                       instrucciones + feedback del agente
+        AGENT.md.archived              old monolith (archived)
 ```
 
 ## Flujo de ejecucion
@@ -22,7 +24,7 @@ IRT/
 ```
   ORCHESTRATOR (conversacion principal)
        |
-       |  Lee .claude/agents/research/AGENT.md
+       |  Lee .claude/agents/research-manager/AGENT.md
        |  y lo inyecta como prompt del sub-agente
        |
        +---> Agent("general-purpose", prompt = AGENT.md + topic)

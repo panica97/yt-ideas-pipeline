@@ -92,9 +92,9 @@ Requires the `DATABASE_URL` environment variable.
 
 Slash commands are the primary interface from Claude Code:
 
-### `/research`
+### Research
 
-Launches the full research pipeline for a topic. See `.claude/skills/research/SKILL.md`.
+Research is handled by the agent architecture (CEO routing in `CLAUDE.md` dispatches to `.claude/agents/research-manager/AGENT.md`). There is no standalone `/research` slash command — tell the CEO what you want to research and it routes to the appropriate agents.
 
 ### `/notebooklm`
 

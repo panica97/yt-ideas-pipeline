@@ -141,7 +141,7 @@ IRT/
 
 | Skill | Directory | Purpose |
 |-------|-----------|---------|
-| research | `.claude/skills/research/` | Research pipeline orchestrator |
+| research-manager | `.claude/agents/research-manager/` | Research pipeline orchestrator (agent, not skill) |
 | yt-scraper | `.claude/skills/yt-scraper/` | Fetch videos by topic from registered channels |
 | video-classifier | `.claude/skills/video-classifier/` | Filter out videos that don't contain strategies |
 | notebooklm | `.claude/skills/notebooklm/` | Full NotebookLM API |

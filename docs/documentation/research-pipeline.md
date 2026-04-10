@@ -46,7 +46,7 @@ Trading strategy research is labor-intensive. Traders spend hours watching YouTu
   User Input                Pipeline Engine              Storage
   ----------                ---------------              -------
 
-  /research <topic>    -->  [0] Preflight Check     -->  NotebookLM Auth
+  research <topic>     -->  [0] Preflight Check     -->  NotebookLM Auth
         |                        |
         |                   [1] YouTube Scraper      <-- channels.yaml / DB
         |                        |
@@ -79,8 +79,8 @@ Trading strategy research is labor-intensive. Traders spend hours watching YouTu
 
 | Component | Location | Role |
 |-----------|----------|------|
-| Research Agent | `.claude/agents/research/AGENT.md` | Main orchestrator, executes full pipeline |
-| Research Skill | `.claude/skills/research/SKILL.md` | Trigger entry point (`/research`) |
+| Research Manager | `.claude/agents/research-manager/AGENT.md` | Main orchestrator, executes full pipeline |
+| CEO Routing | `CLAUDE.md` (routing rules) | Intent detection routes to Research Manager |
 | yt-scraper | `.claude/skills/yt-scraper/SKILL.md` | YouTube video fetching |
 | video-classifier | `.claude/skills/video-classifier/SKILL.md` | Title-based filtering |
 | notebooklm-analyst | `.claude/skills/notebooklm-analyst/SKILL.md` | Strategy extraction via AI |
@@ -97,9 +97,9 @@ Trading strategy research is labor-intensive. Traders spend hours watching YouTu
 
 The pipeline supports three entry points, each skipping different steps depending on the input type.
 
-### 2.1 Topic-Based Research (`/research <topic>`)
+### 2.1 Topic-Based Research (topic input)
 
-**Example**: `/research futures`
+**Example**: "research futures" (CEO routes to Research Manager)
 
 Runs the full pipeline. The topic slug must exist in the channel database (`data/channels/channels.yaml` or the `topics` table in PostgreSQL).
 
@@ -107,9 +107,9 @@ Runs the full pipeline. The topic slug must exist in the channel database (`data
 
 **Session label**: Uses `topic_slug` directly (e.g., `topic_id` is resolved from the slug).
 
-### 2.2 Video URL Research (`/research <url>`)
+### 2.2 Video URL Research (URL input)
 
-**Example**: `/research https://www.youtube.com/watch?v=abc123`
+**Example**: "research https://www.youtube.com/watch?v=abc123" (CEO routes to Research Manager)
 
 Skips YouTube scraping and video classification. Goes directly to NotebookLM analysis with the single video URL.
 
@@ -121,9 +121,9 @@ Skips YouTube scraping and video classification. Goes directly to NotebookLM ana
 
 **History recording**: `topic_id=None`, `channel_id` is resolved if the channel exists in the DB, otherwise `None`.
 
-### 2.3 Raw Idea Research (`/research <idea>`)
+### 2.3 Raw Idea Research (idea input)
 
-**Example**: `/research "Buy when RSI(14) < 30 and price is above 200 SMA, exit after 20 bars"`
+**Example**: "research Buy when RSI(14) < 30 and price is above 200 SMA, exit after 20 bars" (CEO routes to Research Manager)
 
 Skips YouTube scraping, video classification, AND NotebookLM analysis. The idea text is formatted as a strategy YAML and passed directly to the strategy-variants step.
 
@@ -1297,7 +1297,7 @@ topics:
 
 Topics are the top-level organizational unit. Each topic has a slug (e.g., `"futures"`, `"trading"`, `"ai-agents"`) and contains a list of YouTube channels relevant to that topic.
 
-When you run `/research futures`, the pipeline fetches recent videos from ALL channels under the `futures` topic.
+When you research a topic like `futures`, the pipeline fetches recent videos from ALL channels under the `futures` topic.
 
 ### PostgreSQL Storage
 
@@ -1489,7 +1489,7 @@ Also note that `shift_1` and `shift_2` must be >= 1 (shift 0 does not exist in t
 1. Check the session status in the History page or via API: `GET /api/research/sessions`
 2. Read the `error_detail` field to understand what failed
 3. Fix the underlying issue (auth, connection, etc.)
-4. Re-run with the same command: `/research <topic>` -- the pipeline will skip already-researched videos automatically
+4. Re-run by asking to research the same topic -- the pipeline will skip already-researched videos automatically
 5. If the NotebookLM notebook was not cleaned up, delete it manually: `notebooklm list` then `notebooklm delete <id> --yes`
 
 ### Debugging Checklist
